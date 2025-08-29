@@ -30,11 +30,7 @@ function LoginPage() {
       setLoading(false)
     }
   };
-  if(loading){
-    return <>
-    Loading
-    </>
-  }
+
  const containerVariants: Variants = {
     hidden: { opacity: 0, scale: 0.9 },
     visible: {
