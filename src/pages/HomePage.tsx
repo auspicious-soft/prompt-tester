@@ -337,7 +337,7 @@ const PromptGenerator: React.FC = () => {
                     onChange={(e) => handleChange(setIsGenxz, e.target.checked)}
                     className="mr-2 h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-600 rounded"
                   />
-                  <label className="text-sm font-medium text-gray-300">isGenxz</label>
+                  <label className="text-sm font-medium text-gray-300">isGenz</label>
                 </motion.div>
               )}
 
