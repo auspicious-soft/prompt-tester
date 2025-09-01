@@ -116,7 +116,7 @@ const PromptGenerator: React.FC = () => {
     try {
       let response;
       const commonParams = {
-        rizzType: style ?? "",
+        rizzType: style?.toUpperCase() ?? "",
         isGenz: String(isGenxz ?? ""),
         language: language?.toLowerCase() ?? "",
         dialect: language === "en" ? "" : dialect ?? "", // Send empty dialect for English
