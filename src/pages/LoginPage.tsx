@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, Variants } from "framer-motion";
 import { postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
@@ -53,6 +53,16 @@ function LoginPage() {
       transition: { duration: 0.5, ease: "easeOut" },
     },
   };
+
+
+   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      navigate("/prompt-testing", { replace: true });
+    }
+  }, []);
+
 
   return (
  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 p-4 relative overflow-hidden">

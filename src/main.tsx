@@ -12,4 +12,4 @@ createRoot(document.getElementById("root")!).render(
       <Toaster richColors position="top-right" /> 
     </BrowserRouter>
   </StrictMode>
-);
+);0
