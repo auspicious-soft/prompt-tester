@@ -120,11 +120,12 @@ const PromptGenerator: React.FC = () => {
 
     setLoading(true);
     setPromptAccordionOpen(false);
+    setTranslatedAccordionOpen(false);
     try {
       let response;
       const commonParams = {
         rizzType: style?.toUpperCase() ?? "",
-        isGenz: String(isGenxz ?? ""),
+        isGenz: isGenxz ?? false, // Use boolean directly        
         language: language?.toLowerCase() ?? "",
         dialect: language === "en" ? "" : dialect ?? "", // Send empty dialect for English
         gender: gender ?? "",
@@ -132,7 +133,11 @@ const PromptGenerator: React.FC = () => {
       };
 
       if (selectedType === "GetPickUpLine") {
-        const query = new URLSearchParams(commonParams).toString();
+        // For query strings, ensure boolean is serialized as "true"/"false"
+        const query = new URLSearchParams({
+          ...commonParams,
+          isGenz: commonParams.isGenz.toString(), // Convert boolean to "true"/"false" for query string
+        }).toString();
         response = await getApi(`${URLS.getPickUpLine}?${query}`);
       } else if (selectedType === "ManualReply") {
         const body = {
@@ -147,41 +152,64 @@ const PromptGenerator: React.FC = () => {
           formData.append("image", imageFile);
         }
         Object.entries(commonParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null)
-            formData.append(key, value);
+          if (value !== undefined && value !== null) {
+            // Convert boolean to string for FormData if needed
+            formData.append(
+              key,
+              typeof value === "boolean" ? value.toString() : value
+            );
+          }
         });
         response = await postApi(`${URLS.getResponseByScreenshot}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
-
       if (response?.status === 200 && response.data.success) {
-        setSuccess(true);
-        if (selectedType === "GetPickUpLine") {
-          setResponses(response.data.data.pickupLines || []);
-          setTranslatedText(response.data.data.translatedText || []);
+        // Check for special case where no valid chat was extracted
+        const isInvalidScreenshot =
+          selectedType === "ScreenshotReply" &&
+          typeof response.data.data.reply === "string" &&
+          response.data.data.reply.includes(
+            "Sorry, could not extract a valid chat from this screenshot."
+          );
 
-          setFullPrompt(response.data.data.fullPrompt || "");
-        } else if (selectedType === "ManualReply") {
-          setResponses(response.data.data.reply || []);
-          setTranslatedText(response.data.data.translatedText || []);
-
-          setFullPrompt(response.data.data.fullPrompt || "");
-        } else if (selectedType === "ScreenshotReply") {
-          setResponses(response.data.data.reply.replies || []);
-          setTranslatedText(response.data.data.reply.translatedText || []);
-
-          setFullPrompt(response.data.data.reply.fullPrompt || "");
+        if (isInvalidScreenshot) {
+          setSuccess(true); // Set to true to show the response section
+          setOutput("Error: Invalid screenshot");
+          setResponses([response.data.data.reply]); // Map the error message to responses
+          setTranslatedText([]);
+          setFullPrompt("");
+        } else {
+          setSuccess(true);
+          if (selectedType === "GetPickUpLine") {
+            setResponses(response.data.data.pickupLines || []);
+            setTranslatedText(response.data.data.translatedText || []);
+            setFullPrompt(response.data.data.fullPrompt || "");
+          } else if (selectedType === "ManualReply") {
+            setResponses(response.data.data.reply || []);
+            setTranslatedText(response.data.data.translatedText || []);
+            setFullPrompt(response.data.data.fullPrompt || "");
+          } else if (selectedType === "ScreenshotReply") {
+            setResponses(response.data.data.reply.replies || []);
+            setTranslatedText(response.data.data.reply.translatedText || []);
+            setFullPrompt(response.data.data.reply.fullPrompt || "");
+          }
+          setOutput("Success: Response generated");
         }
-        setOutput("Success: Response generated");
       } else {
         setOutput("Error: Failed to fetch response");
         setSuccess(false);
+        setResponses([]);
+        setTranslatedText([]);
+        setFullPrompt("");
       }
     } catch (error) {
       console.error("API Error:", error);
       setOutput("Error: Something went wrong");
       setSuccess(false);
+      setResponses(["Error: Something went wrong"]);
+      setTranslatedText([]);
+      setFullPrompt("");
     } finally {
       setLoading(false);
     }
@@ -205,7 +233,7 @@ const PromptGenerator: React.FC = () => {
     setPromptAccordionOpen(!promptAccordionOpen);
   };
 
-    const toggleTranslatedAccordion = () => {
+  const toggleTranslatedAccordion = () => {
     setTranslatedAccordionOpen(!translatedAccordionOpen);
   };
   return (
@@ -215,11 +243,11 @@ const PromptGenerator: React.FC = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-4xl flex justify-center mb-8"
+        className="w-full max-w-4xl flex flex-col sm:flex-row justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-2"
       >
         <button
           onClick={() => setActiveTab("generator")}
-          className={`px-6 py-2 text-base font-medium rounded-l-lg transition-all duration-300 ${
+          className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg sm:rounded-l-lg transition-all duration-300 ${
             activeTab === "generator"
               ? "bg-blue-600 text-white"
               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -229,7 +257,7 @@ const PromptGenerator: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab("templates")}
-          className={`px-6 py-2 text-base font-medium rounded-r-lg transition-all duration-300 ${
+          className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg sm:rounded-r-lg transition-all duration-300 ${
             activeTab === "templates"
               ? "bg-blue-600 text-white"
               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -244,16 +272,16 @@ const PromptGenerator: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="w-full max-w-3xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 border border-gray-700"
+          className="w-full max-w-3xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700"
         >
-          <h2 className="text-2xl font-bold text-gray-100 text-center mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-100 text-center mb-4 sm:mb-6">
             Prompt Generator
           </h2>
 
           {/* Type Selection */}
           <motion.div
             variants={itemVariants}
-            className="mb-6 flex justify-center space-x-3"
+            className="mb-4 sm:mb-6 flex flex-wrap justify-center gap-2 sm:gap-3"
           >
             {["ScreenshotReply", "ManualReply", "GetPickUpLine"].map((type) => (
               <motion.button
@@ -262,7 +290,7 @@ const PromptGenerator: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleChange(setSelectedType, type)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 min-w-[100px] ${
                   selectedType === type
                     ? "bg-blue-600 text-white"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -273,19 +301,19 @@ const PromptGenerator: React.FC = () => {
             ))}
           </motion.div>
 
-          <div className="space-y-6">
-            {/* 2x3 Grid for Input Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Grid for Input Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Gender Selection with isGenxz Checkbox */}
-              <motion.div variants={itemVariants} className="space-y-4">
+              <motion.div variants={itemVariants} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                     Gender
                   </label>
                   <select
                     value={gender}
                     onChange={(e) => handleChange(setGender, e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                     required
                   >
                     <option value="MALE">Male</option>
@@ -306,11 +334,11 @@ const PromptGenerator: React.FC = () => {
                         handleChange(setIsGenxz, e.target.checked)
                       }
                       id="genz-checkbox"
-                      className="w-5 h-5 text-blue-600 bg-gray-700 border-2 border-gray-500 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-gray-800 transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 bg-gray-700 border-2 border-gray-500 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-gray-800 transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400"
                     />
                     <label
                       htmlFor="genz-checkbox"
-                      className="ml-2 text-sm font-medium text-gray-300 cursor-pointer hover:text-blue-400 transition-colors duration-200"
+                      className="ml-2 text-xs sm:text-sm font-medium text-gray-300 cursor-pointer hover:text-blue-400 transition-colors duration-200"
                     >
                       Gen Z Style
                     </label>
@@ -320,13 +348,13 @@ const PromptGenerator: React.FC = () => {
 
               {/* Style Selection */}
               <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Style
                 </label>
                 <select
                   value={style}
                   onChange={(e) => handleChange(setStyle, e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   required
                 >
                   {stylesOptions.map((opt) => (
@@ -339,13 +367,13 @@ const PromptGenerator: React.FC = () => {
 
               {/* Language Selection */}
               <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Language
                 </label>
                 <select
                   value={language}
                   onChange={(e) => handleChange(setLanguage, e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   required
                 >
                   <option value="en">English</option>
@@ -356,13 +384,13 @@ const PromptGenerator: React.FC = () => {
 
               {/* Dialect Selection */}
               <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Dialect
                 </label>
                 <select
                   value={dialect}
                   onChange={(e) => handleChange(setDialect, e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                  className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm ${
                     language === "en" ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   disabled={language === "en"}
@@ -384,13 +412,13 @@ const PromptGenerator: React.FC = () => {
 
               {/* Prompt Type Selection */}
               <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Prompt Type
                 </label>
                 <select
                   value={promptType}
                   onChange={(e) => handleChange(setPromptType, e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   required
                 >
                   <option value="Optimized">Optimized</option>
@@ -401,24 +429,24 @@ const PromptGenerator: React.FC = () => {
 
             {/* Input Fields for ScreenshotReply and ManualReply */}
             {selectedType === "ScreenshotReply" && (
-              <motion.div variants={itemVariants} className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+              <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Upload Image
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:bg-blue-600 file:text-white file:border-0 hover:file:bg-blue-700 text-sm"
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 file:mr-2 file:py-1 file:px-2 sm:file:mr-3 sm:file:py-1.5 sm:file:px-3 file:rounded-lg file:bg-blue-600 file:text-white file:border-0 hover:file:bg-blue-700 text-xs sm:text-sm"
                   required
                 />
               </motion.div>
             )}
 
             {selectedType === "ManualReply" && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                     Message
                   </label>
                   <textarea
@@ -426,18 +454,18 @@ const PromptGenerator: React.FC = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Enter your message..."
                     required
-                    className="w-full h-20 px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full h-16 sm:h-20 px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   />
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                     Context (Optional)
                   </label>
                   <textarea
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                     placeholder="Enter context (optional)..."
-                    className="w-full h-20 px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full h-16 sm:h-20 px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   />
                 </motion.div>
               </div>
@@ -457,7 +485,7 @@ const PromptGenerator: React.FC = () => {
                 (selectedType === "ManualReply" && !message.trim()) ||
                 (selectedType === "ScreenshotReply" && !imageFile)
               }
-              className={`w-full py-3 rounded-lg font-medium text-base shadow-md transition-all duration-300 ${
+              className={`w-full py-2 sm:py-3 rounded-lg font-medium text-sm sm:text-base shadow-md transition-all duration-300 touch-manipulation ${
                 loading
                   ? "bg-blue-400 text-white cursor-not-allowed"
                   : (selectedType === "ManualReply" && !message.trim()) ||
@@ -478,23 +506,23 @@ const PromptGenerator: React.FC = () => {
               {loading ? "Generating..." : "Generate Prompt"}
             </motion.button>
 
-        
-
             {/* API Response Display */}
-        {success && (
+            {success && (
               <motion.div
                 variants={itemVariants}
-                className="mt-6 p-4 bg-gray-700 rounded-lg text-gray-100"
+                className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-700 rounded-lg text-gray-100 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto"
               >
-                <h3 className="text-base font-semibold mb-3">API Response</h3>
-                <div className="mb-4">
+                <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">
+                  API Response
+                </h3>
+                <div className="mb-3 sm:mb-4">
                   <motion.div
                     onClick={togglePromptAccordion}
                     whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                    className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                    className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
                   >
                     <div className="flex justify-between items-center">
-                      <h4 className="text-sm font-medium text-gray-300">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-300">
                         View Prompt Used
                       </h4>
                       <motion.span
@@ -516,22 +544,29 @@ const PromptGenerator: React.FC = () => {
                     className="overflow-hidden"
                   >
                     <div
-                      className="mt-2 p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-750 transition-colors duration-200"
+                      className="mt-2 p-2 sm:p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-750 transition-colors duration-200"
                       onClick={togglePromptAccordion}
                     >
-                      <pre className="whitespace-pre-wrap text-sm text-gray-200">
+                      <pre className="whitespace-pre-wrap text-xs sm:text-sm text-gray-200">
                         {fullPrompt}
                       </pre>
                     </div>
                   </motion.div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">
+                  <h4 className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                     Responses
                   </h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
+                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
                     {responses.map((response, index) => (
-                      <li key={index} className="text-gray-100">
+                      <li
+                        key={index}
+                        className={`${
+                          output.startsWith("Error:")
+                            ? "text-red-400"
+                            : "text-gray-100"
+                        }`}
+                      >
                         {response
                           .replace(/^\s*"\d+\.\s*|\s*"$/, "")
                           .replace(/^"|"$/g, "")
@@ -542,61 +577,65 @@ const PromptGenerator: React.FC = () => {
                 </div>
 
                 {/* Translated Text Display - Only for ar and arbz languages */}
-                {(language === "ar" || language === "arbz") && translatedText.length > 0 && (
-                  <div className="mt-4">
-                    <motion.div
-                      onClick={toggleTranslatedAccordion}
-                      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                      className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-medium text-gray-300">
-                          View Translated Text (English)
-                        </h4>
-                        <motion.span
-                          animate={{ rotate: translatedAccordionOpen ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="text-gray-400"
-                        >
-                          ▼
-                        </motion.span>
-                      </div>
-                    </motion.div>
-                    <motion.div
-                      initial={false}
-                      animate={{
-                        height: translatedAccordionOpen ? "auto" : 0,
-                        opacity: translatedAccordionOpen ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-2 p-3 bg-gray-800 rounded-lg">
-                        <ul className="list-disc list-inside space-y-1 text-sm">
-                          {translatedText.map((translation, index) => (
-                            <li key={index} className="text-gray-100">
-                              {translation
-                                .replace(/^\s*"\d+\.\s*|\s*"$/, "")
-                                .replace(/^"|"$/g, "")
-                                .trim()}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
+                {(language === "ar" || language === "arbz") &&
+                  translatedText.length > 0 && (
+                    <div className="mt-3 sm:mt-4">
+                      <motion.div
+                        onClick={toggleTranslatedAccordion}
+                        whileHover={{
+                          backgroundColor: "rgba(55, 65, 81, 0.8)",
+                        }}
+                        className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-xs sm:text-sm font-medium text-gray-300">
+                            View Translated Text (English)
+                          </h4>
+                          <motion.span
+                            animate={{
+                              rotate: translatedAccordionOpen ? 180 : 0,
+                            }}
+                            transition={{ duration: 0.3 }}
+                            className="text-gray-400"
+                          >
+                            ▼
+                          </motion.span>
+                        </div>
+                      </motion.div>
+                      <motion.div
+                        initial={false}
+                        animate={{
+                          height: translatedAccordionOpen ? "auto" : 0,
+                          opacity: translatedAccordionOpen ? 1 : 0,
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-2 p-2 sm:p-3 bg-gray-800 rounded-lg">
+                          <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+                            {translatedText.map((translation, index) => (
+                              <li key={index} className="text-gray-100">
+                                {translation
+                                  .replace(/^\s*"\d+\.\s*|\s*"$/, "")
+                                  .replace(/^"|"$/g, "")
+                                  .trim()}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
               </motion.div>
             )}
           </div>
         </motion.div>
       )}
 
-
       {activeTab === "templates" && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-4xl text-center text-gray-300 text-base"
+          className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
         >
           Prompt Templates coming soon...
         </motion.div>
