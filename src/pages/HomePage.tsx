@@ -10,7 +10,7 @@ const PromptGenerator: React.FC = () => {
   );
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
-  >("ScreenshotReply");
+  >("GetPickUpLine");
   const [gender, setGender] = useState<"MALE" | "FEMALE">("MALE");
   const [isGenxz, setIsGenxz] = useState<boolean>(false);
   const [style, setStyle] = useState<string>("Conservative");
@@ -27,9 +27,11 @@ const PromptGenerator: React.FC = () => {
   const [output, setOutput] = useState("");
   const [fullPrompt, setFullPrompt] = useState("");
   const [responses, setResponses] = useState<string[]>([]);
+  const [translatedText, setTranslatedText] = useState<string[]>([]);
   const [success, setSuccess] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
+  const [translatedAccordionOpen, setTranslatedAccordionOpen] = useState(false);
 
   const maleStyles = ["Conservative", "Playful", "Confident", "Flirty"];
   const femaleStyles = ["Modest", "Playful", "Sassy", "Flirty"];
@@ -48,8 +50,11 @@ const PromptGenerator: React.FC = () => {
       setOutput("");
       setFullPrompt("");
       setResponses([]);
+      setTranslatedText([]);
+
       setSuccess(false);
       setPromptAccordionOpen(false);
+      setTranslatedAccordionOpen(false);
     } else if (setter === setGender) {
       // Update style to match new gender's default
       if (value === "MALE") {
@@ -73,8 +78,10 @@ const PromptGenerator: React.FC = () => {
       setOutput("");
       setFullPrompt("");
       setResponses([]);
+      setTranslatedText([]);
       setSuccess(false);
       setPromptAccordionOpen(false);
+      setTranslatedAccordionOpen(false);
     }
   };
 
@@ -152,12 +159,18 @@ const PromptGenerator: React.FC = () => {
         setSuccess(true);
         if (selectedType === "GetPickUpLine") {
           setResponses(response.data.data.pickupLines || []);
+          setTranslatedText(response.data.data.translatedText || []);
+
           setFullPrompt(response.data.data.fullPrompt || "");
         } else if (selectedType === "ManualReply") {
           setResponses(response.data.data.reply || []);
+          setTranslatedText(response.data.data.translatedText || []);
+
           setFullPrompt(response.data.data.fullPrompt || "");
         } else if (selectedType === "ScreenshotReply") {
           setResponses(response.data.data.reply.replies || []);
+          setTranslatedText(response.data.data.reply.translatedText || []);
+
           setFullPrompt(response.data.data.reply.fullPrompt || "");
         }
         setOutput("Success: Response generated");
@@ -190,6 +203,10 @@ const PromptGenerator: React.FC = () => {
 
   const togglePromptAccordion = () => {
     setPromptAccordionOpen(!promptAccordionOpen);
+  };
+
+    const toggleTranslatedAccordion = () => {
+    setTranslatedAccordionOpen(!translatedAccordionOpen);
   };
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-start p-4 sm:p-6">
@@ -276,26 +293,28 @@ const PromptGenerator: React.FC = () => {
                   </select>
                 </div>
                 {gender === "MALE" && (
-                <motion.div
-  variants={itemVariants}
-  className="flex items-center"
-  whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-  whileTap={{ scale: 0.98 }}
->
-  <input
-    type="checkbox"
-    checked={isGenxz}
-    onChange={(e) => handleChange(setIsGenxz, e.target.checked)}
-    id="genz-checkbox"
-    className="w-5 h-5 text-blue-600 bg-gray-700 border-2 border-gray-500 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-gray-800 transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400"
-  />
-  <label
-    htmlFor="genz-checkbox"
-    className="ml-2 text-sm font-medium text-gray-300 cursor-pointer hover:text-blue-400 transition-colors duration-200"
-  >
-    Gen Z Style
-  </label>
-</motion.div>
+                  <motion.div
+                    variants={itemVariants}
+                    className="flex items-center"
+                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isGenxz}
+                      onChange={(e) =>
+                        handleChange(setIsGenxz, e.target.checked)
+                      }
+                      id="genz-checkbox"
+                      className="w-5 h-5 text-blue-600 bg-gray-700 border-2 border-gray-500 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-gray-800 transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400"
+                    />
+                    <label
+                      htmlFor="genz-checkbox"
+                      className="ml-2 text-sm font-medium text-gray-300 cursor-pointer hover:text-blue-400 transition-colors duration-200"
+                    >
+                      Gen Z Style
+                    </label>
+                  </motion.div>
                 )}
               </motion.div>
 
@@ -459,19 +478,10 @@ const PromptGenerator: React.FC = () => {
               {loading ? "Generating..." : "Generate Prompt"}
             </motion.button>
 
-            {/* Output Display */}
-            {output && (
-              <motion.div
-                variants={itemVariants}
-                className="mt-6 p-4 bg-gray-700 rounded-lg text-gray-100"
-              >
-                <h3 className="text-base font-semibold mb-2">Status</h3>
-                <p className="text-sm">{output}</p>
-              </motion.div>
-            )}
+        
 
             {/* API Response Display */}
-            {success && (
+        {success && (
               <motion.div
                 variants={itemVariants}
                 className="mt-6 p-4 bg-gray-700 rounded-lg text-gray-100"
@@ -530,11 +540,58 @@ const PromptGenerator: React.FC = () => {
                     ))}
                   </ul>
                 </div>
+
+                {/* Translated Text Display - Only for ar and arbz languages */}
+                {(language === "ar" || language === "arbz") && translatedText.length > 0 && (
+                  <div className="mt-4">
+                    <motion.div
+                      onClick={toggleTranslatedAccordion}
+                      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                      className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-sm font-medium text-gray-300">
+                          View Translated Text (English)
+                        </h4>
+                        <motion.span
+                          animate={{ rotate: translatedAccordionOpen ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-gray-400"
+                        >
+                          ▼
+                        </motion.span>
+                      </div>
+                    </motion.div>
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: translatedAccordionOpen ? "auto" : 0,
+                        opacity: translatedAccordionOpen ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-2 p-3 bg-gray-800 rounded-lg">
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {translatedText.map((translation, index) => (
+                            <li key={index} className="text-gray-100">
+                              {translation
+                                .replace(/^\s*"\d+\.\s*|\s*"$/, "")
+                                .replace(/^"|"$/g, "")
+                                .trim()}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
               </motion.div>
             )}
           </div>
         </motion.div>
       )}
+
 
       {activeTab === "templates" && (
         <motion.div
