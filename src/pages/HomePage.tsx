@@ -3,6 +3,21 @@ import { motion, Variants } from "framer-motion";
 import { getApi, postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { toast } from "sonner";
+import PromptTemplates from "./PromptTemplates";
+import TypingLoader from "../utils/Lodaer";
+
+interface FullPrompt {
+  role: string;
+  messageType: string;
+  style: string;
+  language: string;
+  dialect: string;
+  gender: string;
+  systemPrompt: string;
+  userInstruction: string;
+  extractedChat: string | null;
+  lastReplies: string[] | null;
+}
 
 const PromptGenerator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"generator" | "templates">(
@@ -25,7 +40,7 @@ const PromptGenerator: React.FC = () => {
   const [context, setContext] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [output, setOutput] = useState("");
-  const [fullPrompt, setFullPrompt] = useState("");
+  const [fullPrompt, setFullPrompt] = useState<FullPrompt | null>(null);
   const [responses, setResponses] = useState<string[]>([]);
   const [translatedText, setTranslatedText] = useState<string[]>([]);
   const [success, setSuccess] = useState<boolean>(false);
@@ -44,30 +59,30 @@ const PromptGenerator: React.FC = () => {
   ) => {
     setter(value);
 
-    // Only reset fields when changing type, but keep all current values
     if (setter === setSelectedType) {
-      // Don't reset any fields when changing type
       setOutput("");
-      setFullPrompt("");
+      setFullPrompt(null);
       setResponses([]);
       setTranslatedText([]);
 
       setSuccess(false);
       setPromptAccordionOpen(false);
       setTranslatedAccordionOpen(false);
+
+      setImageFile(null); // Reset uploaded image
+      setMessage(""); // Reset manual reply
+      setContext(""); // Reset optional context
     } else if (setter === setGender) {
-      // Update style to match new gender's default
       if (value === "MALE") {
         setStyle("Conservative");
         setIsGenxz(false);
       } else if (value === "FEMALE") {
         setStyle("Modest");
-        setIsGenxz(false); // Reset isGenxz for female
+        setIsGenxz(false);
       }
     } else if (setter === setLanguage) {
-      // If language is English, set dialect to empty and disable dialect selection
       if (value === "en") {
-        setDialect(""); // Keep a value but it will be sent as empty
+        setDialect("");
       }
     }
   };
@@ -76,7 +91,7 @@ const PromptGenerator: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
       setOutput("");
-      setFullPrompt("");
+      setFullPrompt(null);
       setResponses([]);
       setTranslatedText([]);
       setSuccess(false);
@@ -85,8 +100,15 @@ const PromptGenerator: React.FC = () => {
     }
   };
 
+  const resetGeneratorTab = () => {
+    setImageFile(null); // reset uploaded image
+    setMessage(""); // reset manual message
+    setContext(""); // reset optional context
+    setResponses([]); // reset API responses
+    setSuccess(false); // reset success state
+  };
+
   const handleSubmit = async () => {
-    // Validation before API call
     if (!selectedType) {
       toast.error("Please select a type");
       return;
@@ -125,18 +147,17 @@ const PromptGenerator: React.FC = () => {
       let response;
       const commonParams = {
         rizzType: style?.toUpperCase() ?? "",
-        isGenz: isGenxz ?? false, // Use boolean directly        
+        isGenz: isGenxz ?? false,
         language: language?.toLowerCase() ?? "",
-        dialect: language === "en" ? "" : dialect ?? "", // Send empty dialect for English
+        dialect: language === "en" ? "" : dialect ?? "",
         gender: gender ?? "",
         protoType: promptType?.toLowerCase().replace(" ", "") ?? "",
       };
 
       if (selectedType === "GetPickUpLine") {
-        // For query strings, ensure boolean is serialized as "true"/"false"
         const query = new URLSearchParams({
           ...commonParams,
-          isGenz: commonParams.isGenz.toString(), // Convert boolean to "true"/"false" for query string
+          isGenz: commonParams.isGenz.toString(),
         }).toString();
         response = await getApi(`${URLS.getPickUpLine}?${query}`);
       } else if (selectedType === "ManualReply") {
@@ -153,7 +174,6 @@ const PromptGenerator: React.FC = () => {
         }
         Object.entries(commonParams).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            // Convert boolean to string for FormData if needed
             formData.append(
               key,
               typeof value === "boolean" ? value.toString() : value
@@ -165,7 +185,6 @@ const PromptGenerator: React.FC = () => {
         });
       }
       if (response?.status === 200 && response.data.success) {
-        // Check for special case where no valid chat was extracted
         const isInvalidScreenshot =
           selectedType === "ScreenshotReply" &&
           typeof response.data.data.reply === "string" &&
@@ -174,25 +193,25 @@ const PromptGenerator: React.FC = () => {
           );
 
         if (isInvalidScreenshot) {
-          setSuccess(true); // Set to true to show the response section
+          setSuccess(true);
           setOutput("Error: Invalid screenshot");
-          setResponses([response.data.data.reply]); // Map the error message to responses
+          setResponses([response.data.data.reply]);
           setTranslatedText([]);
-          setFullPrompt("");
+          setFullPrompt(null);
         } else {
           setSuccess(true);
           if (selectedType === "GetPickUpLine") {
             setResponses(response.data.data.pickupLines || []);
             setTranslatedText(response.data.data.translatedText || []);
-            setFullPrompt(response.data.data.fullPrompt || "");
+            setFullPrompt(response.data.data.fullPrompt || null);
           } else if (selectedType === "ManualReply") {
             setResponses(response.data.data.reply || []);
             setTranslatedText(response.data.data.translatedText || []);
-            setFullPrompt(response.data.data.fullPrompt || "");
+            setFullPrompt(response.data.data.fullPrompt || null);
           } else if (selectedType === "ScreenshotReply") {
             setResponses(response.data.data.reply.replies || []);
             setTranslatedText(response.data.data.reply.translatedText || []);
-            setFullPrompt(response.data.data.reply.fullPrompt || "");
+            setFullPrompt(response.data.data.reply.fullPrompt || null);
           }
           setOutput("Success: Response generated");
         }
@@ -201,7 +220,7 @@ const PromptGenerator: React.FC = () => {
         setSuccess(false);
         setResponses([]);
         setTranslatedText([]);
-        setFullPrompt("");
+        setFullPrompt(null);
       }
     } catch (error) {
       console.error("API Error:", error);
@@ -209,7 +228,7 @@ const PromptGenerator: React.FC = () => {
       setSuccess(false);
       setResponses(["Error: Something went wrong"]);
       setTranslatedText([]);
-      setFullPrompt("");
+      setFullPrompt(null);
     } finally {
       setLoading(false);
     }
@@ -246,7 +265,10 @@ const PromptGenerator: React.FC = () => {
         className="w-full max-w-4xl flex flex-col sm:flex-row justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-2"
       >
         <button
-          onClick={() => setActiveTab("generator")}
+          onClick={() => {
+            setActiveTab("generator");
+            resetGeneratorTab(); // <-- add this
+          }}
           className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg sm:rounded-l-lg transition-all duration-300 ${
             activeTab === "generator"
               ? "bg-blue-600 text-white"
@@ -256,7 +278,10 @@ const PromptGenerator: React.FC = () => {
           Prompt Generator
         </button>
         <button
-          onClick={() => setActiveTab("templates")}
+          onClick={() => {
+            setActiveTab("templates");
+            resetGeneratorTab();
+          }}
           className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg sm:rounded-r-lg transition-all duration-300 ${
             activeTab === "templates"
               ? "bg-blue-600 text-white"
@@ -324,7 +349,10 @@ const PromptGenerator: React.FC = () => {
                   <motion.div
                     variants={itemVariants}
                     className="flex items-center"
-                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                    whileHover={{
+                      scale: 1.02,
+                      transition: { duration: 0.2 },
+                    }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <input
@@ -510,7 +538,7 @@ const PromptGenerator: React.FC = () => {
             {success && (
               <motion.div
                 variants={itemVariants}
-                className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-700 rounded-lg text-gray-100 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto"
+                className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-700 rounded-lg text-gray-100 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto hide-scrollbar"
               >
                 <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">
                   API Response
@@ -518,7 +546,9 @@ const PromptGenerator: React.FC = () => {
                 <div className="mb-3 sm:mb-4">
                   <motion.div
                     onClick={togglePromptAccordion}
-                    whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                    whileHover={{
+                      backgroundColor: "rgba(55, 65, 81, 0.8)",
+                    }}
                     className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
                   >
                     <div className="flex justify-between items-center">
@@ -543,14 +573,93 @@ const PromptGenerator: React.FC = () => {
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
-                    <div
-                      className="mt-2 p-2 sm:p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-750 transition-colors duration-200"
-                      onClick={togglePromptAccordion}
-                    >
-                      <pre className="whitespace-pre-wrap text-xs sm:text-sm text-gray-200">
-                        {fullPrompt}
-                      </pre>
-                    </div>
+                    {fullPrompt && (
+                      <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
+                        {/* Role */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Role
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.role}
+                          </pre>
+                        </div>
+
+                        {/* Message Type */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Message Type
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.messageType}
+                          </pre>
+                        </div>
+
+                        {/* Style */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Style
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.style}
+                          </pre>
+                        </div>
+
+                        {/* Language */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Language
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.language}
+                          </pre>
+                        </div>
+
+                        {/* Dialect */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Dialect
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.dialect || "N/A"}
+                          </pre>
+                        </div>
+
+                        {/* Gender */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Gender
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.gender}
+                          </pre>
+                        </div>
+
+                        {/* User Instruction */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            User Instruction
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.userInstruction}
+                          </pre>
+                        </div>
+
+                        {/* Previous Replies */}
+                        {fullPrompt.lastReplies && (
+                          <div>
+                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                              Previous Replies (last convo)
+                            </h5>
+                            <ul className="list-decimal list-inside space-y-1 text-gray-300">
+                              {fullPrompt.lastReplies.map((reply, i) => (
+                                <li key={i}>{reply}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 </div>
                 <div>
@@ -637,9 +746,11 @@ const PromptGenerator: React.FC = () => {
           variants={itemVariants}
           className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
         >
-          Prompt Templates coming soon...
+          <PromptTemplates />
         </motion.div>
       )}
+
+      {loading && <TypingLoader />}
     </div>
   );
 };

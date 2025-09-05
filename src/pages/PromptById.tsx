@@ -1,0 +1,583 @@
+import React, { useEffect, useState } from "react";
+import { getApi, putApi } from "../utils/api";
+import { URLS } from "../utils/urls";
+import { motion } from "framer-motion";
+import TypingLoader from "../utils/Lodaer";
+
+// Animation variants for smooth transitions
+const containerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+// Language/dialect code mappings
+const languageMappings: Record<string, string> = {
+  en: "English",
+  ar: "Arabic",
+  arbz: "Arabizi",
+};
+
+// Reverse mapping for sending data back to the API
+const reverseLanguageMappings: Record<string, string> = {
+  English: "en",
+  Arabic: "ar",
+  Arabizi: "arbz",
+};
+
+// Excluded fields that cannot be updated
+  const excludedFields = ["_id", "key", "updatedAt", "persona", "generation", "__v", "createdAt"];
+// Assume PromptById API returns dynamic key-value pairs
+interface PromptData {
+  _id: string;
+  key: string;
+  generation: string;
+  persona: string;
+  role: string;
+  messageTypes: Record<string, string>;
+  optimized: {
+    role: string;
+    messageTypes: Record<string, string>;
+    styles: Record<string, string>;
+    languages: Record<string, string>;
+    dialects: Record<string, string>;
+  };
+  dialects: Record<string, string>;
+  languages: Record<string, string>;
+  styles: Record<string, string>;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+  [key: string]: any;
+}
+
+interface PromptByIdProps {
+  id: string;
+}
+
+function PromptById({ id }: PromptByIdProps) {
+  const [loading, setLoading] = useState(false);
+  const [promptData, setPromptData] = useState<PromptData | null>(null);
+  const [formData, setFormData] = useState<PromptData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const getPromptById = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getApi(`${URLS.getPromptById}/${id}`);
+      if (response.status === 200) {
+        const data = response?.data?.data?.prompt || {};
+        // Transform language/dialect codes and styles to lowercase
+        const transformedData = {
+          ...data,
+          languages: Object.fromEntries(
+            Object.entries(data.languages || {}).map(([key, value]) => [
+              languageMappings[key] || key,
+              value,
+            ])
+          ),
+           dialects: Object.fromEntries(
+            Object.entries(data.dialects || {}).map(([key, value]) => [
+              key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
+              value,
+            ])
+          ),
+          styles: Object.fromEntries(
+            Object.entries(data.styles || {}).map(([key, value]) => [
+              key.toLowerCase(),
+              value,
+            ])
+          ),
+          optimized: data.optimized
+            ? {
+                ...data.optimized,
+                languages: Object.fromEntries(
+                  Object.entries(data.optimized?.languages || {}).map(
+                    ([key, value]) => [languageMappings[key] || key, value]
+                  )
+                ),
+               dialects: Object.fromEntries(
+                  Object.entries(data.optimized?.dialects || {}).map(
+                    ([key, value]) => [
+                      key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
+                      value,
+                    ]
+                  )
+                ),
+                styles: Object.fromEntries(
+                  Object.entries(data.optimized?.styles || {}).map(
+                    ([key, value]) => [key.toLowerCase(), value]
+                  )
+                ),
+              }
+            : undefined,
+        };
+        setPromptData(transformedData as PromptData);
+        setFormData(transformedData as PromptData);
+      } else {
+        setError("Failed to fetch prompt details.");
+      }
+    } catch (error) {
+      console.log(error);
+      setError("An error occurred while fetching prompt details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to update the prompt
+  const updatePrompt = async () => {
+    if (!formData) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    // Reverse the language/dialect mappings and exclude restricted fields
+    const dataToSend = {
+      ...Object.fromEntries(
+        Object.entries(formData).filter(([key]) => !excludedFields.includes(key))
+      ),
+      languages: Object.fromEntries(
+        Object.entries(formData.languages || {}).map(([key, value]) => [
+          reverseLanguageMappings[key] || key,
+          value,
+        ])
+      ),
+      dialects: Object.fromEntries(
+        Object.entries(formData.dialects || {}).map(([key, value]) => [
+          key.toUpperCase(),
+          value,
+        ])
+      ),
+      styles: Object.fromEntries(
+        Object.entries(formData.styles || {}).map(([key, value]) => [
+          key.toUpperCase(),
+          value,
+        ])
+      ),
+      optimized: formData.optimized
+        ? {
+            ...Object.fromEntries(
+              Object.entries(formData.optimized).filter(
+                ([key]) => !excludedFields.includes(key)
+              )
+            ),
+            languages: Object.fromEntries(
+              Object.entries(formData.optimized?.languages || {}).map(
+                ([key, value]) => [reverseLanguageMappings[key] || key, value]
+              )
+            ),
+           dialects: Object.fromEntries(
+              Object.entries(formData.optimized?.dialects || {}).map(
+                ([key, value]) => [key.toUpperCase(), value]
+              )
+            ),
+            styles: Object.fromEntries(
+              Object.entries(formData.optimized?.styles || {}).map(
+                ([key, value]) => [key.toUpperCase(), value]
+              )
+            ),
+          }
+        : undefined,
+    };
+
+    try {
+      const response = await putApi(`${URLS.updatePromptById}/${id}`, dataToSend);
+      if (response.status === 200) {
+        setSuccess("Prompt updated successfully!");
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(null), 3000);
+        await getPromptById(); // Refetch to sync UI with server
+      } else {
+        setError("Failed to update prompt.");
+      }
+    } catch (error) {
+      console.log(error);
+      setError("An error occurred while updating the prompt.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      getPromptById();
+    }
+  }, [id]);
+
+  const handleInputChange = (field: string, value: string) => {
+    if (!formData || excludedFields.includes(field)) return;
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  };
+
+  const handleNestedChange = (
+    parentField: string,
+    childField: string,
+    value: string
+  ) => {
+    if (!formData) return;
+    setFormData({
+      ...formData,
+      [parentField]: {
+        ...(formData[parentField] as Record<string, any>),
+        [childField]: value,
+      },
+    });
+  };
+
+  const handleDeepNestedChange = (
+    parentField: string,
+    childField: string,
+    grandChildField: string,
+    value: string
+  ) => {
+    if (!formData) return;
+    const parentObj = formData[parentField] as any;
+    setFormData({
+      ...formData,
+      [parentField]: {
+        ...parentObj,
+        [childField]: {
+          ...(parentObj[childField] || {}),
+          [grandChildField]: value,
+        },
+      },
+    });
+  };
+
+  const toggleAccordion = (field: string) => {
+    setOpenAccordions((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
+  const renderInputField = (
+    label: string,
+    value: string,
+    onChange: (value: string) => void,
+    isTextarea: boolean = false,
+    isReadOnly: boolean = false
+  ) => (
+    <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
+      <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
+        {label
+          .replace(/([A-Z])/g, " $1")
+          .replace(/_/g, " ")
+          .trim()}
+      </label>
+      {isTextarea ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          readOnly={isReadOnly}
+          className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-none hide-scrollbar transition-all duration-200 ${
+            isReadOnly ? "cursor-not-allowed opacity-70" : ""
+          }`}
+          placeholder={
+            isReadOnly
+              ? ""
+              : `Enter ${label
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/_/g, " ")
+                  .trim()
+                  .toLowerCase()}`
+          }
+        />
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          readOnly={isReadOnly}
+          className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200 ${
+            isReadOnly ? "cursor-not-allowed opacity-70" : ""
+          }`}
+          placeholder={
+            isReadOnly
+              ? ""
+              : `Enter ${label
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/_/g, " ")
+                  .trim()
+                  .toLowerCase()}`
+          }
+        />
+      )}
+    </motion.div>
+  );
+
+  const renderNestedFields = (
+    title: string,
+    obj: Record<string, any>,
+    isAccordion: boolean = true
+  ) => (
+    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+        <motion.div
+          onClick={() => toggleAccordion(title)}
+          whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+          className="cursor-pointer"
+        >
+          <div className="flex justify-between items-center">
+            <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+              {title
+                .replace(/([A-Z])/g, " $1")
+                .replace(/_/g, " ")
+                .trim()}
+            </h4>
+            <motion.span
+              animate={{ rotate: openAccordions[title] ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-gray-400"
+            >
+              ▼
+            </motion.span>
+          </div>
+        </motion.div>
+        {openAccordions[title] && (
+          <div className="space-y-3 sm:space-y-4 pt-3">
+            {Object.entries(obj).map(([key, value]) => (
+              <div key={key}>
+                {renderInputField(
+                  key,
+                  typeof value === "string" ? value : JSON.stringify(value),
+                  (newValue) => handleNestedChange(title, key, newValue),
+                  typeof value === "string" && value.length > 100
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+
+const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
+    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+        <motion.div
+          onClick={() => toggleAccordion(parentTitle)}
+          whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+          className="cursor-pointer"
+        >
+          <div className="flex justify-between items-center">
+            <h4 className="text-lg sm:text-xl font-semibold text-gray-100 capitalize text-left">
+              {parentTitle
+                .replace(/([A-Z])/g, " $1")
+                .replace(/_/g, " ")
+                .trim()}
+            </h4>
+            <motion.span
+              animate={{ rotate: openAccordions[parentTitle] ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-gray-400"
+            >
+              ▼
+            </motion.span>
+          </div>
+        </motion.div>
+        {openAccordions[parentTitle] && (
+          <div className="space-y-3 sm:space-y-4 pt-3">
+            {Object.entries(parentObj).map(([key, value]) => (
+              <div key={key}>
+                {typeof value === "object" && value !== null ? (
+                  <div className="mb-3">
+                    <h5 className="text-sm sm:text-base font-medium text-gray-300 mb-2 capitalize text-left">
+                      {key
+                        .replace(/([A-Z])/g, " $1")
+                        .replace(/_/g, " ")
+                        .trim()}
+                    </h5>
+                    <div className="space-y-3">
+                      {Object.entries(value as Record<string, any>).map(
+                        ([subKey, subValue]) => (
+                          <div key={subKey}>
+                            {renderInputField(
+                              subKey,
+                              typeof subValue === "string"
+                                ? subValue
+                                : JSON.stringify(subValue),
+                              (newValue) =>
+                                handleDeepNestedChange(
+                                  parentTitle,
+                                  key,
+                                  subKey,
+                                  newValue
+                                ),
+                              typeof subValue === "string" &&
+                                subValue.length > 100
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  renderInputField(
+                    key,
+                    typeof value === "string" ? value : JSON.stringify(value),
+                    (newValue) =>
+                      handleNestedChange(parentTitle, key, newValue),
+                    typeof value === "string" && value.length > 100
+                  )
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+
+  // if (loading) {
+  //   return (
+  //     <motion.div
+  //       variants={containerVariants}
+  //       initial="hidden"
+  //       animate="visible"
+  //       className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+  //     >
+  //       <p className="text-gray-300 text-left">Loading prompt details...</p>
+  //     </motion.div>
+  //   );
+  // }
+
+  if (error) {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+      >
+        <p className="text-red-500 text-left">{error}</p>
+      </motion.div>
+    );
+  }
+
+  if (!promptData || !formData) {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+      >
+       <TypingLoader/>
+      </motion.div>
+    );
+  }
+
+  const simpleFields = ["key", "generation", "persona"];
+  const textareaFields = ["role"];
+  const accordionFields = [
+
+    "languages",
+    "dialects",
+    "styles",
+        "messageTypes",
+    "optimized",
+  ];
+
+  return (
+    <>
+      {loading ? (
+            <TypingLoader />
+          ) : (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+    >
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-left mb-6 sm:mb-8">
+        Prompt Details
+      </h2>
+      {success && (
+        <motion.div
+          variants={itemVariants}
+          className="mb-4 p-3 bg-green-600/20 border border-green-600 rounded-lg text-green-400 text-left"
+        >
+          {success}
+        </motion.div>
+      )}
+      <div className="space-y-4 sm:space-y-6">
+        <motion.div
+          variants={itemVariants}
+          className="flex flex-wrap gap-3 sm:gap-4"
+        >
+          {simpleFields.map((field) => (
+            <div key={field} className="flex-1 min-w-[200px]">
+              {renderInputField(
+                field,
+                formData[field] || "",
+                (value) => handleInputChange(field, value),
+                false,
+                excludedFields.includes(field) // Mark excluded fields as read-only
+              )}
+            </div>
+          ))}
+        </motion.div>
+
+        {textareaFields.map((field) => (
+          <motion.div key={field} variants={itemVariants}>
+            {renderInputField(
+              field,
+              formData[field] || "",
+              (value) => handleInputChange(field, value),
+              true,
+              excludedFields.includes(field) // Mark excluded fields as read-only
+            )}
+          </motion.div>
+        ))}
+
+        {accordionFields.map((field) => (
+          <motion.div key={field} variants={itemVariants}>
+            {formData[field] &&
+              (field === "optimized"
+                ? renderDeepNestedFields(field, formData[field])
+                : renderNestedFields(
+                    field,
+                    formData[field] as Record<string, any>,
+                    true
+                  ))}
+          </motion.div>
+        ))}
+
+        <motion.div
+          variants={itemVariants}
+          className="flex justify-end mt-6"
+        >
+          <button
+            onClick={updatePrompt}
+            disabled={loading}
+            className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+              loading
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Updating..." : "Update Prompt"}
+          </button>
+        </motion.div>
+      </div>
+    </motion.div>
+          )}
+    </>
+  );
+}
+
+export default PromptById;

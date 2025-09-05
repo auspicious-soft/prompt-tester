@@ -1,3 +1,4 @@
+
 // const baseUrl = "http://localhost:8000/api/admin";
 const baseUrl = "https://api.habibirizz.app/api/admin";
 
@@ -6,4 +7,8 @@ export const URLS = {
   getPickUpLine: `${baseUrl}/admin-pickup-line`,
   getManualReply: `${baseUrl}/admin-manual-message`,
   getResponseByScreenshot: `${baseUrl}/admin-get-response-by-image`,
+
+  getAllPrompts:`${baseUrl}/all-prompts`,
+  getPromptById:`${baseUrl}/prompt-byId`,
+  updatePromptById:`${baseUrl}/prompt-byId`
 };
