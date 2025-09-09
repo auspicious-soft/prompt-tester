@@ -17,6 +17,19 @@ interface Prompt {
   persona: string;
 }
 
+const formatPromptKey = (key: string): string => {
+  return key
+    .split("_")
+    .map((word) => {
+      if (/^V\d+$/i.test(word)) {
+        return `Version ${word.replace("V", "")}`;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");
+};
+
+
 function PromptTemplates() {
   const [loading, setLoading] = useState(false);
   const [allPrompts, setAllPrompts] = useState<Prompt[]>([]);
@@ -29,8 +42,10 @@ function PromptTemplates() {
       if (response.status === 200) {
         console.log(response);
         const allP = response?.data?.data?.prompts || [];
-        setAllPrompts(allP as Prompt[]);
-      }
+ const filteredPrompts = allP.filter(
+          (p: Prompt) => p.key !== "HABIBI_MILLENNIAL_V1"
+        );
+        setAllPrompts(filteredPrompts);      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -84,7 +99,8 @@ function PromptTemplates() {
                         : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                     }`}
                   >
-                    {prompt.key}
+                                      {formatPromptKey(prompt.key)}
+
                   </motion.button>
                 ))}
               </motion.div>

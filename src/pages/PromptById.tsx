@@ -470,6 +470,9 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
 
   if (!promptData || !formData) {
     return (
+     <>
+       {loading  ? <TypingLoader/> : <>
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -478,8 +481,31 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
       >
        <TypingLoader/>
       </motion.div>
+       </>}
+     </>
     );
   }
+
+  if (promptData?.key === "HABIBTI_GENZ") {
+  return (
+ <>
+ {loading  ? <TypingLoader/> : <>
+    
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+    >
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-center mb-6">
+        {promptData.key}
+      </h2>
+      <p className="text-gray-300 text-center text-lg">🚀 Coming Soon</p>
+    </motion.div>
+ </>}
+ </>
+  );
+}
 
   const simpleFields = ["key", "generation", "persona"];
   const textareaFields = ["role"];
@@ -489,7 +515,7 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
     "dialects",
     "styles",
         "messageTypes",
-    "optimized",
+
   ];
 
   return (

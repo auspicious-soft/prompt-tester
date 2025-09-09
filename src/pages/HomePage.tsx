@@ -125,10 +125,6 @@ const PromptGenerator: React.FC = () => {
       toast.error("Please select a language");
       return;
     }
-    if (!promptType) {
-      toast.error("Please select a prompt type");
-      return;
-    }
 
     if (selectedType === "ManualReply" && !message.trim()) {
       toast.error("Message cannot be empty");
@@ -151,7 +147,7 @@ const PromptGenerator: React.FC = () => {
         language: language?.toLowerCase() ?? "",
         dialect: language === "en" ? "" : dialect ?? "",
         gender: gender ?? "",
-        protoType: promptType?.toLowerCase().replace(" ", "") ?? "",
+        protoType:"Full_prompt",
       };
 
       if (selectedType === "GetPickUpLine") {
@@ -439,7 +435,7 @@ const PromptGenerator: React.FC = () => {
               </motion.div>
 
               {/* Prompt Type Selection */}
-              <motion.div variants={itemVariants}>
+              {/* <motion.div variants={itemVariants}>
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Prompt Type
                 </label>
@@ -452,7 +448,7 @@ const PromptGenerator: React.FC = () => {
                   <option value="Optimized">Optimized</option>
                   <option value="Full prompt">Full Prompt</option>
                 </select>
-              </motion.div>
+              </motion.div> */}
             </div>
 
             {/* Input Fields for ScreenshotReply and ManualReply */}
