@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, Variants } from "framer-motion";
 import { getApi, postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { toast } from "sonner";
 import PromptTemplates from "./PromptTemplates";
 import TypingLoader from "../utils/Lodaer";
+import { createPortal } from "react-dom";
 
 interface FullPrompt {
   role: string;
@@ -33,9 +34,6 @@ const PromptGenerator: React.FC = () => {
   const [dialect, setDialect] = useState<
     "LEVANTINE" | "EGYPTIAN" | "GULF" | "IRAQI" | "NORTH_AFRICAN" | ""
   >("");
-  const [promptType, setPromptType] = useState<"Optimized" | "Full prompt">(
-    "Optimized"
-  );
   const [message, setMessage] = useState("");
   const [context, setContext] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -47,6 +45,7 @@ const PromptGenerator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [translatedAccordionOpen, setTranslatedAccordionOpen] = useState(false);
+const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const maleStyles = ["Conservative", "Playful", "Confident", "Flirty"];
   const femaleStyles = ["Modest", "Playful", "Sassy", "Flirty"];
@@ -229,6 +228,19 @@ const PromptGenerator: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+  if (isPreviewOpen) {
+    document.body.style.overflow = "hidden";  // disable scroll
+  } else {
+    document.body.style.overflow = "";        // restore scroll
+  }
+
+  // cleanup on unmount just in case
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [isPreviewOpen]);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
@@ -451,21 +463,74 @@ const PromptGenerator: React.FC = () => {
               </motion.div> */}
             </div>
 
-            {/* Input Fields for ScreenshotReply and ManualReply */}
-            {selectedType === "ScreenshotReply" && (
-              <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-                  Upload Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 file:mr-2 file:py-1 file:px-2 sm:file:mr-3 sm:file:py-1.5 sm:file:px-3 file:rounded-lg file:bg-blue-600 file:text-white file:border-0 hover:file:bg-blue-700 text-xs sm:text-sm"
-                  required
-                />
-              </motion.div>
-            )}
+{selectedType === "ScreenshotReply" && (
+  <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+      Upload Image
+    </label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleImageChange}
+      className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+        file:mr-2 file:py-1 file:px-2 sm:file:mr-3 sm:file:py-1.5 sm:file:px-3 
+        file:rounded-lg file:bg-blue-600 file:text-white file:border-0 hover:file:bg-blue-700 
+        text-xs sm:text-sm cursor-pointer"
+      required
+    />
+
+    {/* Thumbnail Preview */}
+    {imageFile && (
+      <div className="mt-3">
+        <p className="text-xs text-gray-400 mb-1">Preview:</p>
+        <img
+          src={URL.createObjectURL(imageFile)}
+          alt="Thumbnail preview"
+          onClick={() => setIsPreviewOpen(true)}
+          className="max-h-40 rounded-lg border border-gray-600 cursor-pointer hover:opacity-80 transition"
+        />
+      </div>
+    )}
+
+    {/* Full Page Preview with Blurred Background */}
+   {/* Full Page Preview with Blurred Background */}
+{isPreviewOpen && imageFile &&
+  createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center pt-6">
+      {/* Full-page blur layer */}
+      <div
+        className="absolute inset-0 backdrop-blur-md"
+        onClick={() => setIsPreviewOpen(false)}
+      />
+
+      {/* Image container */}
+      <div className="relative z-50 flex items-center justify-center">
+        {/* Close button */}
+        <button
+          onClick={() => setIsPreviewOpen(false)}
+          className="absolute -top-10 right-0 bg-red-500 hover:bg-red-600 text-white 
+                     rounded-full w-8 h-8 flex items-center justify-center text-lg shadow-lg"
+        >
+          ✕
+        </button>
+
+        {/* Full Image */}
+        <img
+          src={URL.createObjectURL(imageFile)}
+          alt="Full preview"
+          className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+        />
+      </div>
+    </div>,
+    document.body // 👈 mounts overlay at <body> level
+  )
+}
+
+
+  </motion.div>
+)}
+
+
 
             {selectedType === "ManualReply" && (
               <div className="space-y-3 sm:space-y-4">
