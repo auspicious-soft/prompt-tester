@@ -4,6 +4,7 @@ import { URLS } from "../utils/urls";
 import { motion } from "framer-motion";
 import PromptById from "./PromptById";
 import TypingLoader from "../utils/Lodaer";
+import ConfirmationModal from "../utils/ConfirmationModal";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -34,7 +35,10 @@ function PromptTemplates() {
   const [loading, setLoading] = useState(false);
   const [allPrompts, setAllPrompts] = useState<Prompt[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null); // Store full Prompt object
-
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(
+    async () => {}
+  );
   const getAllPrompts = async () => {
     setLoading(true);
     try {
@@ -63,8 +67,9 @@ function PromptTemplates() {
 
   const handleChange = (prompt: Prompt) => {
     console.log(`Prompt changed to: ${prompt.key}`);
-    // Add any additional logic here, e.g., notify parent or trigger API calls
   };
+
+
   return (
     <>
       {loading ? (
@@ -105,7 +110,25 @@ function PromptTemplates() {
                 ))}
               </motion.div>
             )}
-            {selectedPrompt && <PromptById id={selectedPrompt._id} />}
+           
+      {selectedPrompt && (
+    <PromptById
+  id={selectedPrompt._id}
+  onRequestLoadToProduction={(action) => {
+    setConfirmAction(() => action);
+    setIsConfirmOpen(true); // ✅ modal only opens when button is clicked
+  }}
+        />
+      )}
+
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={async () => {
+          await confirmAction(); 
+          setIsConfirmOpen(false);
+        }}
+      />
           </div>
         </>
       )}

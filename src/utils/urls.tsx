@@ -1,6 +1,6 @@
 
-// const baseUrl = "http://localhost:8000/api/admin";
-const baseUrl = "https://api.habibirizz.app/api/admin";
+const baseUrl = "http://localhost:8001/api/admin";
+// const baseUrl = "https://api.habibirizz.app/api/admin";
 
 export const URLS = {
   login: `${baseUrl}/login`,
@@ -10,5 +10,6 @@ export const URLS = {
 
   getAllPrompts:`${baseUrl}/all-prompts`,
   getPromptById:`${baseUrl}/prompt-byId`,
-  updatePromptById:`${baseUrl}/prompt-byId`
+  updatePromptById:`${baseUrl}/prompt-byId`,
+  loadPrompt:`${baseUrl}/sync-prompt`
 };

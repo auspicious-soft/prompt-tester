@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getApi, putApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { motion } from "framer-motion";
 import TypingLoader from "../utils/Lodaer";
 
-// Animation variants for smooth transitions
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
@@ -15,23 +14,27 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-// Language/dialect code mappings
 const languageMappings: Record<string, string> = {
   en: "English",
   ar: "Arabic",
   arbz: "Arabizi",
 };
 
-// Reverse mapping for sending data back to the API
 const reverseLanguageMappings: Record<string, string> = {
   English: "en",
   Arabic: "ar",
   Arabizi: "arbz",
 };
 
-// Excluded fields that cannot be updated
-  const excludedFields = ["_id", "key", "updatedAt", "persona", "generation", "__v", "createdAt"];
-// Assume PromptById API returns dynamic key-value pairs
+const excludedFields = [
+  "_id",
+  "key",
+  "updatedAt",
+  "persona",
+  "generation",
+  "__v",
+  "createdAt",
+];
 interface PromptData {
   _id: string;
   key: string;
@@ -57,9 +60,10 @@ interface PromptData {
 
 interface PromptByIdProps {
   id: string;
+  onRequestLoadToProduction: (action: () => Promise<void>) => void;
 }
 
-function PromptById({ id }: PromptByIdProps) {
+function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
   const [loading, setLoading] = useState(false);
   const [promptData, setPromptData] = useState<PromptData | null>(null);
   const [formData, setFormData] = useState<PromptData | null>(null);
@@ -68,6 +72,7 @@ function PromptById({ id }: PromptByIdProps) {
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {}
   );
+  const [syncLoading, setSyncLoading] = useState(false);
 
   const getPromptById = async () => {
     setLoading(true);
@@ -85,7 +90,7 @@ function PromptById({ id }: PromptByIdProps) {
               value,
             ])
           ),
-           dialects: Object.fromEntries(
+          dialects: Object.fromEntries(
             Object.entries(data.dialects || {}).map(([key, value]) => [
               key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
               value,
@@ -105,7 +110,7 @@ function PromptById({ id }: PromptByIdProps) {
                     ([key, value]) => [languageMappings[key] || key, value]
                   )
                 ),
-               dialects: Object.fromEntries(
+                dialects: Object.fromEntries(
                   Object.entries(data.optimized?.dialects || {}).map(
                     ([key, value]) => [
                       key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
@@ -144,7 +149,9 @@ function PromptById({ id }: PromptByIdProps) {
     // Reverse the language/dialect mappings and exclude restricted fields
     const dataToSend = {
       ...Object.fromEntries(
-        Object.entries(formData).filter(([key]) => !excludedFields.includes(key))
+        Object.entries(formData).filter(
+          ([key]) => !excludedFields.includes(key)
+        )
       ),
       languages: Object.fromEntries(
         Object.entries(formData.languages || {}).map(([key, value]) => [
@@ -176,7 +183,7 @@ function PromptById({ id }: PromptByIdProps) {
                 ([key, value]) => [reverseLanguageMappings[key] || key, value]
               )
             ),
-           dialects: Object.fromEntries(
+            dialects: Object.fromEntries(
               Object.entries(formData.optimized?.dialects || {}).map(
                 ([key, value]) => [key.toUpperCase(), value]
               )
@@ -191,7 +198,10 @@ function PromptById({ id }: PromptByIdProps) {
     };
 
     try {
-      const response = await putApi(`${URLS.updatePromptById}/${id}`, dataToSend);
+      const response = await putApi(
+        `${URLS.updatePromptById}/${id}`,
+        dataToSend
+      );
       if (response.status === 200) {
         setSuccess("Prompt updated successfully!");
         // Clear success message after 3 seconds
@@ -213,6 +223,83 @@ function PromptById({ id }: PromptByIdProps) {
       getPromptById();
     }
   }, [id]);
+
+  const loadToProduction = async () => {
+    if (!id) return;
+    if (!formData) return;
+    setSyncLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    // Transform data exactly like in updatePrompt
+    const dataToSend = {
+      ...Object.fromEntries(
+        Object.entries(formData).filter(
+          ([key]) => !excludedFields.includes(key)
+        )
+      ),
+      languages: Object.fromEntries(
+        Object.entries(formData.languages || {}).map(([key, value]) => [
+          reverseLanguageMappings[key] || key,
+          value,
+        ])
+      ),
+      dialects: Object.fromEntries(
+        Object.entries(formData.dialects || {}).map(([key, value]) => [
+          key.toUpperCase(),
+          value,
+        ])
+      ),
+      styles: Object.fromEntries(
+        Object.entries(formData.styles || {}).map(([key, value]) => [
+          key.toUpperCase(),
+          value,
+        ])
+      ),
+      optimized: formData.optimized
+        ? {
+            ...Object.fromEntries(
+              Object.entries(formData.optimized).filter(
+                ([key]) => !excludedFields.includes(key)
+              )
+            ),
+            languages: Object.fromEntries(
+              Object.entries(formData.optimized?.languages || {}).map(
+                ([key, value]) => [reverseLanguageMappings[key] || key, value]
+              )
+            ),
+            dialects: Object.fromEntries(
+              Object.entries(formData.optimized?.dialects || {}).map(
+                ([key, value]) => [key.toUpperCase(), value]
+              )
+            ),
+            styles: Object.fromEntries(
+              Object.entries(formData.optimized?.styles || {}).map(
+                ([key, value]) => [key.toUpperCase(), value]
+              )
+            ),
+          }
+        : undefined,
+    };
+
+    try {
+      // Use the sync endpoint that now handles both update and sync
+      const response = await putApi(`${URLS.loadPrompt}/${id}`, dataToSend);
+      if (response.status === 200) {
+        setSuccess("Prompt successfully updated and loaded into production!");
+        setTimeout(() => setSuccess(null), 3000);
+        // Refresh the data to show the latest state
+        await getPromptById();
+      } else {
+        setError("Failed to load prompt into production.");
+      }
+    } catch (error) {
+      console.error(error);
+      setError("An error occurred while syncing the prompt.");
+    } finally {
+      setSyncLoading(false);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     if (!formData || excludedFields.includes(field)) return;
@@ -365,7 +452,7 @@ function PromptById({ id }: PromptByIdProps) {
     </motion.div>
   );
 
-const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
+  const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
     <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
       <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
         <motion.div
@@ -470,138 +557,162 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
 
   if (!promptData || !formData) {
     return (
-     <>
-       {loading  ? <TypingLoader/> : <>
-
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
-      >
-       <TypingLoader/>
-      </motion.div>
-       </>}
-     </>
+      <>
+        {loading ? (
+          <TypingLoader />
+        ) : (
+          <>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+            >
+              <TypingLoader />
+            </motion.div>
+          </>
+        )}
+      </>
     );
   }
 
   if (promptData?.key === "HABIBTI_GENZ") {
-  return (
- <>
- {loading  ? <TypingLoader/> : <>
-    
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
-    >
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-center mb-6">
-        {promptData.key}
-      </h2>
-      <p className="text-gray-300 text-center text-lg">🚀 Coming Soon</p>
-    </motion.div>
- </>}
- </>
-  );
-}
+    return (
+      <>
+        {loading ? (
+          <TypingLoader />
+        ) : (
+          <>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+            >
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-center mb-6">
+                {promptData.key}
+              </h2>
+              <p className="text-gray-300 text-center text-lg">
+                🚀 Coming Soon
+              </p>
+            </motion.div>
+          </>
+        )}
+      </>
+    );
+  }
 
   const simpleFields = ["key", "generation", "persona"];
   const textareaFields = ["role"];
-  const accordionFields = [
-
-    "languages",
-    "dialects",
-    "styles",
-        "messageTypes",
-
-  ];
+  const accordionFields = ["languages", "dialects", "styles", "messageTypes"];
 
   return (
     <>
       {loading ? (
-            <TypingLoader />
-          ) : (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
-    >
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-left mb-6 sm:mb-8">
-        Prompt Details
-      </h2>
-      {success && (
+        <TypingLoader />
+      ) : (
         <motion.div
-          variants={itemVariants}
-          className="mb-4 p-3 bg-green-600/20 border border-green-600 rounded-lg text-green-400 text-left"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
         >
-          {success}
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-left mb-6 sm:mb-8">
+            Prompt Details
+          </h2>
+          {success && (
+            <motion.div
+              variants={itemVariants}
+              className="mb-4 p-3 bg-green-600/20 border border-green-600 rounded-lg text-green-400 text-left"
+            >
+              {success}
+            </motion.div>
+          )}
+          <div className="space-y-4 sm:space-y-6">
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-wrap gap-3 sm:gap-4"
+            >
+              {simpleFields.map((field) => (
+                <div key={field} className="flex-1 min-w-[200px]">
+                  {renderInputField(
+                    field,
+                    formData[field] || "",
+                    (value) => handleInputChange(field, value),
+                    false,
+                    excludedFields.includes(field) // Mark excluded fields as read-only
+                  )}
+                </div>
+              ))}
+            </motion.div>
+
+            {textareaFields.map((field) => (
+              <motion.div key={field} variants={itemVariants}>
+                {renderInputField(
+                  field,
+                  formData[field] || "",
+                  (value) => handleInputChange(field, value),
+                  true,
+                  excludedFields.includes(field) // Mark excluded fields as read-only
+                )}
+              </motion.div>
+            ))}
+
+            {accordionFields.map((field) => (
+              <motion.div key={field} variants={itemVariants}>
+                {formData[field] &&
+                  (field === "optimized"
+                    ? renderDeepNestedFields(field, formData[field])
+                    : renderNestedFields(
+                        field,
+                        formData[field] as Record<string, any>,
+                        true
+                      ))}
+              </motion.div>
+            ))}
+
+            <div className="flex flex-row justify-between">
+
+          
+            <motion.div
+              variants={itemVariants}
+              className="flex justify-end mt-6 "
+            >
+              <button
+                onClick={updatePrompt}
+                disabled={loading}
+                className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+                  loading
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {loading ? "Updating..." : "Update Prompt"}
+              </button>
+            </motion.div>
+
+            <motion.div
+              variants={itemVariants}
+              className="flex justify-end mt-6"
+            >
+              <button
+                onClick={() => onRequestLoadToProduction(loadToProduction)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+                  loading
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700"
+                }`}
+              >
+                {loading ? "Updating..." : "Load Prompt to Production"}
+              </button>
+            </motion.div>
+
+              </div>
+
+          </div>
         </motion.div>
       )}
-      <div className="space-y-4 sm:space-y-6">
-        <motion.div
-          variants={itemVariants}
-          className="flex flex-wrap gap-3 sm:gap-4"
-        >
-          {simpleFields.map((field) => (
-            <div key={field} className="flex-1 min-w-[200px]">
-              {renderInputField(
-                field,
-                formData[field] || "",
-                (value) => handleInputChange(field, value),
-                false,
-                excludedFields.includes(field) // Mark excluded fields as read-only
-              )}
-            </div>
-          ))}
-        </motion.div>
-
-        {textareaFields.map((field) => (
-          <motion.div key={field} variants={itemVariants}>
-            {renderInputField(
-              field,
-              formData[field] || "",
-              (value) => handleInputChange(field, value),
-              true,
-              excludedFields.includes(field) // Mark excluded fields as read-only
-            )}
-          </motion.div>
-        ))}
-
-        {accordionFields.map((field) => (
-          <motion.div key={field} variants={itemVariants}>
-            {formData[field] &&
-              (field === "optimized"
-                ? renderDeepNestedFields(field, formData[field])
-                : renderNestedFields(
-                    field,
-                    formData[field] as Record<string, any>,
-                    true
-                  ))}
-          </motion.div>
-        ))}
-
-        <motion.div
-          variants={itemVariants}
-          className="flex justify-end mt-6"
-        >
-          <button
-            onClick={updatePrompt}
-            disabled={loading}
-            className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-              loading
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Updating..." : "Update Prompt"}
-          </button>
-        </motion.div>
-      </div>
-    </motion.div>
-          )}
     </>
   );
 }
