@@ -1,0 +1,351 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { postApi } from "../utils/api";
+import { URLS } from "../utils/urls";
+
+const containerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+interface CreatePromptFormProps {
+  onCancel: () => void;
+  onCreated: () => void;
+}
+
+const formatLabel = (key: string): string => {
+  return key
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+const languageLabels: Record<string, string> = {
+  en: "English",
+  ar: "Arabic",
+  arbz: "Arabizi",
+};
+
+const dialectLabels: Record<string, string> = {
+  LEVANTINE: "Levantine",
+  EGYPTIAN: "Egyptian",
+  GULF: "Gulf",
+  IRAQI: "Iraqi",
+  NORTH_AFRICAN: "North African",
+};
+
+interface PromptData {
+  gender: "MALE" | "FEMALE" | "";
+  isGenZ: boolean;
+  role: string;
+  messageTypes: Record<string, string>;
+  styles: Record<string, string>;
+  languages: Record<string, string>;
+  dialects: Record<string, string>;
+  optimized: {
+    role: string;
+    messageTypes: Record<string, string>;
+    styles: Record<string, string>;
+    languages: Record<string, string>;
+    dialects: Record<string, string>;
+  };
+  [key: string]: any;
+}
+
+const cleanPayload = (data: any) => {
+  const result: any = {};
+
+  for (const key in data) {
+    const value = data[key];
+
+    if (value === "" || value === null || value === undefined) continue;
+
+    // For nested objects
+    if (typeof value === "object" && !Array.isArray(value)) {
+      if (key === "messageTypes") {
+        // Keep all required keys with empty string if missing
+        const requiredKeys = ["uploadScreenshot", "addManually", "pickup"];
+        const nested: any = {};
+        requiredKeys.forEach((k) => {
+          nested[k] = value[k] || ""; // keep empty string if missing
+        });
+        result[key] = nested;
+      } else {
+        // Recursively clean other objects
+        const nestedCleaned = cleanPayload(value);
+        if (Object.keys(nestedCleaned).length) result[key] = nestedCleaned;
+      }
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
+};
+
+
+const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
+  onCancel,
+  onCreated,
+}) => {
+  const [formData, setFormData] = useState<PromptData>({
+    gender: "",
+    isGenZ: false,
+    role: "",
+    messageTypes: { uploadScreenshot: "", addManually: "", pickup: "" },
+    styles: {
+      CONSERVATIVE: "",
+      PLAYFUL: "",
+      CONFIDENT: "",
+      FLIRTY: "",
+      MODEST: "",
+      SASSY: "",
+    },
+    languages: { en: "", ar: "", arbz: "" },
+    dialects: {
+      LEVANTINE: "",
+      EGYPTIAN: "",
+      GULF: "",
+      IRAQI: "",
+      NORTH_AFRICAN: "",
+    },
+    optimized: {
+      role: "",
+      messageTypes: {},
+      styles: {},
+      languages: {},
+      dialects: {},
+    },
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const handleInputChange = (
+    field: keyof PromptData,
+    value: string | boolean
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleNestedChange = (
+    parentField: string,
+    childField: string,
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [parentField]: { ...(prev[parentField] || {}), [childField]: value },
+    }));
+  };
+
+  const toggleAccordion = (field: string) => {
+    setOpenAccordions((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const renderInputField = (
+    label: string,
+    value: string,
+    onChange: (value: string) => void,
+    isTextarea: boolean = false
+  ) => (
+    <motion.div variants={itemVariants} className="flex-1 min-w-[200px] mb-3">
+      <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 text-left">
+        {label}
+      </label>
+      {isTextarea ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[100px] resize-none hide-scrollbar transition-all duration-200"
+          placeholder={`Enter ${label}`}
+        />
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200"
+          placeholder={`Enter ${label}`}
+        />
+      )}
+    </motion.div>
+  );
+
+  const renderNestedFields = (title: string, obj: Record<string, any>) => (
+    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+        <motion.div
+          onClick={() => toggleAccordion(title)}
+          className="cursor-pointer flex justify-between items-center"
+        >
+          <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-2 capitalize text-left">
+            {formatLabel(title)}
+          </h4>
+          <motion.span
+            animate={{ rotate: openAccordions[title] ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-gray-400"
+          >
+            ▼
+          </motion.span>
+        </motion.div>
+        {openAccordions[title] && (
+          <div className="space-y-2 pt-2">
+            {Object.entries(obj).map(([key, value]) => {
+              // ✅ pick human-readable labels
+              let displayLabel = key;
+              if (title.toLowerCase() === "languages") {
+                displayLabel = languageLabels[key] || formatLabel(key);
+              } else if (title.toLowerCase() === "dialects") {
+                displayLabel = dialectLabels[key] || formatLabel(key);
+              } else {
+                displayLabel = formatLabel(key);
+              }
+
+              return (
+                <div key={key}>
+                  {renderInputField(
+                    displayLabel,
+                    typeof value === "string" ? value : String(value),
+                    (val) => handleNestedChange(title, key, val)
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+
+  const createPrompt = async () => {
+    if (!formData.gender) return setError("Please select a gender");
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const payload = cleanPayload(formData);
+
+      const response = await postApi(URLS.createPrompt, payload);
+      if (response.status === 200) {
+        setSuccess("Prompt created successfully!");
+        setTimeout(() => setSuccess(null), 3000);
+        onCreated();
+      } else {
+        setError("Failed to create prompt.");
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError("An error occurred while creating the prompt.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+    >
+      {error && (
+        <div className="mb-4 p-3 bg-red-600/20 border border-red-600 rounded-lg text-red-400">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 p-3 bg-green-600/20 border border-green-600 rounded-lg text-green-400">
+          {success}
+        </div>
+      )}
+
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-left mb-6 sm:mb-8">
+        Create Prompt
+      </h2>
+
+      {/* Gender */}
+      <div className="mb-4">
+        <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 text-start">
+          Gender
+        </label>
+        <select
+          value={formData.gender}
+          onChange={(e) => handleInputChange("gender", e.target.value)}
+          className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Select Gender</option>
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+        </select>
+      </div>
+
+      {/* Show isGenz only after gender is selected */}
+      {formData.gender && (
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={formData.isGenZ}
+            onChange={(e) => handleInputChange("isGenZ", e.target.checked)}
+            className="w-4 h-4 accent-blue-600"
+          />
+          <label className="text-gray-300 font-medium">Is GenZ?</label>
+        </div>
+      )}
+
+      {/* Show other fields only after gender is selected */}
+      {formData.gender && (
+        <>
+          {renderInputField(
+            "Role",
+            formData.role,
+            (val) => handleInputChange("role", val),
+            true
+          )}
+
+          {renderNestedFields("languages", formData.languages)}
+          {renderNestedFields("dialects", formData.dialects)}
+          {renderNestedFields("styles", formData.styles)}
+          {renderNestedFields("messageTypes", formData.messageTypes)}
+        </>
+      )}
+
+      <div className="flex justify-end gap-4 mt-6">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 rounded-lg text-white font-semibold bg-gray-600 hover:bg-gray-700 transition-all duration-200"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={createPrompt}
+          disabled={loading || !formData.gender}
+          className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+            loading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {loading ? "Creating..." : "Create Prompt"}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+export default CreatePromptForm;
