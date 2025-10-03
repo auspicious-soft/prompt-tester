@@ -1,5 +1,5 @@
-const baseUrl = "http://localhost:8001/api/admin";
-// const baseUrl = "https://api.habibirizz.app/api/admin";
+// const baseUrl = "http://localhost:8001/api/admin";
+const baseUrl = "https://api.habibirizz.app/api/admin";
 
 export const URLS = {
   login: `${baseUrl}/login`,
