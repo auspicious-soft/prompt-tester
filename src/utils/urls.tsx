@@ -14,4 +14,7 @@ export const URLS = {
 
   createPrompt: `${baseUrl}/create-prompt`,
   deletePrompt: `${baseUrl}/delete-prompt`,
+
+  promotePromptVersion: `${baseUrl}/promote-prompt`,
+  promoteWebPromptVersion: `${baseUrl}/promote-web-prompt`,
 };

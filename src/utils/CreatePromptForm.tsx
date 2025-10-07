@@ -60,23 +60,37 @@ interface PromptData {
 const cleanPayload = (data: any) => {
   const result: any = {};
 
+  // Define required subkeys for every nested object
+  const requiredKeysMap: Record<string, string[]> = {
+    messageTypes: ["uploadScreenshot", "addManually", "pickup"],
+    languages: ["en", "ar", "arbz"],
+    dialects: ["LEVANTINE", "EGYPTIAN", "GULF", "IRAQI", "NORTH_AFRICAN"],
+    styles: [
+      "CONSERVATIVE",
+      "PLAYFUL",
+      "CONFIDENT",
+      "FLIRTY",
+      "MODEST",
+      "SASSY",
+    ],
+  };
+
   for (const key in data) {
     const value = data[key];
 
     if (value === "" || value === null || value === undefined) continue;
 
-    // For nested objects
     if (typeof value === "object" && !Array.isArray(value)) {
-      if (key === "messageTypes") {
-        // Keep all required keys with empty string if missing
-        const requiredKeys = ["uploadScreenshot", "addManually", "pickup"];
-        const nested: any = {};
-        requiredKeys.forEach((k) => {
-          nested[k] = value[k] || ""; // keep empty string if missing
+      const nested: any = {};
+
+      // If the key has predefined required subkeys, ensure all exist (even empty)
+      if (requiredKeysMap[key]) {
+        requiredKeysMap[key].forEach((subKey) => {
+          nested[subKey] = value[subKey] ?? "";
         });
         result[key] = nested;
       } else {
-        // Recursively clean other objects
+        // Recursively clean other nested objects (like optimized)
         const nestedCleaned = cleanPayload(value);
         if (Object.keys(nestedCleaned).length) result[key] = nestedCleaned;
       }
@@ -87,7 +101,6 @@ const cleanPayload = (data: any) => {
 
   return result;
 };
-
 
 const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
   onCancel,
@@ -159,32 +172,39 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
     label: string,
     value: string,
     onChange: (value: string) => void,
-    isTextarea: boolean = false
-  ) => (
-    <motion.div variants={itemVariants} className="flex-1 min-w-[200px] mb-3">
-      <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 text-left">
-        {label}
-      </label>
-      {isTextarea ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[100px] resize-none hide-scrollbar transition-all duration-200"
-          placeholder={`Enter ${label}`}
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200"
-          placeholder={`Enter ${label}`}
-        />
-      )}
-    </motion.div>
-  );
+    isTextarea: boolean = false,
+    isRequired: boolean = false
+  ) => {
+    const isEmpty = isRequired && !value.trim();
+    return (
+      <motion.div variants={itemVariants} className="flex-1 min-w-[200px] mb-3">
+        <label className=" text-sm sm:text-base font-medium text-gray-300 mb-1 text-left flex items-center gap-1">
+          {label}
+          {isRequired && <span className="text-red-500">*</span>}
+        </label>
+        {isTextarea ? (
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border ${
+              isEmpty ? "border-red-500" : "border-gray-600"
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[100px] resize-none transition-all duration-200`}
+            placeholder={`Enter ${label}`}
+          />
+        ) : (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border ${
+              isEmpty ? "border-red-500" : "border-gray-600"
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200`}
+            placeholder={`Enter ${label}`}
+          />
+        )}
+      </motion.div>
+    );
+  };
 
   const renderNestedFields = (title: string, obj: Record<string, any>) => (
     <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
@@ -193,9 +213,13 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
           onClick={() => toggleAccordion(title)}
           className="cursor-pointer flex justify-between items-center"
         >
-          <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-2 capitalize text-left">
+          <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-2 capitalize text-left flex items-center gap-1">
             {formatLabel(title)}
+            {title.toLowerCase() === "messagetypes" && (
+              <span className="text-red-500">*</span>
+            )}
           </h4>
+
           <motion.span
             animate={{ rotate: openAccordions[title] ? 180 : 0 }}
             transition={{ duration: 0.3 }}
@@ -207,7 +231,6 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
         {openAccordions[title] && (
           <div className="space-y-2 pt-2">
             {Object.entries(obj).map(([key, value]) => {
-              // ✅ pick human-readable labels
               let displayLabel = key;
               if (title.toLowerCase() === "languages") {
                 displayLabel = languageLabels[key] || formatLabel(key);
@@ -222,7 +245,9 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
                   {renderInputField(
                     displayLabel,
                     typeof value === "string" ? value : String(value),
-                    (val) => handleNestedChange(title, key, val)
+                    (val) => handleNestedChange(title, key, val),
+                    false,
+                    title.toLowerCase() === "messagetypes"
                   )}
                 </div>
               );
@@ -235,6 +260,17 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
 
   const createPrompt = async () => {
     if (!formData.gender) return setError("Please select a gender");
+
+    const messageTypes = formData.messageTypes;
+    const allMessageTypesFilled = Object.values(messageTypes).every(
+      (val) => val.trim() !== ""
+    );
+
+    if (!allMessageTypesFilled) {
+      setError("Please fill all Message Types before creating a prompt.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);

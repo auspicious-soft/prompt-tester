@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getApi, putApi } from "../utils/api";
+import { getApi, postApi, putApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { motion } from "framer-motion";
 import TypingLoader from "../utils/Lodaer";
@@ -67,12 +67,13 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
   const [loading, setLoading] = useState(false);
   const [promptData, setPromptData] = useState<PromptData | null>(null);
   const [formData, setFormData] = useState<PromptData | null>(null);
+  const [originalData, setOriginalData] = useState<PromptData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {}
   );
-  const [syncLoading, setSyncLoading] = useState(false);
+  const [isModified, setIsModified] = useState(false);
 
   const getPromptById = async () => {
     setLoading(true);
@@ -128,6 +129,7 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
         };
         setPromptData(transformedData as PromptData);
         setFormData(transformedData as PromptData);
+        setOriginalData(transformedData);
       } else {
         setError("Failed to fetch prompt details.");
       }
@@ -145,12 +147,20 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
     setLoading(true);
     setError(null);
     setSuccess(null);
+    const restrictedKeys = [
+      "isActive",
+      "_id",
+      "createdAt",
+      "updatedAt",
+      "isActiveWeb",
+    ];
 
     // Reverse the language/dialect mappings and exclude restricted fields
     const dataToSend = {
       ...Object.fromEntries(
         Object.entries(formData).filter(
-          ([key]) => !excludedFields.includes(key)
+          ([key]) =>
+            !excludedFields.includes(key) && !restrictedKeys.includes(key)
         )
       ),
       languages: Object.fromEntries(
@@ -175,7 +185,8 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
         ? {
             ...Object.fromEntries(
               Object.entries(formData.optimized).filter(
-                ([key]) => !excludedFields.includes(key)
+                ([key]) =>
+                  !excludedFields.includes(key) && !restrictedKeys.includes(key)
               )
             ),
             languages: Object.fromEntries(
@@ -206,6 +217,8 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
         setSuccess("Prompt updated successfully!");
         // Clear success message after 3 seconds
         setTimeout(() => setSuccess(null), 3000);
+        setIsModified(false);
+        setOriginalData(formData);
         await getPromptById(); // Refetch to sync UI with server
       } else {
         setError("Failed to update prompt.");
@@ -218,89 +231,64 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
     }
   };
 
+  const promotePrompt = async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await postApi(`${URLS.promotePromptVersion}`, {
+        versionId: id,
+      });
+      if (response.status === 200) {
+        setSuccess("Prompt successfully promoted to production!");
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError("Failed to promote prompt.");
+      }
+    } catch (error) {
+      console.error(error);
+      setError("An error occurred while promoting the prompt.");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     if (id) {
       getPromptById();
     }
   }, [id]);
 
-  const loadToProduction = async () => {
+  useEffect(() => {
+    if (!originalData || !formData) return;
+    const changed = JSON.stringify(formData) !== JSON.stringify(originalData);
+    setIsModified(changed);
+  }, [formData, originalData]);
+
+  const promotePromptWeb = async () => {
     if (!id) return;
-    if (!formData) return;
-    setSyncLoading(true);
+    setLoading(true);
     setError(null);
     setSuccess(null);
 
-    // Transform data exactly like in updatePrompt
-    const dataToSend = {
-      ...Object.fromEntries(
-        Object.entries(formData).filter(
-          ([key]) => !excludedFields.includes(key)
-        )
-      ),
-      languages: Object.fromEntries(
-        Object.entries(formData.languages || {}).map(([key, value]) => [
-          reverseLanguageMappings[key] || key,
-          value,
-        ])
-      ),
-      dialects: Object.fromEntries(
-        Object.entries(formData.dialects || {}).map(([key, value]) => [
-          key.toUpperCase(),
-          value,
-        ])
-      ),
-      styles: Object.fromEntries(
-        Object.entries(formData.styles || {}).map(([key, value]) => [
-          key.toUpperCase(),
-          value,
-        ])
-      ),
-      optimized: formData.optimized
-        ? {
-            ...Object.fromEntries(
-              Object.entries(formData.optimized).filter(
-                ([key]) => !excludedFields.includes(key)
-              )
-            ),
-            languages: Object.fromEntries(
-              Object.entries(formData.optimized?.languages || {}).map(
-                ([key, value]) => [reverseLanguageMappings[key] || key, value]
-              )
-            ),
-            dialects: Object.fromEntries(
-              Object.entries(formData.optimized?.dialects || {}).map(
-                ([key, value]) => [key.toUpperCase(), value]
-              )
-            ),
-            styles: Object.fromEntries(
-              Object.entries(formData.optimized?.styles || {}).map(
-                ([key, value]) => [key.toUpperCase(), value]
-              )
-            ),
-          }
-        : undefined,
-    };
-
     try {
-      // Use the sync endpoint that now handles both update and sync
-      const response = await putApi(`${URLS.loadPrompt}/${id}`, dataToSend);
+      const response = await postApi(`${URLS.promoteWebPromptVersion}`, {
+        versionId: id,
+      });
       if (response.status === 200) {
-        setSuccess("Prompt successfully updated and loaded into production!");
+        setSuccess("Prompt successfully promoted to Site!");
         setTimeout(() => setSuccess(null), 3000);
-        // Refresh the data to show the latest state
-        await getPromptById();
       } else {
-        setError("Failed to load prompt into production.");
+        setError("Failed to promote prompt.");
       }
     } catch (error) {
       console.error(error);
-      setError("An error occurred while syncing the prompt.");
+      setError("An error occurred while promoting the prompt.");
     } finally {
-      setSyncLoading(false);
+      setLoading(false);
     }
   };
-
   const handleInputChange = (field: string, value: string) => {
     if (!formData || excludedFields.includes(field)) return;
     setFormData({
@@ -576,31 +564,31 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
     );
   }
 
-  if (promptData?.key === "HABIBTI_GENZ") {
-    return (
-      <>
-        {loading ? (
-          <TypingLoader />
-        ) : (
-          <>
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
-            >
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-center mb-6">
-                {promptData.key}
-              </h2>
-              <p className="text-gray-300 text-center text-lg">
-                🚀 Coming Soon
-              </p>
-            </motion.div>
-          </>
-        )}
-      </>
-    );
-  }
+  // if (promptData?.key === "HABIBTI_GENZ") {
+  //   return (
+  //     <>
+  //       {loading ? (
+  //         <TypingLoader />
+  //       ) : (
+  //         <>
+  //           <motion.div
+  //             variants={containerVariants}
+  //             initial="hidden"
+  //             animate="visible"
+  //             className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+  //           >
+  //             <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-center mb-6">
+  //               {promptData.key}
+  //             </h2>
+  //             <p className="text-gray-300 text-center text-lg">
+  //               🚀 Coming Soon
+  //             </p>
+  //           </motion.div>
+  //         </>
+  //       )}
+  //     </>
+  //   );
+  // }
 
   const simpleFields = ["key", "generation", "persona"];
   const textareaFields = ["role"];
@@ -672,44 +660,63 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
             ))}
 
             <div className="flex flex-row justify-between">
+              {isModified ? (
+                // ✅ Show only Update button when something is changed
+                <motion.div
+                  variants={itemVariants}
+                  className="flex justify-end mt-6"
+                >
+                  <button
+                    onClick={updatePrompt}
+                    disabled={loading}
+                    className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+                      loading
+                        ? "bg-gray-600 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                  >
+                    {loading ? "Updating..." : "Update Prompt"}
+                  </button>
+                </motion.div>
+              ) : (
+                // ✅ Show Load buttons only when nothing is modified
+                <>
+                  <motion.div
+                    variants={itemVariants}
+                    className="flex justify-end mt-6"
+                  >
+                    <button
+                      onClick={promotePromptWeb}
+                      disabled={loading}
+                      className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+                        loading
+                          ? "bg-gray-600 cursor-not-allowed"
+                          : "bg-purple-600 hover:bg-purple-700"
+                      }`}
+                    >
+                      {loading ? "Promoting..." : "Load to Prompt Tester Site"}
+                    </button>
+                  </motion.div>
 
-          
-            <motion.div
-              variants={itemVariants}
-              className="flex justify-end mt-6 "
-            >
-              <button
-                onClick={updatePrompt}
-                disabled={loading}
-                className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-                  loading
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {loading ? "Updating..." : "Update Prompt"}
-              </button>
-            </motion.div>
-
-            <motion.div
-              variants={itemVariants}
-              className="flex justify-end mt-6"
-            >
-              <button
-                onClick={() => onRequestLoadToProduction(loadToProduction)}
-                disabled={loading}
-                className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-                  loading
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700"
-                }`}
-              >
-                {loading ? "Updating..." : "Load Prompt to Production"}
-              </button>
-            </motion.div>
-
-              </div>
-
+                  <motion.div
+                    variants={itemVariants}
+                    className="flex justify-end mt-6"
+                  >
+                    <button
+                      onClick={promotePrompt}
+                      disabled={loading}
+                      className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
+                        loading
+                          ? "bg-gray-600 cursor-not-allowed"
+                          : "bg-orange-600 hover:bg-orange-700"
+                      }`}
+                    >
+                      {loading ? "Promoting..." : "Load to Production (App)"}
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </div>
           </div>
         </motion.div>
       )}
