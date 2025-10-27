@@ -3,6 +3,7 @@ import { getApi, postApi, putApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { motion } from "framer-motion";
 import TypingLoader from "../utils/Lodaer";
+import { toast } from "sonner";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -38,6 +39,7 @@ const excludedFields = [
 interface PromptData {
   _id: string;
   key: string;
+    title?: string;
   generation: string;
   persona: string;
   role: string;
@@ -61,9 +63,10 @@ interface PromptData {
 interface PromptByIdProps {
   id: string;
   onRequestLoadToProduction: (action: () => Promise<void>) => void;
+  onPromptUpdated?: () => void;
 }
 
-function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
+function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptByIdProps) {
   const [loading, setLoading] = useState(false);
   const [promptData, setPromptData] = useState<PromptData | null>(null);
   const [formData, setFormData] = useState<PromptData | null>(null);
@@ -141,7 +144,6 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
     }
   };
 
-  // Function to update the prompt
   const updatePrompt = async () => {
     if (!formData) return;
     setLoading(true);
@@ -155,7 +157,6 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
       "isActiveWeb",
     ];
 
-    // Reverse the language/dialect mappings and exclude restricted fields
     const dataToSend = {
       ...Object.fromEntries(
         Object.entries(formData).filter(
@@ -219,13 +220,17 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
         setTimeout(() => setSuccess(null), 3000);
         setIsModified(false);
         setOriginalData(formData);
-        await getPromptById(); // Refetch to sync UI with server
-      } else {
+       await  getPromptById();
+ if (onPromptUpdated) {
+          onPromptUpdated();
+        }      } else {
         setError("Failed to update prompt.");
+        toast.error("Failed")
       }
-    } catch (error) {
+    } catch (error:any) {
       console.log(error);
-      setError("An error occurred while updating the prompt.");
+      setError(error.response.data.message);
+      toast.error(error.response.data.message)
     } finally {
       setLoading(false);
     }
@@ -590,7 +595,7 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
   //   );
   // }
 
-  const simpleFields = ["key", "generation", "persona"];
+const simpleFields = ["title", "key", "generation", "persona"];
   const textareaFields = ["role"];
   const accordionFields = ["languages", "dialects", "styles", "messageTypes"];
 
@@ -608,6 +613,34 @@ function PromptById({ id, onRequestLoadToProduction }: PromptByIdProps) {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-left mb-6 sm:mb-8">
             Prompt Details
           </h2>
+
+          <div className="flex flex-wrap justify-start items-center gap-4 text-sm text-gray-400 mb-6 sm:mb-8">
+            <div>
+              <span className="font-medium text-gray-300">Created On:</span>{" "}
+              {promptData?.createdAt
+                ? new Date(promptData.createdAt).toLocaleString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "N/A"}
+            </div>
+            <div>
+              <span className="font-medium text-gray-300">Modified On:</span>{" "}
+              {promptData?.updatedAt
+                ? new Date(promptData.updatedAt).toLocaleString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "N/A"}
+            </div>
+          </div>
+
           {success && (
             <motion.div
               variants={itemVariants}

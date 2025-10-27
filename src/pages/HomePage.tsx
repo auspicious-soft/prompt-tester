@@ -45,12 +45,23 @@ const PromptGenerator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [translatedAccordionOpen, setTranslatedAccordionOpen] = useState(false);
-const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const maleStyles = ["Conservative", "Playful", "Confident", "Flirty"];
   const femaleStyles = ["Modest", "Playful", "Sassy", "Flirty"];
   const stylesOptions =
     gender === "MALE" ? maleStyles : gender === "FEMALE" ? femaleStyles : [];
+
+  const [gptModel, setGptModel] = useState("gpt-4o-mini");
+  const [temperature, setTemperature] = useState(1);
+  const [modelUsed, setModelUsed] = useState<string | null>(null);
+  const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
+  const [tokenUsage, setTokenUsage] = useState<{
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCost: number;
+  } | null>(null);
 
   const handleChange = (
     setter: React.Dispatch<React.SetStateAction<any>>,
@@ -146,13 +157,17 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
         language: language?.toLowerCase() ?? "",
         dialect: language === "en" ? "" : dialect ?? "",
         gender: gender ?? "",
-        protoType:"Full_prompt",
+        protoType: "Full_prompt",
+        gptModel,
+        temperature,
       };
 
       if (selectedType === "GetPickUpLine") {
         const query = new URLSearchParams({
           ...commonParams,
           isGenz: commonParams.isGenz.toString(),
+          gptModel: gptModel,
+          temperature: temperature.toString(),
         }).toString();
         response = await getApi(`${URLS.getPickUpLine}?${query}`);
       } else if (selectedType === "ManualReply") {
@@ -169,10 +184,7 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
         }
         Object.entries(commonParams).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            formData.append(
-              key,
-              typeof value === "boolean" ? value.toString() : value
-            );
+            formData.append(key, String(value));
           }
         });
         response = await postApi(`${URLS.getResponseByScreenshot}`, formData, {
@@ -199,14 +211,29 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
             setResponses(response.data.data.pickupLines || []);
             setTranslatedText(response.data.data.translatedText || []);
             setFullPrompt(response.data.data.fullPrompt || null);
+            setModelUsed(response.data.data.fullPrompt?.modelUsed || null);
+            setTemperatureUsed(
+              response.data.data.fullPrompt?.temperatureUsed || null
+            );
+            setTokenUsage(response.data.data.fullPrompt?.tokenUsage || null);
           } else if (selectedType === "ManualReply") {
             setResponses(response.data.data.reply || []);
             setTranslatedText(response.data.data.translatedText || []);
             setFullPrompt(response.data.data.fullPrompt || null);
+           setModelUsed(response.data.data.fullPrompt?.modelUsed || null);
+            setTemperatureUsed(
+              response.data.data.fullPrompt?.temperatureUsed || null
+            );
+            setTokenUsage(response.data.data.fullPrompt?.tokenUsage || null);
           } else if (selectedType === "ScreenshotReply") {
             setResponses(response.data.data.reply.replies || []);
             setTranslatedText(response.data.data.reply.translatedText || []);
             setFullPrompt(response.data.data.reply.fullPrompt || null);
+            setModelUsed(response.data.data.fullPrompt?.modelUsed || null);
+            setTemperatureUsed(
+              response.data.data.fullPrompt?.temperatureUsed || null
+            );
+            setTokenUsage(response.data.data.fullPrompt?.tokenUsage || null);
           }
           setOutput("Success: Response generated");
         }
@@ -230,17 +257,17 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   };
 
   useEffect(() => {
-  if (isPreviewOpen) {
-    document.body.style.overflow = "hidden";  // disable scroll
-  } else {
-    document.body.style.overflow = "";        // restore scroll
-  }
+    if (isPreviewOpen) {
+      document.body.style.overflow = "hidden"; // disable scroll
+    } else {
+      document.body.style.overflow = ""; // restore scroll
+    }
 
-  // cleanup on unmount just in case
-  return () => {
-    document.body.style.overflow = "";
-  };
-}, [isPreviewOpen]);
+    // cleanup on unmount just in case
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isPreviewOpen]);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
@@ -263,6 +290,10 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const toggleTranslatedAccordion = () => {
     setTranslatedAccordionOpen(!translatedAccordionOpen);
   };
+
+  console.log(tokenUsage,"tokenUssage")
+    console.log(temperatureUsed,"temperatureUsed")
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-start p-4 sm:p-6">
       {/* Top Tabs */}
@@ -335,9 +366,53 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
           </motion.div>
 
           <div className="space-y-4 sm:space-y-6">
+            {/* GPT Model + Temperature (Top Section, half width each) */}
+            <motion.div
+              variants={itemVariants}
+              className="grid grid-cols-2 gap-4"
+            >
+              {/* GPT Model Dropdown */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                  GPT Model
+                </label>
+                <select
+                  value={gptModel}
+                  onChange={(e) => setGptModel(e.target.value)}
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+          focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                  required
+                >
+                  <option value="gpt-4o-mini">GPT-4o Mini</option>
+                  <option value="gpt-4o">GPT-4o</option>
+                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                </select>
+              </div>
+
+              {/* Temperature Dropdown */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                  Temperature
+                </label>
+                <select
+                  value={temperature}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+          focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                  required
+                >
+                  <option value={0}>0 (Deterministic)</option>
+                  <option value={0.5}>0.5 (Balanced)</option>
+                  <option value={1}>1 (Creative)</option>
+                  <option value={1.5}>1.5 (Highly Creative)</option>
+                </select>
+              </div>
+            </motion.div>
+
             {/* Grid for Input Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {/* Gender Selection with isGenxz Checkbox */}
+              {/* Gender Selection with Gen Z Checkbox */}
               <motion.div variants={itemVariants} className="space-y-3">
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
@@ -346,13 +421,15 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
                   <select
                     value={gender}
                     onChange={(e) => handleChange(setGender, e.target.value)}
-                    className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                    className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+            focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                     required
                   >
                     <option value="MALE">Male</option>
                     <option value="FEMALE">Female</option>
                   </select>
                 </div>
+
                 {gender === "MALE" && (
                   <motion.div
                     variants={itemVariants}
@@ -370,11 +447,14 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
                         handleChange(setIsGenxz, e.target.checked)
                       }
                       id="genz-checkbox"
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 bg-gray-700 border-2 border-gray-500 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-gray-800 transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 bg-gray-700 border-2 border-gray-500 rounded-md 
+              focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-gray-800 
+              transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400"
                     />
                     <label
                       htmlFor="genz-checkbox"
-                      className="ml-2 text-xs sm:text-sm font-medium text-gray-300 cursor-pointer hover:text-blue-400 transition-colors duration-200"
+                      className="ml-2 text-xs sm:text-sm font-medium text-gray-300 cursor-pointer 
+              hover:text-blue-400 transition-colors duration-200"
                     >
                       Gen Z Style
                     </label>
@@ -463,74 +543,70 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
               </motion.div> */}
             </div>
 
-{selectedType === "ScreenshotReply" && (
-  <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-      Upload Image
-    </label>
-    <input
-      type="file"
-      accept="image/*"
-      onChange={handleImageChange}
-      className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
+            {selectedType === "ScreenshotReply" && (
+              <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                  Upload Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 
         file:mr-2 file:py-1 file:px-2 sm:file:mr-3 sm:file:py-1.5 sm:file:px-3 
         file:rounded-lg file:bg-blue-600 file:text-white file:border-0 hover:file:bg-blue-700 
         text-xs sm:text-sm cursor-pointer"
-      required
-    />
+                  required
+                />
 
-    {/* Thumbnail Preview */}
-    {imageFile && (
-      <div className="mt-3">
-        <p className="text-xs text-gray-400 mb-1">Preview:</p>
-        <img
-          src={URL.createObjectURL(imageFile)}
-          alt="Thumbnail preview"
-          onClick={() => setIsPreviewOpen(true)}
-          className="max-h-40 rounded-lg border border-gray-600 cursor-pointer hover:opacity-80 transition"
-        />
-      </div>
-    )}
+                {/* Thumbnail Preview */}
+                {imageFile && (
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-400 mb-1">Preview:</p>
+                    <img
+                      src={URL.createObjectURL(imageFile)}
+                      alt="Thumbnail preview"
+                      onClick={() => setIsPreviewOpen(true)}
+                      className="max-h-40 rounded-lg border border-gray-600 cursor-pointer hover:opacity-80 transition"
+                    />
+                  </div>
+                )}
 
-    {/* Full Page Preview with Blurred Background */}
-   {/* Full Page Preview with Blurred Background */}
-{isPreviewOpen && imageFile &&
-  createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center pt-6">
-      {/* Full-page blur layer */}
-      <div
-        className="absolute inset-0 backdrop-blur-md"
-        onClick={() => setIsPreviewOpen(false)}
-      />
+                {/* Full Page Preview with Blurred Background */}
+                {/* Full Page Preview with Blurred Background */}
+                {isPreviewOpen &&
+                  imageFile &&
+                  createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center pt-6">
+                      {/* Full-page blur layer */}
+                      <div
+                        className="absolute inset-0 backdrop-blur-md"
+                        onClick={() => setIsPreviewOpen(false)}
+                      />
 
-      {/* Image container */}
-      <div className="relative z-50 flex items-center justify-center">
-        {/* Close button */}
-        <button
-          onClick={() => setIsPreviewOpen(false)}
-          className="absolute -top-10 right-0 bg-red-500 hover:bg-red-600 text-white 
+                      {/* Image container */}
+                      <div className="relative z-50 flex items-center justify-center">
+                        {/* Close button */}
+                        <button
+                          onClick={() => setIsPreviewOpen(false)}
+                          className="absolute -top-10 right-0 bg-red-500 hover:bg-red-600 text-white 
                      rounded-full w-8 h-8 flex items-center justify-center text-lg shadow-lg"
-        >
-          ✕
-        </button>
+                        >
+                          ✕
+                        </button>
 
-        {/* Full Image */}
-        <img
-          src={URL.createObjectURL(imageFile)}
-          alt="Full preview"
-          className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
-        />
-      </div>
-    </div>,
-    document.body // 👈 mounts overlay at <body> level
-  )
-}
-
-
-  </motion.div>
-)}
-
-
+                        {/* Full Image */}
+                        <img
+                          src={URL.createObjectURL(imageFile)}
+                          alt="Full preview"
+                          className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+                        />
+                      </div>
+                    </div>,
+                    document.body // 👈 mounts overlay at <body> level
+                  )}
+              </motion.div>
+            )}
 
             {selectedType === "ManualReply" && (
               <div className="space-y-3 sm:space-y-4">
@@ -723,6 +799,57 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
                     )}
                   </motion.div>
                 </div>
+
+{(modelUsed || temperatureUsed || tokenUsage) && (
+  <div className="mt-5 sm:mt-6 p-4 sm:p-5 bg-gray-800 rounded-xl border border-gray-700 shadow-md hover:shadow-lg transition-all duration-300">
+    <h5 className="text-base sm:text-lg font-semibold text-gray-100 mb-4 border-b border-gray-700 pb-2">
+      ⚙️ Model & Token Details
+    </h5>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-xs sm:text-sm text-gray-200">
+      {modelUsed && (
+        <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+          <span className="font-medium text-gray-300">Model Used</span>
+          <span className="text-gray-400">{modelUsed}</span>
+        </div>
+      )}
+
+      {temperatureUsed !== null && (
+        <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+          <span className="font-medium text-gray-300">Temperature</span>
+          <span className="text-gray-400">{temperatureUsed}</span>
+        </div>
+      )}
+
+      {tokenUsage && (
+        <>
+          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+            <span className="font-medium text-gray-300">Input Tokens</span>
+            <span className="text-gray-400">{tokenUsage.inputTokens}</span>
+          </div>
+
+          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+            <span className="font-medium text-gray-300">Output Tokens</span>
+            <span className="text-gray-400">{tokenUsage.outputTokens}</span>
+          </div>
+
+          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+            <span className="font-medium text-gray-300">Total Tokens</span>
+            <span className="text-gray-400">{tokenUsage.totalTokens}</span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="font-medium text-gray-300">Estimated Cost</span>
+            <span className="text-green-400 font-semibold">
+              ${tokenUsage.estimatedCost.toFixed(5)}
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
+
                 <div>
                   <h4 className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                     Responses
@@ -796,11 +923,15 @@ const [isPreviewOpen, setIsPreviewOpen] = useState(false);
                       </motion.div>
                     </div>
                   )}
+
+
               </motion.div>
             )}
           </div>
         </motion.div>
       )}
+
+ 
 
       {activeTab === "templates" && (
         <motion.div

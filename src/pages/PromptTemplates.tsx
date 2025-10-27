@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { deleteApi, getApi } from "../utils/api";
+import { deleteApi, getApi, postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { motion, AnimatePresence } from "framer-motion";
 import PromptById from "./PromptById";
@@ -7,10 +7,12 @@ import TypingLoader from "../utils/Lodaer";
 import ConfirmationModal from "../utils/ConfirmationModal";
 import CreatePromptForm from "../utils/CreatePromptForm";
 import { Trash2 } from "lucide-react"; // Import delete icon
+import { toast } from "sonner";
 
 interface Prompt {
   _id: string;
   key: string;
+  title?: string; 
   generation: string;
   persona: string;
 }
@@ -37,10 +39,10 @@ const containerVariants = {
   },
 };
 
- const tooltipVariants = {
-    hidden: { opacity: 0, y: 6 },
-    visible: { opacity: 1, y: 0 },
-  };
+const tooltipVariants = {
+  hidden: { opacity: 0, y: 6 },
+  visible: { opacity: 1, y: 0 },
+};
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -59,12 +61,19 @@ const PromptTemplates: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<
     "ALL" | "ACTIVE" | "ACTIVE_WEB" | "BOTH_ACTIVE"
   >("ALL");
-
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateTitle, setDuplicateTitle] = useState("");
+  const [selectedDuplicateId, setSelectedDuplicateId] = useState<string | null>(
+    null
+  );
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(
     async () => {}
   );
-
+const [showPasswordModal, setShowPasswordModal] = useState(false);
+const [password, setPassword] = useState("");
+const [showPassword, setShowPassword] = useState(false);
+const [deletingPromptId, setDeletingPromptId] = useState<string | null>(null);
   const isDefaultVersion = (key: string) =>
     /(_GENZ|_MILLENNIAL_V1)$/i.test(key);
 
@@ -99,16 +108,14 @@ const PromptTemplates: React.FC = () => {
     setFilteredPrompts(filtered);
   }, [selectedGender, selectedGen, allPrompts]);
 
-  // Handler for selecting a prompt
   const handleSelectPrompt = (prompt: Prompt) => {
     setSelectedPrompt(prompt);
-    setShowCreateForm(false); // Deselect "Create Prompt" form
+    setShowCreateForm(false); 
   };
 
-  // Handler for opening the create prompt form
   const handleOpenCreateForm = () => {
     setShowCreateForm(true);
-    setSelectedPrompt(null); // Deselect any selected prompt
+    setSelectedPrompt(null); 
   };
 
   useEffect(() => {
@@ -118,13 +125,10 @@ const PromptTemplates: React.FC = () => {
       const isActive = (p as any).isActive;
       const isActiveWeb = (p as any).isActiveWeb;
 
-      // Gender filter
       if (selectedGender && gender !== selectedGender) return false;
 
-      // Generation filter
       if (selectedGen && gen !== selectedGen) return false;
 
-      // Active filters
       if (activeFilter === "ACTIVE" && !isActive) return false;
       if (activeFilter === "ACTIVE_WEB" && !isActiveWeb) return false;
       if (activeFilter === "BOTH_ACTIVE" && !(isActive && isActiveWeb))
@@ -136,19 +140,56 @@ const PromptTemplates: React.FC = () => {
     setFilteredPrompts(filtered);
   }, [selectedGender, selectedGen, activeFilter, allPrompts]);
 
-  const handleDeletePrompt = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this prompt?")) return;
+const handleDeletePrompt = (id: string) => {
+  setDeletingPromptId(id);
+  setShowPasswordModal(true);
+};
+
+const confirmDeletePrompt = async () => {
+  if (!password.trim()) {
+    toast.error("Please enter your password");
+    return;
+  }
+
+  try {
+    const response = await postApi(`${URLS.deletePrompt}`, {
+      id: deletingPromptId,
+      password,
+    });
+
+    if (response.status === 200) {
+      toast.success(response.data.message);
+      setShowPasswordModal(false);
+      setPassword("");
+      setDeletingPromptId(null);
+      getAllPrompts();
+      if (selectedPrompt?._id === deletingPromptId) setSelectedPrompt(null);
+    } else {
+      
+      toast.error("Failed to delete prompt");
+    }
+  } catch (err: any) {
+    toast.error(err.response.data.message || "Invalid Password");
+    console.log(err)
+  }
+};
+  const handleDuplicatePrompt = async () => {
+    if (!selectedDuplicateId || !duplicateTitle.trim())
+      return toast("Enter a title!");
     try {
-      const response = await deleteApi(`${URLS.deletePrompt}/${id}`);
+      const response = await postApi(`${URLS.duplicatePrompt}`, {
+        id: selectedDuplicateId,
+        title: duplicateTitle,
+      });
       if (response.status === 200) {
-        alert(response.data.message);
-        getAllPrompts(); // refresh list after deletion
-        if (selectedPrompt?._id === id) setSelectedPrompt(null); // deselect if deleted
-      } else {
-        alert("Failed to delete prompt");
+        toast.success("Prompt duplicated successfully!");
+        setShowDuplicateModal(false);
+        setDuplicateTitle("");
+        setSelectedDuplicateId(null);
+        getAllPrompts(); 
       }
     } catch (err: any) {
-      alert(err.message || "Error deleting prompt");
+      toast.error(err.message || "Failed to duplicate prompt");
     }
   };
 
@@ -238,84 +279,82 @@ const PromptTemplates: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-<div className="flex gap-6 text-sm text-gray-300 mb-6">
-  {/* App Active */}
-  <motion.div
-    className="relative flex items-center gap-2 cursor-pointer"
-    initial="hidden"
-    whileHover="visible"
-    variants={{
-      visible: {},
-      hidden: {},
-    }}
-  >
-    <div className="w-3 h-3 bg-orange-600 rounded-full"></div>
-    <span>App</span>
+      <div className="flex gap-6 text-sm text-gray-300 mb-6">
+        {/* App Active */}
+        <motion.div
+          className="relative flex items-center gap-2 cursor-pointer"
+          initial="hidden"
+          whileHover="visible"
+          variants={{
+            visible: {},
+            hidden: {},
+          }}
+        >
+          <div className="w-3 h-3 bg-orange-600 rounded-full"></div>
+          <span>App</span>
 
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 6, scale: 0.95 },
-        visible: { opacity: 1, y: 0, scale: 1 },
-      }}
-      transition={{ duration: 0.25 }}
-      className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
-    >
-      Prompts Active in Mobile App
-    </motion.div>
-  </motion.div>
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 6, scale: 0.95 },
+              visible: { opacity: 1, y: 0, scale: 1 },
+            }}
+            transition={{ duration: 0.25 }}
+            className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
+          >
+            Prompts Active in Mobile App
+          </motion.div>
+        </motion.div>
 
-  {/* Web Active */}
-  <motion.div
-    className="relative flex items-center gap-2 cursor-pointer"
-    initial="hidden"
-    whileHover="visible"
-    variants={{
-      visible: {},
-      hidden: {},
-    }}
-  >
-    <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-    <span>Prompt Tester</span>
+        {/* Web Active */}
+        <motion.div
+          className="relative flex items-center gap-2 cursor-pointer"
+          initial="hidden"
+          whileHover="visible"
+          variants={{
+            visible: {},
+            hidden: {},
+          }}
+        >
+          <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
+          <span>Prompt Tester</span>
 
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 6, scale: 0.95 },
-        visible: { opacity: 1, y: 0, scale: 1 },
-      }}
-      transition={{ duration: 0.25 }}
-      className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
-    >
-      Prompts Active only for Web Prompt Testing
-    </motion.div>
-  </motion.div>
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 6, scale: 0.95 },
+              visible: { opacity: 1, y: 0, scale: 1 },
+            }}
+            transition={{ duration: 0.25 }}
+            className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
+          >
+            Prompts Active only for Web Prompt Testing
+          </motion.div>
+        </motion.div>
 
-  {/* Both Active */}
-  <motion.div
-    className="relative flex items-center gap-2 cursor-pointer"
-    initial="hidden"
-    whileHover="visible"
-    variants={{
-      visible: {},
-      hidden: {},
-    }}
-  >
-    <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
-    <span>Both</span>
+        {/* Both Active */}
+        <motion.div
+          className="relative flex items-center gap-2 cursor-pointer"
+          initial="hidden"
+          whileHover="visible"
+          variants={{
+            visible: {},
+            hidden: {},
+          }}
+        >
+          <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
+          <span>Both</span>
 
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 6, scale: 0.95 },
-        visible: { opacity: 1, y: 0, scale: 1 },
-      }}
-      transition={{ duration: 0.25 }}
-      className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
-    >
-      Active for both App & Prompt Tester Site
-    </motion.div>
-  </motion.div>
-</div>
-
-
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 6, scale: 0.95 },
+              visible: { opacity: 1, y: 0, scale: 1 },
+            }}
+            transition={{ duration: 0.25 }}
+            className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
+          >
+            Active for both App & Prompt Tester Site
+          </motion.div>
+        </motion.div>
+      </div>
 
       {/* Prompts List */}
       {loading ? (
@@ -339,46 +378,92 @@ const PromptTemplates: React.FC = () => {
                   const isActiveWeb = (prompt as any).isActiveWeb;
 
                   return (
-                    <motion.div
-                      key={prompt._id}
-                      layout
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      className="relative"
-                    >
-                      <motion.button
-                        className={`w-full px-5 py-3 rounded-lg font-medium text-sm transition-all duration-300 min-w-[140px]
-    ${
-      isSelected
-        ? "bg-blue-600 text-white shadow-lg"
-        : isActive && isActiveWeb
-        ? "bg-teal-600 text-white shadow-md"
-        : isActiveWeb
-        ? "bg-purple-600 text-white shadow-md hover:bg-purple-700"
-        : isActive
-        ? "bg-orange-600 text-white shadow-md hover:bg-orange-700"
-        : "bg-gray-700 text-white hover:bg-gray-600"
-    }`}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleSelectPrompt(prompt)}
-                      >
-                        {formatPromptKey(prompt.key)}
-                      </motion.button>
+                 <motion.div
+  key={prompt._id}
+  layout
+  variants={itemVariants}
+  initial="hidden"
+  animate="visible"
+  exit="exit"
+  className="relative"
+>
+  <motion.button
+    className={`w-full px-5 py-3 pt-10 rounded-lg font-medium text-sm transition-all duration-300 min-w-[140px] text-left
+      ${
+        isSelected
+          ? "bg-blue-600 text-white shadow-lg"
+          : isActive && isActiveWeb
+          ? "bg-teal-600 text-white shadow-md"
+          : isActiveWeb
+          ? "bg-purple-600 text-white shadow-md hover:bg-purple-700"
+          : isActive
+          ? "bg-orange-600 text-white shadow-md hover:bg-orange-700"
+          : "bg-gray-700 text-white hover:bg-gray-600"
+      }`}
+    whileHover={{ scale: 1.03 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={() => handleSelectPrompt(prompt)}
+  >
+  <div className="font-semibold">{(prompt as any).title || formatPromptKey(prompt.key)}</div>
+    <div className="text-xs mt-2 opacity-80">
+      <div>
+        Created: {new Date((prompt as any).createdAt).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })}
+      </div>
+      <div>
+        Modified: {new Date((prompt as any).updatedAt).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })}
+      </div>
+    </div>
+  </motion.button>
 
-                      {/* Delete Button */}
-                      {!isDefaultVersion(prompt.key) && (
-                        <button
-                          onClick={() => handleDeletePrompt(prompt._id)}
-                          className="absolute top-2 right-1 text-red-500 hover:text-red-600 p-1 rounded"
-                          title="Delete Prompt"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </motion.div>
+  <div className="absolute top-2 right-2 flex gap-4 z-10 ">
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        setSelectedDuplicateId(prompt._id);
+        setShowDuplicateModal(true);
+      }}
+      className="p-1.5 rounded bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-40 transition-all duration-200 group"
+      title="Duplicate Prompt"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-white group-hover:text-white transition-colors"
+      >
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+
+    {!isDefaultVersion(prompt.key) && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeletePrompt(prompt._id);
+        }}
+        className="p-1.5 rounded bg-white bg-opacity-10 hover:bg-red-500 hover:bg-opacity-100 transition-all duration-200 group"
+        title="Delete Prompt"
+      >
+        <Trash2 size={14} className="text-white group-hover:text-white transition-colors" />
+      </button>
+    )}
+  </div>
+</motion.div>
                   );
                 })}
             </AnimatePresence>
@@ -386,7 +471,6 @@ const PromptTemplates: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Selected Prompt Details */}
       {selectedPrompt && (
         <PromptById
           id={selectedPrompt._id}
@@ -394,10 +478,10 @@ const PromptTemplates: React.FC = () => {
             setConfirmAction(() => action);
             setIsConfirmOpen(true);
           }}
+           onPromptUpdated={getAllPrompts} 
         />
       )}
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
@@ -406,6 +490,163 @@ const PromptTemplates: React.FC = () => {
           setIsConfirmOpen(false);
         }}
       />
+
+
+<AnimatePresence>
+  {showDuplicateModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 px-4"
+      onClick={() => setShowDuplicateModal(false)}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.2 }}
+        className="bg-gray-800 text-white rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-sm text-gray-400 mb-5">
+          Create a copy of this prompt with a new title
+        </p>
+        
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            New Prompt Title
+          </label>
+          <input
+            type="text"
+            placeholder="Enter New Title"
+            value={duplicateTitle}
+            onChange={(e) => setDuplicateTitle(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            autoFocus
+          />
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => {
+              setShowDuplicateModal(false);
+              setDuplicateTitle("");
+              setSelectedDuplicateId(null);
+            }}
+            className="px-5 py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDuplicatePrompt}
+            disabled={!duplicateTitle.trim()}
+            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+          >
+            Duplicate Prompt
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
+<AnimatePresence>
+  {showPasswordModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4"
+      onClick={() => setShowPasswordModal(false)}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ duration: 0.25 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-gray-800 border border-gray-700 text-white rounded-2xl shadow-2xl p-6 w-full max-w-md"
+      >
+        <h2 className="text-lg font-semibold mb-3">Confirm Deletion</h2>
+        <p className="text-sm text-gray-400 mb-6">
+          Enter your admin password to delete this prompt permanently.
+        </p>
+
+        <div className="relative mb-6">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2.5 pr-10 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-200"
+          >
+            {!showPassword ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-10-8-10-8a18.07 18.07 0 0 1 4.27-5.94M1 1l22 22" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => {
+              setShowPasswordModal(false);
+              setPassword("");
+              setDeletingPromptId(null);
+            }}
+            className="px-5 py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={confirmDeletePrompt}
+            className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 font-medium"
+          >
+            Delete
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
+
     </div>
   );
 };
