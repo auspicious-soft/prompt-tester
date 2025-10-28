@@ -335,7 +335,7 @@ const PromptGenerator: React.FC = () => {
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.95 }}
     transition={{ duration: 0.15 }}
-    className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
+    className="absolute right-0 mt-2 w-32 sm:w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
   >
     <button
       onClick={handleLogout}
@@ -631,7 +631,8 @@ const PromptGenerator: React.FC = () => {
                 {isPreviewOpen &&
                   imageFile &&
                   createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center pt-6">
+                   <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
+
                       {/* Full-page blur layer */}
                       <div
                         className="absolute inset-0 backdrop-blur-md"
@@ -643,7 +644,7 @@ const PromptGenerator: React.FC = () => {
                         {/* Close button */}
                         <button
                           onClick={() => setIsPreviewOpen(false)}
-                          className="absolute -top-10 right-0 bg-red-500 hover:bg-red-600 text-white 
+                          className="absolute top-2 right-2 sm:-top-10 sm:right-0 bg-red-500 hover:bg-red-600 text-white 
                      rounded-full w-8 h-8 flex items-center justify-center text-lg shadow-lg"
                         >
                           ✕
@@ -653,7 +654,7 @@ const PromptGenerator: React.FC = () => {
                         <img
                           src={URL.createObjectURL(imageFile)}
                           alt="Full preview"
-                          className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+                          className="max-h-[80vh] max-w-[95vw] sm:max-h-[90vh] sm:max-w-[90vw] object-contain rounded-lg shadow-2xl"
                         />
                       </div>
                     </div>,

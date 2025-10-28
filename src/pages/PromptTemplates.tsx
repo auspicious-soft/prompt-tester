@@ -279,10 +279,10 @@ const confirmDeletePrompt = async () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="flex gap-6 text-sm text-gray-300 mb-6">
+<div className="flex flex-wrap gap-3 sm:gap-6 text-xs sm:text-sm text-gray-300 mb-6">
         {/* App Active */}
         <motion.div
-          className="relative flex items-center gap-2 cursor-pointer"
+    className="relative flex items-center gap-1.5 sm:gap-2 cursor-pointer"
           initial="hidden"
           whileHover="visible"
           variants={{
@@ -299,7 +299,7 @@ const confirmDeletePrompt = async () => {
               visible: { opacity: 1, y: 0, scale: 1 },
             }}
             transition={{ duration: 0.25 }}
-            className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
+                 className="absolute bottom-6 left-0 w-max max-w-[200px] sm:max-w-none bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none z-10"
           >
             Prompts Active in Mobile App
           </motion.div>
@@ -307,7 +307,7 @@ const confirmDeletePrompt = async () => {
 
         {/* Web Active */}
         <motion.div
-          className="relative flex items-center gap-2 cursor-pointer"
+    className="relative flex items-center gap-1.5 sm:gap-2 cursor-pointer"
           initial="hidden"
           whileHover="visible"
           variants={{
@@ -315,8 +315,8 @@ const confirmDeletePrompt = async () => {
             hidden: {},
           }}
         >
-          <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-          <span>Prompt Tester</span>
+    <div className="w-3 h-3 bg-purple-600 rounded-full flex-shrink-0"></div>
+    <span className="whitespace-nowrap">Prompt Tester</span>
 
           <motion.div
             variants={{
@@ -324,7 +324,7 @@ const confirmDeletePrompt = async () => {
               visible: { opacity: 1, y: 0, scale: 1 },
             }}
             transition={{ duration: 0.25 }}
-            className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
+                 className="absolute bottom-6 left-0 w-max max-w-[200px] sm:max-w-none bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none z-10"
           >
             Prompts Active only for Web Prompt Testing
           </motion.div>
@@ -332,7 +332,7 @@ const confirmDeletePrompt = async () => {
 
         {/* Both Active */}
         <motion.div
-          className="relative flex items-center gap-2 cursor-pointer"
+    className="relative flex items-center gap-1.5 sm:gap-2 cursor-pointer"
           initial="hidden"
           whileHover="visible"
           variants={{
@@ -340,8 +340,8 @@ const confirmDeletePrompt = async () => {
             hidden: {},
           }}
         >
-          <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
-          <span>Both</span>
+    <div className="w-3 h-3 bg-teal-600 rounded-full flex-shrink-0"></div>
+    <span className="whitespace-nowrap">Both</span>
 
           <motion.div
             variants={{
@@ -349,7 +349,7 @@ const confirmDeletePrompt = async () => {
               visible: { opacity: 1, y: 0, scale: 1 },
             }}
             transition={{ duration: 0.25 }}
-            className="absolute bottom-6 left-0 w-max bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none"
+                className="absolute bottom-6 left-0 w-max max-w-[200px] sm:max-w-none bg-gray-800 text-gray-100 text-xs px-3 py-2 rounded-md shadow-md pointer-events-none z-10"
           >
             Active for both App & Prompt Tester Site
           </motion.div>
@@ -363,7 +363,7 @@ const confirmDeletePrompt = async () => {
         <p className="text-gray-300 text-center mt-6">No prompts available.</p>
       ) : (
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -492,14 +492,13 @@ const confirmDeletePrompt = async () => {
       />
 
 
-{/* Duplicate Modal */}
 <AnimatePresence>
   {showDuplicateModal && (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-3 sm:p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 px-4 py-6"
       onClick={() => setShowDuplicateModal(false)}
     >
       <motion.div
@@ -508,8 +507,11 @@ const confirmDeletePrompt = async () => {
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.25 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-gray-800 text-white rounded-xl p-5 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-700 overflow-y-auto max-h-[90vh]"
+        className="bg-gray-800 text-white rounded-xl p-5 sm:p-6 w-full max-w-[calc(100%-2rem)] sm:max-w-md shadow-2xl border border-gray-700 overflow-y-auto max-h-[85vh]"
       >
+        <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">
+          Duplicate Prompt
+        </h2>
         <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-5">
           Create a copy of this prompt with a new title
         </p>
@@ -552,14 +554,14 @@ const confirmDeletePrompt = async () => {
   )}
 </AnimatePresence>
 
-{/* Password Modal */}
+// 4. Fix Password Modal (line ~534)
 <AnimatePresence>
   {showPasswordModal && (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-3 sm:p-4"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4 py-6"
       onClick={() => setShowPasswordModal(false)}
     >
       <motion.div
@@ -568,7 +570,7 @@ const confirmDeletePrompt = async () => {
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.25 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-gray-800 border border-gray-700 text-white rounded-xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-sm sm:max-w-md overflow-y-auto max-h-[90vh]"
+        className="bg-gray-800 border border-gray-700 text-white rounded-xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-[calc(100%-2rem)] sm:max-w-md overflow-y-auto max-h-[85vh]"
       >
         <h2 className="text-base sm:text-lg font-semibold mb-3">
           Confirm Deletion
@@ -583,13 +585,13 @@ const confirmDeletePrompt = async () => {
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 pr-10 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm sm:text-base"
+            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 pr-10 sm:pr-12 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm sm:text-base"
             autoFocus
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-200"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
           >
             {!showPassword ? (
               <svg
