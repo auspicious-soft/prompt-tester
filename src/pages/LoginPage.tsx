@@ -3,6 +3,7 @@ import { motion, Variants } from "framer-motion";
 import { postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 function LoginPage() {
   const [email, setEmail] = useState<string>("");
@@ -21,10 +22,10 @@ function LoginPage() {
         navigate("/prompt-testing")
       }
       else{
-        console.log("error")
+        toast.error("error")
       }
-    } catch (error) {
-      console.log(error)
+    } catch (error : any) {
+      toast.error(error.response.data.message)
     }
     finally{
       setLoading(false)

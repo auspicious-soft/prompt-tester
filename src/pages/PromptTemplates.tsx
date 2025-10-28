@@ -492,29 +492,30 @@ const confirmDeletePrompt = async () => {
       />
 
 
+{/* Duplicate Modal */}
 <AnimatePresence>
   {showDuplicateModal && (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 px-4"
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-3 sm:p-4"
       onClick={() => setShowDuplicateModal(false)}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ duration: 0.2 }}
-        className="bg-gray-800 text-white rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-700"
+        transition={{ duration: 0.25 }}
         onClick={(e) => e.stopPropagation()}
+        className="bg-gray-800 text-white rounded-xl p-5 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-700 overflow-y-auto max-h-[90vh]"
       >
-        <p className="text-sm text-gray-400 mb-5">
+        <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-5">
           Create a copy of this prompt with a new title
         </p>
-        
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+
+        <div className="mb-5 sm:mb-6">
+          <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
             New Prompt Title
           </label>
           <input
@@ -522,26 +523,26 @@ const confirmDeletePrompt = async () => {
             placeholder="Enter New Title"
             value={duplicateTitle}
             onChange={(e) => setDuplicateTitle(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
             autoFocus
           />
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             onClick={() => {
               setShowDuplicateModal(false);
               setDuplicateTitle("");
               setSelectedDuplicateId(null);
             }}
-            className="px-5 py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium text-sm sm:text-base"
           >
             Cancel
           </button>
           <button
             onClick={handleDuplicatePrompt}
             disabled={!duplicateTitle.trim()}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 font-medium text-sm sm:text-base"
           >
             Duplicate Prompt
           </button>
@@ -551,14 +552,14 @@ const confirmDeletePrompt = async () => {
   )}
 </AnimatePresence>
 
-
+{/* Password Modal */}
 <AnimatePresence>
   {showPasswordModal && (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-3 sm:p-4"
       onClick={() => setShowPasswordModal(false)}
     >
       <motion.div
@@ -567,20 +568,22 @@ const confirmDeletePrompt = async () => {
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.25 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-gray-800 border border-gray-700 text-white rounded-2xl shadow-2xl p-6 w-full max-w-md"
+        className="bg-gray-800 border border-gray-700 text-white rounded-xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-sm sm:max-w-md overflow-y-auto max-h-[90vh]"
       >
-        <h2 className="text-lg font-semibold mb-3">Confirm Deletion</h2>
-        <p className="text-sm text-gray-400 mb-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-3">
+          Confirm Deletion
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-400 mb-5 sm:mb-6">
           Enter your admin password to delete this prompt permanently.
         </p>
 
-        <div className="relative mb-6">
+        <div className="relative mb-5 sm:mb-6">
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2.5 pr-10 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 pr-10 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm sm:text-base"
             autoFocus
           />
           <button
@@ -621,21 +624,20 @@ const confirmDeletePrompt = async () => {
           </button>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             onClick={() => {
               setShowPasswordModal(false);
               setPassword("");
               setDeletingPromptId(null);
             }}
-            className="px-5 py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium text-sm sm:text-base"
           >
             Cancel
           </button>
-
           <button
             onClick={confirmDeletePrompt}
-            className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 font-medium"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 font-medium text-sm sm:text-base"
           >
             Delete
           </button>
