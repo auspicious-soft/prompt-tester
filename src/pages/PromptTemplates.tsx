@@ -554,7 +554,6 @@ const confirmDeletePrompt = async () => {
   )}
 </AnimatePresence>
 
-// 4. Fix Password Modal (line ~534)
 <AnimatePresence>
   {showPasswordModal && (
     <motion.div
