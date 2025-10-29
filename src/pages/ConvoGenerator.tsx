@@ -9,7 +9,10 @@ interface ConvoGeneratorProps {
   setGlobalLoading: (loading: boolean) => void;
 }
 
-const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({ setGlobalLoading }) => {  const [maleName, setMaleName] = useState("");
+const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
+  setGlobalLoading,
+}) => {
+  const [maleName, setMaleName] = useState("");
   const [femaleName, setFemaleName] = useState("");
   const [language, setLanguage] = useState("english");
   const [dialect, setDialect] = useState("");
@@ -25,8 +28,8 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({ setGlobalLoading }) => 
   const [loading, setLoading] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-const [customMin, setCustomMin] = useState("");
-const [customMax, setCustomMax] = useState("");
+  const [customMin, setCustomMin] = useState("");
+  const [customMax, setCustomMax] = useState("");
 
   // Options (synced with JSON)
   const languages = [
@@ -105,10 +108,9 @@ const [customMax, setCustomMax] = useState("");
     if (!conversationLength)
       newErrors.conversationLength = "Conversation length is required";
     if (conversationLength === "custom") {
-  if (!customMin) newErrors.customMin = "Min messages required";
-  if (!customMax) newErrors.customMax = "Max messages required";
-}
-
+      if (!customMin) newErrors.customMin = "Min messages required";
+      if (!customMax) newErrors.customMax = "Max messages required";
+    }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -121,7 +123,7 @@ const [customMax, setCustomMax] = useState("");
   const handleGenerate = async () => {
     if (!validateForm()) return;
     setLoading(true);
-    setGlobalLoading(true);  // ← Use global
+    setGlobalLoading(true); // ← Use global
     setConversation([]);
     setSystemPrompt("");
     setMetaData(null);
@@ -130,17 +132,20 @@ const [customMax, setCustomMax] = useState("");
       const body = {
         maleName,
         femaleName,
-        language,
-        dialect: language === "english" ? "" : dialect,
-        tone,
+        maleLanguage: language,
+        femaleLanguage: language,
+        maleDialect: language === "english" ? "" : dialect,
+        femaleDialect: language === "english" ? "" : dialect,
+        maleTone: tone,
+        femaleTone: tone,
         scenarioCategory,
         scenarioSubCategory: scenarioSub,
         relationshipLevel,
         conversationLength,
-  ...(conversationLength === "custom" && {
-    customMin: Number(customMin),
-    customMax: Number(customMax),
-  }),
+        ...(conversationLength === "custom" && {
+          customMin: Number(customMin),
+          customMax: Number(customMax),
+        }),
       };
 
       const res = await postApi(URLS.generateConversation, body);
@@ -170,9 +175,9 @@ const [customMax, setCustomMax] = useState("");
     }
   };
 
-return (
+  return (
     <div className="min-h-screen  py-8 px-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -188,15 +193,17 @@ return (
           <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
             Conversation Generator
           </h2>
-          <p className="text-gray-400 text-sm">Create authentic conversations with AI-powered generation</p>
+          <p className="text-gray-400 text-sm">
+            Create authentic conversations with AI-powered generation
+          </p>
         </motion.div>
 
         {/* Form with staggered animation */}
-        <motion.div 
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={{
-            visible: { transition: { staggerChildren: 0.05 } }
+            visible: { transition: { staggerChildren: 0.05 } },
           }}
           className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8"
         >
@@ -204,7 +211,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -219,7 +226,7 @@ return (
             />
             <AnimatePresence>
               {errors.maleName && (
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -235,7 +242,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -250,7 +257,7 @@ return (
             />
             <AnimatePresence>
               {errors.femaleName && (
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -266,7 +273,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -289,7 +296,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -318,7 +325,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -346,7 +353,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -378,7 +385,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -401,7 +408,7 @@ return (
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
           >
             <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
@@ -423,10 +430,10 @@ return (
           </motion.div>
 
           {/* Conversation Length */}
-          <motion.div 
+          <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
+              visible: { opacity: 1, y: 0 },
             }}
             className="col-span-1 sm:col-span-2"
           >
@@ -481,7 +488,7 @@ return (
         </motion.div>
 
         {/* Generate Button with gradient */}
-      <motion.button
+        <motion.button
           onClick={handleGenerate}
           disabled={loading}
           whileHover={{
@@ -498,12 +505,9 @@ return (
           {loading ? "Generating..." : "Generate Conversation"}
         </motion.button>
 
-
-   
-
         {/* System Prompt with smooth reveal */}
         {systemPrompt && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="mt-8 text-center"
@@ -527,7 +531,7 @@ return (
                   className="bg-gray-900/80 backdrop-blur-sm text-gray-200 mt-4 p-5 rounded-xl text-xs sm:text-sm border border-gray-700/50 max-h-64 overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words shadow-inner select-text cursor-text"
                   style={{
                     scrollbarWidth: "thin",
-                    scrollbarColor: "#4B5563 transparent"
+                    scrollbarColor: "#4B5563 transparent",
                   }}
                 >
                   {systemPrompt}
@@ -548,10 +552,10 @@ return (
               className="mt-8 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl max-h-[500px] overflow-y-auto space-y-4"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#4B5563 transparent"
+                scrollbarColor: "#4B5563 transparent",
               }}
             >
-              <motion.h3 
+              <motion.h3
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-lg font-semibold text-center mb-4 bg-gradient-to-r from-blue-400 to-pink-400 bg-clip-text text-transparent"
@@ -565,21 +569,23 @@ return (
                     key={i}
                     initial={{ opacity: 0, x: isMale ? -50 : 50, scale: 0.8 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
-                    transition={{ 
-                      duration: 0.4, 
+                    transition={{
+                      duration: 0.4,
                       delay: i * 0.1,
                       type: "spring",
                       stiffness: 260,
-                      damping: 20
+                      damping: 20,
                     }}
-                    className={`flex ${isMale ? "justify-start" : "justify-end"}`}
+                    className={`flex ${
+                      isMale ? "justify-start" : "justify-end"
+                    }`}
                   >
                     <motion.div
                       whileHover={{
                         y: -2,
-                        boxShadow: isMale 
+                        boxShadow: isMale
                           ? "0 8px 20px rgba(59, 130, 246, 0.4)"
-                          : "0 8px 20px rgba(236, 72, 153, 0.4)"
+                          : "0 8px 20px rgba(236, 72, 153, 0.4)",
                       }}
                       className={`px-5 py-3 rounded-2xl max-w-[80%] sm:max-w-[70%] text-sm sm:text-base relative cursor-text select-text ${
                         isMale
@@ -596,9 +602,11 @@ return (
                         {msg}
                       </motion.div>
                       {/* Subtle glow effect */}
-                      <div className={`absolute inset-0 rounded-2xl opacity-0 hover:opacity-20 transition-opacity duration-300 pointer-events-none ${
-                        isMale ? "bg-blue-400" : "bg-pink-400"
-                      }`} />
+                      <div
+                        className={`absolute inset-0 rounded-2xl opacity-0 hover:opacity-20 transition-opacity duration-300 pointer-events-none ${
+                          isMale ? "bg-blue-400" : "bg-pink-400"
+                        }`}
+                      />
                     </motion.div>
                   </motion.div>
                 );
@@ -609,24 +617,26 @@ return (
 
         {/* Metadata with gradient styling */}
         {metaData && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="mt-6 text-xs sm:text-sm text-gray-400 text-center bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/30"
           >
             <p className="flex flex-wrap justify-center gap-x-4 gap-y-2">
-              <span className="text-blue-400 font-medium">Model:</span> 
+              <span className="text-blue-400 font-medium">Model:</span>
               <span>{metaData.model}</span>
               <span className="text-purple-400">•</span>
-              <span className="text-blue-400 font-medium">Temp:</span> 
+              <span className="text-blue-400 font-medium">Temp:</span>
               <span>{metaData.temperature}</span>
               <span className="text-purple-400">•</span>
-              <span className="text-blue-400 font-medium">Tokens:</span> 
+              <span className="text-blue-400 font-medium">Tokens:</span>
               <span>{metaData.tokens}</span>
               <span className="text-purple-400">•</span>
-              <span className="text-blue-400 font-medium">Est. Cost:</span> 
-              <span className="text-green-400">${metaData.cost?.toFixed(6)}</span>
+              <span className="text-blue-400 font-medium">Est. Cost:</span>
+              <span className="text-green-400">
+                ${metaData.cost?.toFixed(6)}
+              </span>
             </p>
           </motion.div>
         )}
