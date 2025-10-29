@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion, Variants } from "framer-motion";
+import { AnimatePresence, motion, Variants } from "framer-motion";
 import { getApi, postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import TypingLoader from "../utils/Lodaer";
 import { createPortal } from "react-dom";
 import { User, User2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ConvoGenerator from "./ConvoGenerator";
 
 interface FullPrompt {
   role: string;
@@ -23,9 +24,9 @@ interface FullPrompt {
 }
 
 const PromptGenerator: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"generator" | "templates">(
-    "generator"
-  );
+ const [activeTab, setActiveTab] = useState<
+    "generator" | "templates" | "conversation"
+  >("conversation");
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
   >("GetPickUpLine");
@@ -64,9 +65,14 @@ const PromptGenerator: React.FC = () => {
     totalTokens: number;
     estimatedCost: number;
   } | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
+const [globalLoading, setGlobalLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+    const adminRole = localStorage.getItem("adminRole") || "admin";
+
+
   const handleChange = (
     setter: React.Dispatch<React.SetStateAction<any>>,
     value: any
@@ -141,9 +147,9 @@ const PromptGenerator: React.FC = () => {
     }
 
     if (temperature < 0 || temperature > 2) {
-  toast.error("Temperature must be between 0 and 2");
-  return;
-}
+      toast.error("Temperature must be between 0 and 2");
+      return;
+    }
 
     if (selectedType === "ManualReply" && !message.trim()) {
       toast.error("Message cannot be empty");
@@ -229,7 +235,7 @@ const PromptGenerator: React.FC = () => {
             setResponses(response.data.data.reply || []);
             setTranslatedText(response.data.data.translatedText || []);
             setFullPrompt(response.data.data.fullPrompt || null);
-           setModelUsed(response.data.data.fullPrompt?.modelUsed || null);
+            setModelUsed(response.data.data.fullPrompt?.modelUsed || null);
             setTemperatureUsed(
               response.data.data.fullPrompt?.temperatureUsed || null
             );
@@ -267,9 +273,9 @@ const PromptGenerator: React.FC = () => {
 
   useEffect(() => {
     if (isPreviewOpen) {
-      document.body.style.overflow = "hidden"; 
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ""; 
+      document.body.style.overflow = "";
     }
 
     return () => {
@@ -299,8 +305,7 @@ const PromptGenerator: React.FC = () => {
     setTranslatedAccordionOpen(!translatedAccordionOpen);
   };
 
-
-     useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -311,79 +316,102 @@ const PromptGenerator: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = async () =>{
-    localStorage.removeItem("token")
-    navigate("/")
-    setIsOpen(false)
-  } 
+  const handleLogout = async () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("adminRole");
+
+    navigate("/");
+    setIsOpen(false);
+  };
+
+   const visibleTabs =
+    adminRole === "superAdmin"
+      ? ["generator", "templates", "conversation"]
+      : ["conversation"];
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-start p-4 sm:p-6">
       {/* Top Tabs */}
 
-     <div className="absolute top-4 right-4" ref={menuRef}>
-      <div className="relative">
-        <button
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center focus:outline-none transition-all duration-300"
-        >
-          <User2 />
-        </button>
+      <div className="absolute top-4 right-4" ref={menuRef}>
+        <div className="relative">
+          <button
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center focus:outline-none transition-all duration-300"
+          >
+            <User2 />
+          </button>
 
-       {isOpen && (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.95 }}
-    transition={{ duration: 0.15 }}
-    className="absolute right-0 mt-2 w-32 sm:w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
-  >
-    <button
-      onClick={handleLogout}
-      className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 rounded-md"
-    >
-      Logout
-    </button>
-  </motion.div>
-)}
-
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-0 mt-2 w-32 sm:w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
+            >
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 rounded-md"
+              >
+                Logout
+              </button>
+            </motion.div>
+          )}
+        </div>
       </div>
-    </div>
 
-
-      <motion.div
+     <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
         className="w-full max-w-4xl flex flex-col sm:flex-row justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-2"
       >
-        <button
-          onClick={() => {
-            setActiveTab("generator");
-            resetGeneratorTab(); // <-- add this
-          }}
-          className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg sm:rounded-l-lg transition-all duration-300 ${
-            activeTab === "generator"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-        >
-          Prompt Generator
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("templates");
-            resetGeneratorTab();
-          }}
-          className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg sm:rounded-r-lg transition-all duration-300 ${
-            activeTab === "templates"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-        >
-          Prompt Templates
-        </button>
-      </motion.div>
+        {visibleTabs.includes("generator") && (
+          <button
+            onClick={() => {
+              setActiveTab("generator");
+              resetGeneratorTab();
+            }}
+            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
+              activeTab === "generator"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Prompt Generator
+          </button>
+        )}
 
+        {visibleTabs.includes("templates") && (
+          <button
+            onClick={() => {
+              setActiveTab("templates");
+              resetGeneratorTab();
+            }}
+            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
+              activeTab === "templates"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Prompt Templates
+          </button>
+        )}
+
+        {visibleTabs.includes("conversation") && (
+          <button
+            onClick={() => setActiveTab("conversation")}
+            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
+              activeTab === "conversation"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Conversation Generator
+          </button>
+        )}
+      </motion.div>
       {activeTab === "generator" && (
         <motion.div
           variants={containerVariants}
@@ -445,23 +473,22 @@ const PromptGenerator: React.FC = () => {
 
               {/* Temperature Dropdown */}
               <div>
-  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-    Temperature (Use between 0 and 2)
-  </label>
-  <input
-    type="number"
-    step="0.1"
-    value={temperature}
-    onChange={(e) => setTemperature(parseFloat(e.target.value))}
-    className="w-full px-3 py-1.5 sm:py-2 rounded-lg border text-xs sm:text-sm
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                  Temperature (Use between 0 and 2)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={temperature}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg border text-xs sm:text-sm
       focus:outline-none focus:ring-2 focus:ring-blue-500
       border-gray-600 bg-gray-700 text-gray-100 
       [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-    placeholder="Enter temperature (0 - 2)"
-    required
-  />
-</div>
-
+                  placeholder="Enter temperature (0 - 2)"
+                  required
+                />
+              </div>
             </motion.div>
 
             {/* Grid for Input Fields */}
@@ -631,8 +658,7 @@ const PromptGenerator: React.FC = () => {
                 {isPreviewOpen &&
                   imageFile &&
                   createPortal(
-                   <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
-
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
                       {/* Full-page blur layer */}
                       <div
                         className="absolute inset-0 backdrop-blur-md"
@@ -855,55 +881,75 @@ const PromptGenerator: React.FC = () => {
                   </motion.div>
                 </div>
 
-{(modelUsed || temperatureUsed || tokenUsage) && (
-  <div className="mt-5 sm:mt-6 p-4 sm:p-5 bg-gray-800 rounded-xl border border-gray-700 shadow-md hover:shadow-lg transition-all duration-300">
-    <h5 className="text-base sm:text-lg font-semibold text-gray-100 mb-4 border-b border-gray-700 pb-2">
-      ⚙️ Model & Token Details
-    </h5>
+                {(modelUsed || temperatureUsed || tokenUsage) && (
+                  <div className="mt-5 sm:mt-6 p-4 sm:p-5 bg-gray-800 rounded-xl border border-gray-700 shadow-md hover:shadow-lg transition-all duration-300">
+                    <h5 className="text-base sm:text-lg font-semibold text-gray-100 mb-4 border-b border-gray-700 pb-2">
+                      ⚙️ Model & Token Details
+                    </h5>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-xs sm:text-sm text-gray-200">
-      {modelUsed && (
-        <div className="flex justify-between items-center border-b border-gray-700 pb-1">
-          <span className="font-medium text-gray-300">Model Used</span>
-          <span className="text-gray-400">{modelUsed}</span>
-        </div>
-      )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-xs sm:text-sm text-gray-200">
+                      {modelUsed && (
+                        <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+                          <span className="font-medium text-gray-300">
+                            Model Used
+                          </span>
+                          <span className="text-gray-400">{modelUsed}</span>
+                        </div>
+                      )}
 
-      {temperatureUsed !== null && (
-        <div className="flex justify-between items-center border-b border-gray-700 pb-1">
-          <span className="font-medium text-gray-300">Temperature</span>
-          <span className="text-gray-400">{temperatureUsed}</span>
-        </div>
-      )}
+                      {temperatureUsed !== null && (
+                        <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+                          <span className="font-medium text-gray-300">
+                            Temperature
+                          </span>
+                          <span className="text-gray-400">
+                            {temperatureUsed}
+                          </span>
+                        </div>
+                      )}
 
-      {tokenUsage && (
-        <>
-          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
-            <span className="font-medium text-gray-300">Input Tokens</span>
-            <span className="text-gray-400">{tokenUsage.inputTokens}</span>
-          </div>
+                      {tokenUsage && (
+                        <>
+                          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+                            <span className="font-medium text-gray-300">
+                              Input Tokens
+                            </span>
+                            <span className="text-gray-400">
+                              {tokenUsage.inputTokens}
+                            </span>
+                          </div>
 
-          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
-            <span className="font-medium text-gray-300">Output Tokens</span>
-            <span className="text-gray-400">{tokenUsage.outputTokens}</span>
-          </div>
+                          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+                            <span className="font-medium text-gray-300">
+                              Output Tokens
+                            </span>
+                            <span className="text-gray-400">
+                              {tokenUsage.outputTokens}
+                            </span>
+                          </div>
 
-          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
-            <span className="font-medium text-gray-300">Total Tokens</span>
-            <span className="text-gray-400">{tokenUsage.totalTokens}</span>
-          </div>
+                          <div className="flex justify-between items-center border-b border-gray-700 pb-1">
+                            <span className="font-medium text-gray-300">
+                              Total Tokens
+                            </span>
+                            <span className="text-gray-400">
+                              {tokenUsage.totalTokens}
+                            </span>
+                          </div>
 
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-gray-300">Estimated Cost</span>
-            <span className="text-green-400 font-semibold">
-              ${tokenUsage.estimatedCost.toFixed(5)}
-            </span>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-)}
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-300">
+                              Estimated Cost
+                            </span>
+                            <span className="text-green-400 font-semibold">
+                              ${tokenUsage.estimatedCost.toFixed(5)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <h4 className="text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
@@ -978,15 +1024,11 @@ const PromptGenerator: React.FC = () => {
                       </motion.div>
                     </div>
                   )}
-
-
               </motion.div>
             )}
           </div>
         </motion.div>
       )}
-
- 
 
       {activeTab === "templates" && (
         <motion.div
@@ -997,7 +1039,31 @@ const PromptGenerator: React.FC = () => {
         </motion.div>
       )}
 
+          {activeTab === "conversation" && (
+        <motion.div
+          variants={itemVariants}
+          className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
+        >
+<ConvoGenerator setGlobalLoading={setGlobalLoading} />        </motion.div>
+      )}
+
       {loading && <TypingLoader />}
+      <AnimatePresence>
+  {globalLoading && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+    >
+  
+      <div className="relative z-10 pointer-events-auto">
+        <TypingLoader />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
     </div>
   );
 };

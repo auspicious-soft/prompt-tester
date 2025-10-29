@@ -8,31 +8,32 @@ import { toast } from "sonner";
 function LoginPage() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await postApi(`${URLS.login}`,{email, password})
-      if(response.status === 200){
+      const response = await postApi(`${URLS.login}`, { email, password });
+      if (response.status === 200) {
         const token = response?.data?.data?.token;
-        localStorage.setItem("token",token);
-        navigate("/prompt-testing")
+        const adminRole = response?.data?.data?.role;
+        localStorage.setItem("token", token);
+        localStorage.setItem("adminRole", adminRole);
+
+        navigate("/prompt-testing");
+      } else {
+        toast.error("error");
       }
-      else{
-        toast.error("error")
-      }
-    } catch (error : any) {
-      toast.error(error.response.data.message)
-    }
-    finally{
-      setLoading(false)
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    } finally {
+      setLoading(false);
     }
   };
 
- const containerVariants: Variants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, scale: 0.9 },
     visible: {
       opacity: 1,
@@ -55,8 +56,7 @@ function LoginPage() {
     },
   };
 
-
-   useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem("token");
 
     if (token) {
@@ -64,9 +64,8 @@ function LoginPage() {
     }
   }, []);
 
-
   return (
- <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03),transparent_50%)] pointer-events-none"></div>
       <motion.div
         variants={containerVariants}
@@ -75,7 +74,7 @@ function LoginPage() {
         className="w-full max-w-md bg-gray-800/80 backdrop-blur-md rounded-3xl shadow-lg p-8 border border-gray-700 relative z-10"
       >
         <h2 className="text-3xl font-extrabold text-gray-100 text-center mb-8 tracking-tight">
-         Prompt Testing Login
+          Prompt Testing Login
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <motion.div variants={childVariants}>
@@ -106,7 +105,10 @@ function LoginPage() {
           </motion.div>
           <motion.button
             variants={childVariants}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(59, 130, 246, 0.4)" }}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0 0 15px rgba(59, 130, 246, 0.4)",
+            }}
             whileTap={{ scale: 0.95 }}
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition-all duration-300"

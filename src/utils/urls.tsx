@@ -1,5 +1,9 @@
 // const baseUrl = "http://localhost:8001/api/admin";
+// const commonBaseUrl = "http://localhost:8001/api";
 const baseUrl = "https://api.habibirizz.app/api/admin";
+const commonBaseUrl = "https://api.habibirizz.app/api";
+
+
 
 export const URLS = {
   login: `${baseUrl}/login`,
@@ -17,5 +21,6 @@ export const URLS = {
 
   promotePromptVersion: `${baseUrl}/promote-prompt`,
   promoteWebPromptVersion: `${baseUrl}/promote-web-prompt`,
-  duplicatePrompt:`${baseUrl}/duplicate-prompt`
+  duplicatePrompt:`${baseUrl}/duplicate-prompt`,
+  generateConversation:`${commonBaseUrl}/conversation/generate`
 };
