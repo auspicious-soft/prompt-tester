@@ -125,7 +125,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     setLoading(true);
     setGlobalLoading(true); // ← Use global
     setConversation([]);
-    setSystemPrompt("");
+    setSystemPrompt("");  
     setMetaData(null);
 
     try {
