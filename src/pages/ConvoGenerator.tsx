@@ -369,6 +369,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   : "bg-gray-700/50 border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer"
               }`}
             >
+                  
               <option value="">Select Subcategory</option>
               {scenarioCategory &&
                 scenarios[scenarioCategory].map((sub) => (
@@ -379,7 +380,22 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   </option>
                 ))}
             </select>
+              <AnimatePresence>
+              {errors.scenarioSub && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs text-red-400 mt-1"
+                >
+                  {errors.scenarioSub}
+                </motion.p>
+              )}
+              </AnimatePresence>
+
           </motion.div>
+
+       
 
           {/* Tone */}
           <motion.div
@@ -471,6 +487,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                       className="p-3 bg-gray-700/50 rounded-xl w-1/2 outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all duration-300
                       [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
+
                     <input
                       type="number"
                       min="1"
@@ -483,7 +500,21 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   </motion.div>
                 )}
               </AnimatePresence>
+
             </div>
+             <AnimatePresence>
+              {errors.customMax && errors.customMin && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs text-red-400 mt-1"
+                >
+                  {errors.customMin} , {errors.customMax} 
+                </motion.p>
+              )}
+              </AnimatePresence>
+
           </motion.div>
         </motion.div>
 
