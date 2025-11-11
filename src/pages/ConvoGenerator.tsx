@@ -460,12 +460,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
           </p>
         </motion.div>
 
-        {editMode ? (
-          <ConversationPromptEditor
-            keyValue="conversation_prompt_v5_1762836404699"
-            handleCancel={() => setEditMode(false)}
-          />
-        ) : (
+     
           <>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -1376,7 +1371,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </motion.div>
             )}
           </>
-        )}
+       
       </motion.div>
     </div>
   );

@@ -19,6 +19,7 @@ const itemVariants = {
 interface ConversationPromptEditorProps {
   keyValue: string;
   handleCancel?: () => void;
+  setGlobalLoading: (loading: boolean) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -28,7 +29,8 @@ const deepClone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
 const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
   keyValue,
-  handleCancel
+  handleCancel,
+  setGlobalLoading,
 }) => {
   const [promptData, setPromptData] = useState<any>(null);
   const [editedData, setEditedData] = useState<any>(null);
@@ -39,58 +41,72 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {}
   );
-  const [parentConvoId, setParentConvoId] = useState("")
+  const [parentConvoId, setParentConvoId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-const [modalType, setModalType] = useState<"scenario" | "relationshipLevel" | null>(null);
+  const [modalType, setModalType] = useState<
+    "scenario" | "relationshipLevel" | null
+  >(null);
 
-useEffect(() => {
-  if (!keyValue) return;
 
-  const fetchPrompt = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const res = await getApi(`${URLS.getConversationPrompt}?key=${keyValue}`);
-      const data = res?.data?.data?.response;
-      setParentConvoId(data._id)
-      if (!data) {
-        setError("No data found.");
-        return;
+    const fetchPrompt = async () => {
+      try {
+        setLoading(true);
+        setGlobalLoading(true);
+        setError("");
+        const res = await getApi(
+          `${URLS.getConversationPrompt}?key=${keyValue}`
+        );
+        const data = res?.data?.data?.response;
+        setParentConvoId(data._id);
+        if (!data) {
+          setError("No data found.");
+          return;
+        }
+
+        let normalizedPersonas: Record<string, any> = {};
+        if (Array.isArray(data.personaPrompts)) {
+          normalizedPersonas = data.personaPrompts.reduce(
+            (acc: any, p: any) => {
+              acc[p.key || p.title || p._id] = p;
+              return acc;
+            },
+            {}
+          );
+        } else if (
+          data.personaPrompts &&
+          typeof data.personaPrompts === "object"
+        ) {
+          Object.entries(data.personaPrompts).forEach(
+            ([k, v]: [string, any]) => {
+              if (typeof v === "object" && v._id) {
+                normalizedPersonas[k] = v;
+              }
+            }
+          );
+        }
+
+        const normalized = {
+          ...data,
+          personaPrompts: normalizedPersonas,
+        };
+
+        setPromptData(normalized);
+        setEditedData(deepClone(normalized));
+      } catch (err) {
+        console.error("Error fetching:", err);
+        toast.error("Failed to fetch conversation prompt.");
+        setError("Failed to fetch prompt data.");
+      } finally {
+        setLoading(false);
+        setGlobalLoading(false);
       }
+    };
 
-      let normalizedPersonas: Record<string, any> = {};
-      if (Array.isArray(data.personaPrompts)) {
-        normalizedPersonas = data.personaPrompts.reduce((acc: any, p: any) => {
-          acc[p.key || p.title || p._id] = p;
-          return acc;
-        }, {});
-      } else if (data.personaPrompts && typeof data.personaPrompts === "object") {
-        Object.entries(data.personaPrompts).forEach(([k, v]: [string, any]) => {
-          if (typeof v === "object" && v._id) {
-            normalizedPersonas[k] = v;
-          }
-        });
-      }
+  useEffect(() => {
+    if (!keyValue) return;
 
-      const normalized = {
-        ...data,
-        personaPrompts: normalizedPersonas,
-      };
-
-      setPromptData(normalized);
-      setEditedData(deepClone(normalized));
-    } catch (err) {
-      console.error("Error fetching:", err);
-      toast.error("Failed to fetch conversation prompt.");
-      setError("Failed to fetch prompt data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchPrompt();
-}, [keyValue]);
-
+    fetchPrompt();
+  }, [keyValue]);
 
   const toggleAccordion = (field: string) => {
     setOpenAccordions((prev) => ({
@@ -99,181 +115,197 @@ useEffect(() => {
     }));
   };
 
-const isObjectId = (s: string) => /^[a-fA-F0-9]{24}$/.test(String(s));
+  const isObjectId = (s: string) => /^[a-fA-F0-9]{24}$/.test(String(s));
 
-const updateField = useCallback((path: string[], value: any) => {
-  const pathKey = path.join(".");
-  setDirtyFields((prev) => ({ ...prev, [pathKey]: value }));
+  const updateField = useCallback((path: string[], value: any) => {
+    const pathKey = path.join(".");
+    setDirtyFields((prev) => ({ ...prev, [pathKey]: value }));
 
-  setEditedData((prev: any) => {
-    const copy = deepClone(prev);
+    setEditedData((prev: any) => {
+      const copy = deepClone(prev);
 
-    if (path[0] === "personaPrompts") {
-      const personaKey = path[1]; 
-      if (!copy.personaPrompts) copy.personaPrompts = {};
-      if (!copy.personaPrompts[personaKey]) copy.personaPrompts[personaKey] = {};
-      if (path.length === 2) {
-        copy.personaPrompts[personaKey] = value;
-      } else {
-        let node = copy.personaPrompts[personaKey];
-        for (let i = 2; i < path.length - 1; i++) {
-          const k = path[i];
-          if (node[k] == null) node[k] = {};
-          node = node[k];
-        }
-        node[path[path.length - 1]] = value;
-      }
-      return copy;
-    }
-
-    if (path.length >= 2 && isObjectId(path[1]) && Array.isArray(copy[path[0]])) {
-      const collectionName = path[0];
-      const id = path[1];
-      const rest = path.slice(2); 
-      const arr = copy[collectionName] as any[];
-
-      const newArr = arr.map((item) => {
-        const itemIdStr = String(item._id ?? item.id ?? item._doc?._id ?? "");
-        if (itemIdStr === id) {
-          const updatedItem = { ...item };
-          if (rest.length === 0) {
-            return value;
+      if (path[0] === "personaPrompts") {
+        const personaKey = path[1];
+        if (!copy.personaPrompts) copy.personaPrompts = {};
+        if (!copy.personaPrompts[personaKey])
+          copy.personaPrompts[personaKey] = {};
+        if (path.length === 2) {
+          copy.personaPrompts[personaKey] = value;
+        } else {
+          let node = copy.personaPrompts[personaKey];
+          for (let i = 2; i < path.length - 1; i++) {
+            const k = path[i];
+            if (node[k] == null) node[k] = {};
+            node = node[k];
           }
-          let node = updatedItem;
+          node[path[path.length - 1]] = value;
+        }
+        return copy;
+      }
+
+      if (
+        path.length >= 2 &&
+        isObjectId(path[1]) &&
+        Array.isArray(copy[path[0]])
+      ) {
+        const collectionName = path[0];
+        const id = path[1];
+        const rest = path.slice(2);
+        const arr = copy[collectionName] as any[];
+
+        const newArr = arr.map((item) => {
+          const itemIdStr = String(item._id ?? item.id ?? item._doc?._id ?? "");
+          if (itemIdStr === id) {
+            const updatedItem = { ...item };
+            if (rest.length === 0) {
+              return value;
+            }
+            let node = updatedItem;
+            for (let i = 0; i < rest.length - 1; i++) {
+              const k = rest[i];
+              if (node[k] == null) node[k] = {};
+              node = node[k];
+            }
+            node[rest[rest.length - 1]] = value;
+            return updatedItem;
+          }
+          return item;
+        });
+
+        copy[collectionName] = newArr;
+        return copy;
+      }
+
+      let node: any = copy;
+      for (let i = 0; i < path.length - 1; i++) {
+        const k = path[i];
+        if (node[k] == null) node[k] = {};
+        node = node[k];
+      }
+      node[path[path.length - 1]] = value;
+      return copy;
+    });
+  }, []);
+
+  const buildPatchPayload = (): any => {
+    const grouped: Record<string, Record<string, any>> = {};
+    const topLevelScalars: Record<string, any> = {};
+
+    for (const [path, val] of Object.entries(dirtyFields)) {
+      const parts = path.split(".");
+      if (parts[0] === "personaPrompts") {
+        const personaKey = parts[1];
+        const rest = parts.slice(2);
+        if (!grouped["personaPrompts"]) grouped["personaPrompts"] = {};
+        if (!grouped["personaPrompts"][personaKey])
+          grouped["personaPrompts"][personaKey] = {};
+        if (rest.length === 0) {
+          grouped["personaPrompts"][personaKey] = val;
+        } else {
+          let node = grouped["personaPrompts"][personaKey];
           for (let i = 0; i < rest.length - 1; i++) {
             const k = rest[i];
             if (node[k] == null) node[k] = {};
             node = node[k];
           }
-          node[rest[rest.length - 1]] = value;
-          return updatedItem;
+          node[rest[rest.length - 1]] = val;
         }
-        return item;
-      });
-
-      copy[collectionName] = newArr;
-      return copy;
-    }
-
-    let node: any = copy;
-    for (let i = 0; i < path.length - 1; i++) {
-      const k = path[i];
-      if (node[k] == null) node[k] = {};
-      node = node[k];
-    }
-    node[path[path.length - 1]] = value;
-    return copy;
-  });
-}, []);
-
-const buildPatchPayload = (): any => {
-  const grouped: Record<string, Record<string, any>> = {}; 
-  const topLevelScalars: Record<string, any> = {}; 
-
-  for (const [path, val] of Object.entries(dirtyFields)) {
-    const parts = path.split(".");
-    if (parts[0] === "personaPrompts") {
-      const personaKey = parts[1];
-      const rest = parts.slice(2);
-      if (!grouped["personaPrompts"]) grouped["personaPrompts"] = {};
-      if (!grouped["personaPrompts"][personaKey]) grouped["personaPrompts"][personaKey] = {};
-      if (rest.length === 0) {
-        grouped["personaPrompts"][personaKey] = val;
+      } else if (parts.length >= 2 && isObjectId(parts[1])) {
+        const collection = parts[0];
+        const id = parts[1];
+        const rest = parts.slice(2);
+        if (!grouped[collection]) grouped[collection] = {};
+        if (!grouped[collection][id]) grouped[collection][id] = {};
+        if (rest.length === 0) {
+          grouped[collection][id] = val;
+        } else {
+          let node = grouped[collection][id];
+          for (let i = 0; i < rest.length - 1; i++) {
+            const k = rest[i];
+            if (node[k] == null) node[k] = {};
+            node = node[k];
+          }
+          node[rest[rest.length - 1]] = val;
+        }
       } else {
-        let node = grouped["personaPrompts"][personaKey];
-        for (let i = 0; i < rest.length - 1; i++) {
-          const k = rest[i];
+        let node = topLevelScalars;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const k = parts[i];
           if (node[k] == null) node[k] = {};
           node = node[k];
         }
-        node[rest[rest.length - 1]] = val;
+        node[parts[parts.length - 1]] = val;
       }
-    } else if (parts.length >= 2 && isObjectId(parts[1])) {
-      const collection = parts[0]; 
-      const id = parts[1];
-      const rest = parts.slice(2);
-      if (!grouped[collection]) grouped[collection] = {};
-      if (!grouped[collection][id]) grouped[collection][id] = {};
-      if (rest.length === 0) {
-        grouped[collection][id] = val;
+    }
+
+    const payload: any = { ...topLevelScalars };
+
+    for (const [collection, map] of Object.entries(grouped)) {
+      if (collection === "personaPrompts") {
+        payload.personaPrompts = Object.entries(map).map(
+          ([personaKey, updates]) => {
+            const personaId =
+              promptData?.personaPrompts?.[personaKey] ||
+              editedData?.personaPrompts?.[personaKey] ||
+              personaKey;
+
+            return {
+              id: personaId._id,
+              updates,
+            };
+          }
+        );
       } else {
-        let node = grouped[collection][id];
-        for (let i = 0; i < rest.length - 1; i++) {
-          const k = rest[i];
-          if (node[k] == null) node[k] = {};
-          node = node[k];
-        }
-        node[rest[rest.length - 1]] = val;
+        payload[collection] = Object.entries(map).map(([id, updates]) => ({
+          id,
+          updates,
+        }));
       }
-    } else {
-      let node = topLevelScalars;
-      for (let i = 0; i < parts.length - 1; i++) {
-        const k = parts[i];
-        if (node[k] == null) node[k] = {};
-        node = node[k];
+    }
+    return payload;
+  };
+
+  const handleSave = async () => {
+    if (Object.keys(dirtyFields).length === 0) {
+      toast.info("No changes to save.");
+      return;
+    }
+
+    setSaving(true);
+          setGlobalLoading(true);
+
+    try {
+      const payload = buildPatchPayload();
+
+      delete payload._id;
+      delete payload.key;
+      delete payload.createdAt;
+      delete payload.updatedAt;
+
+      const res = await patchApi(
+        `${URLS.updateConversationPrompt}/${promptData._id}`,
+        payload
+      );
+
+      if (res?.data?.data?.updatedPrompt) {
+        const fresh = res.data.data.updatedPrompt;
+        fetchPrompt()
+        setPromptData(fresh);
+        setEditedData(deepClone(fresh));
+        setDirtyFields({});
+        toast.success("Saved successfully!");
+      } else {
+        throw new Error("No updated document returned");
       }
-      node[parts[parts.length - 1]] = val;
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast.error(err?.response?.data?.message || "Save failed");
+    } finally {
+      setSaving(false);
+            setGlobalLoading(false);
+
     }
-  }
-
-  const payload: any = { ...topLevelScalars };
-
- for (const [collection, map] of Object.entries(grouped)) {
-  if (collection === "personaPrompts") {
-    payload.personaPrompts = Object.entries(map).map(([personaKey, updates]) => {
-      const personaId =
-        promptData?.personaPrompts?.[personaKey] ||
-        editedData?.personaPrompts?.[personaKey] ||
-        personaKey;
-
-      return {
-        id: personaId._id,
-        updates,
-      };
-    });
-  } else {
-    payload[collection] = Object.entries(map).map(([id, updates]) => ({
-      id,
-      updates,
-    }));
-  }
-}
-  return payload;
-};
-
-const handleSave = async () => {
-  if (Object.keys(dirtyFields).length === 0) {
-    toast.info("No changes to save.");
-    return;
-  }
-
-  setSaving(true);
-  try {
-    const payload = buildPatchPayload();
-
-    delete payload._id;
-    delete payload.key;
-    delete payload.createdAt;
-    delete payload.updatedAt;
-
-    const res = await patchApi(`${URLS.updateConversationPrompt}/${promptData._id}`, payload);
-
-    if (res?.data?.updatedPrompt) {
-      const fresh = res.data.updatedPrompt;
-      setPromptData(fresh);
-      setEditedData(deepClone(fresh));
-      setDirtyFields({});
-      toast.success("Saved successfully!");
-    } else {
-      throw new Error("No updated document returned");
-    }
-  } catch (err: any) {
-    console.error("Save error:", err);
-    toast.error(err?.response?.data?.message || "Save failed");
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   const handleCancelMain = () => {
     setPromptData(null);
@@ -282,59 +314,63 @@ const handleSave = async () => {
     handleCancel?.();
   };
 
+  /* ---------------- Delete Scenario ---------------- */
+  const handleDeleteScenario = async (scenarioId: string) => {
+    try {
+      if (!promptData?._id) {
+        toast.error("mainConvoId is missing");
+        return;
+      }
 
-/* ---------------- Delete Scenario ---------------- */
-const handleDeleteScenario = async (scenarioId: string) => {
-  try {
-    if (!promptData?._id) {
-      toast.error("mainConvoId is missing");
-      return;
+      const payload = { mainConvoId: promptData._id, scenarioId };
+
+      const mainConvoId = promptData._id;
+
+      const res = await deleteApi(
+        `${URLS.deleteScenarioAndDetach}?mainConvoId=${mainConvoId}&scenarioId=${scenarioId}`
+      );
+      toast.success("Scenario deleted successfully!");
+
+      // Remove from local state
+      setEditedData((prev: any) => ({
+        ...prev,
+        scenarios: prev?.scenarios?.filter((s: any) => s._id !== scenarioId),
+      }));
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to delete scenario");
     }
+  };
 
-    const payload = { mainConvoId: promptData._id, scenarioId };
+  /* ---------------- Delete Relationship Level ---------------- */
+  const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
+    try {
+      if (!promptData?._id) {
+        toast.error("mainConvoId is missing");
+        return;
+      }
 
-   const mainConvoId = promptData._id;
+      const mainConvoId = promptData._id;
 
-    const res = await deleteApi(`${URLS.deleteScenarioAndDetach}?mainConvoId=${mainConvoId}&scenarioId=${scenarioId}`);
-    toast.success("Scenario deleted successfully!");
+      const res = await deleteApi(
+        `${URLS.deleteRelationshipLevelAndDetach}?mainConvoId=${mainConvoId}&relationshipLevelId=${relationshipLevelId}`
+      );
+      toast.success("Relationship level deleted successfully!");
 
-    // Remove from local state
-    setEditedData((prev: any) => ({
-      ...prev,
-      scenarios: prev?.scenarios?.filter((s: any) => s._id !== scenarioId),
-    }));
-  } catch (err: any) {
-    console.error(err);
-    toast.error(err?.response?.data?.message || "Failed to delete scenario");
-  }
-};
-
-/* ---------------- Delete Relationship Level ---------------- */
-const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
-  try {
-    if (!promptData?._id) {
-      toast.error("mainConvoId is missing");
-      return;
+      // Remove from local state
+      setEditedData((prev: any) => ({
+        ...prev,
+        relationshipLevels: prev?.relationshipLevels?.filter(
+          (r: any) => r._id !== relationshipLevelId
+        ),
+      }));
+    } catch (err: any) {
+      console.error(err);
+      toast.error(
+        err?.response?.data?.message || "Failed to delete relationship level"
+      );
     }
-
-    const mainConvoId = promptData._id;
-
-    const res = await deleteApi(`${URLS.deleteRelationshipLevelAndDetach}?mainConvoId=${mainConvoId}&relationshipLevelId=${relationshipLevelId}`);
-    toast.success("Relationship level deleted successfully!");
-
-    // Remove from local state
-    setEditedData((prev: any) => ({
-      ...prev,
-      relationshipLevels: prev?.relationshipLevels?.filter(
-        (r: any) => r._id !== relationshipLevelId
-      ),
-    }));
-  } catch (err: any) {
-    console.error(err);
-    toast.error(err?.response?.data?.message || "Failed to delete relationship level");
-  }
-};
-
+  };
 
   if (loading) {
     return (
@@ -365,8 +401,7 @@ const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
     scenarios,
     conversationLengths,
     submissionPrompt,
-  } = editedData; 
-
+  } = editedData;
 
   return (
     <motion.div
@@ -375,9 +410,7 @@ const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
       animate="visible"
       className="relative w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
     >
-   
       <div className="flex flex-wrap justify-start items-center gap-4 text-sm text-gray-400 mb-6 sm:mb-8">
-       
         <div>
           <span className="font-medium text-gray-300">Modified On:</span>{" "}
           {promptData?.updatedAt
@@ -393,7 +426,6 @@ const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
       </div>
 
       <div className="space-y-4 sm:space-y-6">
-        
         <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
           <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
             <motion.div
@@ -687,188 +719,191 @@ const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
           </div>
         </motion.div>
 
-<motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-  <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-    <motion.div
-      onClick={() => toggleAccordion("relationshipLevels")}
-      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-      className="cursor-pointer flex justify-between items-center"
-    >
-      <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-        Relationship Levels
-      </h4>
-      <motion.span
-        animate={{
-          rotate: openAccordions["relationshipLevels"] ? 180 : 0,
-        }}
-        transition={{ duration: 0.3 }}
-        className="text-gray-400"
-      >
-        ▼
-      </motion.span>
-    </motion.div>
-
-    {openAccordions["relationshipLevels"] && (
-      <div className="pt-3 space-y-3 sm:space-y-4">
-        {/* ✅ Create New Relationship Button */}
-       <button
-  onClick={() => {
-    setModalType("relationshipLevel");
-    setIsModalOpen(true);
-  }}
-  className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-2"
->
-  + Add Relationship Level
-</button>
-
-       {relationshipLevels
-          ?.filter((r: any) => r.value !== "custom")
-          .map((r: any) => (
-          <div
-            key={r._id}
-            className="p-2 bg-gray-700 rounded-lg border border-gray-600 relative"
-          >
-            {/* Delete Icon */}
-            <button
-              onClick={() => handleDeleteRelationshipLevel(r._id)}
-              className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+        <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+          <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+            <motion.div
+              onClick={() => toggleAccordion("relationshipLevels")}
+              whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+              className="cursor-pointer flex justify-between items-center"
             >
-              <Trash2 size={14} />
-            </button>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+                Relationship Levels
+              </h4>
+              <motion.span
+                animate={{
+                  rotate: openAccordions["relationshipLevels"] ? 180 : 0,
+                }}
+                transition={{ duration: 0.3 }}
+                className="text-gray-400"
+              >
+                ▼
+              </motion.span>
+            </motion.div>
 
-            <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
-              {r.title}
-            </label>
-            <textarea
-              value={String(r.promptAddOn ?? "")}
-              onChange={(e) =>
-                updateField(
-                  ["relationshipLevels", r._id, "promptAddOn"],
-                  e.target.value
-                )
-              }
-              className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
-            />
+            {openAccordions["relationshipLevels"] && (
+              <div className="pt-3 space-y-3 sm:space-y-4">
+                {/* ✅ Create New Relationship Button */}
+                <button
+                  onClick={() => {
+                    setModalType("relationshipLevel");
+                    setIsModalOpen(true);
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-2"
+                >
+                  + Add Relationship Level
+                </button>
+
+                {relationshipLevels
+                  ?.filter((r: any) => r.value !== "custom")
+                  .map((r: any) => (
+                    <div
+                      key={r._id}
+                      className="p-2 bg-gray-700 rounded-lg border border-gray-600 relative"
+                    >
+                      {/* Delete Icon */}
+                      <button
+                        onClick={() => handleDeleteRelationshipLevel(r._id)}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+
+                      <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
+                        {r.title}
+                      </label>
+                      <textarea
+                        value={String(r.promptAddOn ?? "")}
+                        onChange={(e) =>
+                          updateField(
+                            ["relationshipLevels", r._id, "promptAddOn"],
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
+                      />
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-</motion.div>
+        </motion.div>
 
-<motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-  <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-    <motion.div
-      onClick={() => toggleAccordion("scenarios")}
-      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-      className="cursor-pointer flex justify-between items-center"
-    >
-      <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-        Scenarios
-      </h4>
-      <motion.span
-        animate={{
-          rotate: openAccordions["scenarios"] ? 180 : 0,
-        }}
-        transition={{ duration: 0.3 }}
-        className="text-gray-400"
-      >
-        ▼
-      </motion.span>
-    </motion.div>
-
-    {openAccordions["scenarios"] && (
-      <div className="pt-3 space-y-3 sm:space-y-4">
-        {/* ✅ Create New Scenario Button */}
-       <button
-  onClick={() => {
-    setModalType("scenario");
-    setIsModalOpen(true);
-  }}
-  className="bg-blue-500 text-white px-4 py-2 rounded-lg"
->
-  + Add Scenario
-</button>
-
-      {scenarios
-          ?.filter((s: any) => s.value !== "custom")
-          .map((s: any) => (
-          <div
-            key={s._id}
-            className="p-2 bg-gray-700 rounded-lg border border-gray-600 relative"
-          >
-            {/* Delete Icon */}
-            <button
-              onClick={() => handleDeleteScenario(s._id)}
-              className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+        <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+          <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+            <motion.div
+              onClick={() => toggleAccordion("scenarios")}
+              whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+              className="cursor-pointer flex justify-between items-center"
             >
-              <Trash2 size={14} />
-            </button>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+                Scenarios
+              </h4>
+              <motion.span
+                animate={{
+                  rotate: openAccordions["scenarios"] ? 180 : 0,
+                }}
+                transition={{ duration: 0.3 }}
+                className="text-gray-400"
+              >
+                ▼
+              </motion.span>
+            </motion.div>
 
-            <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
-              {s.title}
-            </label>
-            <textarea
-              value={s.promptAddOn || ""}
-              onChange={(e) =>
-                updateField(["scenarios", s._id, "promptAddOn"], e.target.value)
-              }
-              className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
-            />
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</motion.div>
-<motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-  <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-    <motion.div
-      onClick={() => toggleAccordion("conversationLengths")}
-      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-      className="cursor-pointer flex justify-between items-center"
-    >
-      <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-        Conversation Lengths
-      </h4>
-      <motion.span
-        animate={{
-          rotate: openAccordions["conversationLengths"] ? 180 : 0,
-        }}
-        transition={{ duration: 0.3 }}
-        className="text-gray-400"
-      >
-        ▼
-      </motion.span>
-    </motion.div>
+            {openAccordions["scenarios"] && (
+              <div className="pt-3 space-y-3 sm:space-y-4">
+                {/* ✅ Create New Scenario Button */}
+                <button
+                  onClick={() => {
+                    setModalType("scenario");
+                    setIsModalOpen(true);
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                >
+                  + Add Scenario
+                </button>
 
-    {openAccordions["conversationLengths"] && (
-      <div className="space-y-3 sm:space-y-4 pt-3">
-        {conversationLengths?.map((c: any) => (
-          <div
-            key={c._id}
-            className="p-2 bg-gray-700 rounded-lg border border-gray-600"
-          >
-            <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
-              {c.title}{" "}
-              {c.range?.length ? `(${c.range[0]} - ${c.range[1]})` : ""}
-            </label>
-            <textarea
-              value={c.promptAddOn || ""}
-              onChange={(e) =>
-                updateField(
-                  ["conversationLengths", c._id, "promptAddOn"], // ✅ changed idx → c._id
-                  e.target.value
-                )
-              }
-              className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
-            />
+                {scenarios
+                  ?.filter((s: any) => s.value !== "custom")
+                  .map((s: any) => (
+                    <div
+                      key={s._id}
+                      className="p-2 bg-gray-700 rounded-lg border border-gray-600 relative"
+                    >
+                      {/* Delete Icon */}
+                      <button
+                        onClick={() => handleDeleteScenario(s._id)}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+
+                      <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
+                        {s.title}
+                      </label>
+                      <textarea
+                        value={s.promptAddOn || ""}
+                        onChange={(e) =>
+                          updateField(
+                            ["scenarios", s._id, "promptAddOn"],
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
+                      />
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-</motion.div>
+        </motion.div>
+        <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+          <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+            <motion.div
+              onClick={() => toggleAccordion("conversationLengths")}
+              whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+              className="cursor-pointer flex justify-between items-center"
+            >
+              <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+                Conversation Lengths
+              </h4>
+              <motion.span
+                animate={{
+                  rotate: openAccordions["conversationLengths"] ? 180 : 0,
+                }}
+                transition={{ duration: 0.3 }}
+                className="text-gray-400"
+              >
+                ▼
+              </motion.span>
+            </motion.div>
+
+            {openAccordions["conversationLengths"] && (
+              <div className="space-y-3 sm:space-y-4 pt-3">
+                {conversationLengths?.map((c: any) => (
+                  <div
+                    key={c._id}
+                    className="p-2 bg-gray-700 rounded-lg border border-gray-600"
+                  >
+                    <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
+                      {c.title}{" "}
+                      {c.range?.length ? `(${c.range[0]} - ${c.range[1]})` : ""}
+                    </label>
+                    <textarea
+                      value={c.promptAddOn || ""}
+                      onChange={(e) =>
+                        updateField(
+                          ["conversationLengths", c._id, "promptAddOn"], // ✅ changed idx → c._id
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
 
         <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
           <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
@@ -910,12 +945,12 @@ const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition"
+          className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition w-full"
         >
           {saving ? "Saving…" : "Save"}
         </button>
 
-        <button
+        {/* <button
           onClick={() => {
         handleCancelMain()
           }}
@@ -923,18 +958,16 @@ const handleDeleteRelationshipLevel = async (relationshipLevelId: string) => {
           className="px-5 py-2 bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white rounded-lg font-medium transition"
         >
           Cancel
-        </button>
+        </button> */}
       </div>
 
-
-<AddPromptModal
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  type={modalType}
-  mainConvoId={parentConvoId}
-  setEditedData={setEditedData}
-/>
-
+      <AddPromptModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        type={modalType}
+        mainConvoId={parentConvoId}
+        setEditedData={setEditedData}
+      />
     </motion.div>
   );
 };

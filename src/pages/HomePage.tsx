@@ -1208,6 +1208,7 @@ const PromptGenerator: React.FC = () => {
           <ConversationPromptEditor
             keyValue="conversation_prompt_v5_1762836404699"
             handleCancel={() => setEditMode(false)}
+             setGlobalLoading={setGlobalLoading}
           />
         </motion.div>
       )}
