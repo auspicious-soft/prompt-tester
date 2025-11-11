@@ -54,6 +54,7 @@ interface PromptData {
   dialects: Record<string, string>;
   languages: Record<string, string>;
   styles: Record<string, string>;
+  submissionPrompt?:string;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -349,15 +350,18 @@ function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptB
     value: string,
     onChange: (value: string) => void,
     isTextarea: boolean = false,
-    isReadOnly: boolean = false
+    isReadOnly: boolean = false,
+    hideLabel = false
   ) => (
     <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
+      {!hideLabel && (
       <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
         {label
           .replace(/([A-Z])/g, " $1")
           .replace(/_/g, " ")
           .trim()}
       </label>
+      )}
       {isTextarea ? (
         <textarea
           value={value}
@@ -597,7 +601,9 @@ function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptB
 
 const simpleFields = ["title", "key", "generation", "persona"];
   const textareaFields = ["role"];
-  const accordionFields = ["languages", "dialects", "styles", "messageTypes"];
+    const textareaFields2 = ["submissionPrompt"];
+
+  const accordionFields = ["messageTypes","languages", "dialects", "styles"];
 
   return (
     <>
@@ -691,6 +697,48 @@ const simpleFields = ["title", "key", "generation", "persona"];
                       ))}
               </motion.div>
             ))}
+
+             {textareaFields2.map((field) => (
+  <motion.div key={field} variants={itemVariants} className="mb-4 sm:mb-6">
+    <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+      <motion.div
+        onClick={() => toggleAccordion(field)}
+        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+        className="cursor-pointer"
+      >
+        <div className="flex justify-between items-center">
+          <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+            {field
+              .replace(/([A-Z])/g, " $1")
+              .replace(/_/g, " ")
+              .trim()}
+          </h4>
+          <motion.span
+            animate={{ rotate: openAccordions[field] ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-gray-400"
+          >
+            ▼
+          </motion.span>
+        </div>
+      </motion.div>
+
+      {openAccordions[field] && (
+        <div className="pt-3">
+          {renderInputField(
+            field,
+            formData[field] || "",
+            (value) => handleInputChange(field, value),
+            true,
+            excludedFields.includes(field),
+              true
+          )}
+        </div>
+      )}
+    </div>
+  </motion.div>
+))}
+
 
             <div className="flex flex-row justify-between">
               {isModified ? (

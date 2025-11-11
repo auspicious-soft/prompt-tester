@@ -22,5 +22,12 @@ export const URLS = {
   promotePromptVersion: `${baseUrl}/promote-prompt`,
   promoteWebPromptVersion: `${baseUrl}/promote-web-prompt`,
   duplicatePrompt:`${baseUrl}/duplicate-prompt`,
-  generateConversation:`${commonBaseUrl}/conversation/generate`
+  generateConversation:`${commonBaseUrl}/conversation/generate`,
+  getConversationPrompt:`${baseUrl}/convo-prompt`,
+  updateConversationPrompt:`${baseUrl}/update-convo-prompt`,
+  createScenarioAndAttach:`${baseUrl}/create-scenario`,
+  createRelationshipLevelAndAttach:`${baseUrl}/create-realtionship-level`,
+  deleteScenarioAndDetach:`${baseUrl}/delete-scenario`,
+  deleteRelationshipLevelAndDetach:`${baseUrl}/delete-relationship-level`,
+  getMergedConvoData:`${commonBaseUrl}/get-merged-data`
 };

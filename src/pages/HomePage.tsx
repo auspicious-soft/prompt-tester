@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { User, User2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ConvoGenerator from "./ConvoGenerator";
+import ConversationPromptEditor from "../utils/ConversationPromptEditor";
 
 interface FullPrompt {
   role: string;
@@ -17,6 +18,7 @@ interface FullPrompt {
   language: string;
   dialect: string;
   gender: string;
+  subPrmpt: string;
   systemPrompt: string;
   userInstruction: string;
   extractedChat: string | null;
@@ -24,8 +26,8 @@ interface FullPrompt {
 }
 
 const PromptGenerator: React.FC = () => {
- const [activeTab, setActiveTab] = useState<
-    "generator" | "templates" | "conversation"
+  const [activeTab, setActiveTab] = useState<
+    "generator" | "templates" | "conversation" | "conversation_prompt"
   >("conversation");
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
@@ -49,7 +51,8 @@ const PromptGenerator: React.FC = () => {
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [translatedAccordionOpen, setTranslatedAccordionOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
+  const [inputAccordionOpen, setInputAccordionOpen] = useState(false);
+  const [outputAccordionOpen, setOutputAccordionOpen] = useState(false);
   const maleStyles = ["Conservative", "Playful", "Confident", "Flirty"];
   const femaleStyles = ["Modest", "Playful", "Sassy", "Flirty"];
   const stylesOptions =
@@ -59,20 +62,25 @@ const PromptGenerator: React.FC = () => {
   const [temperature, setTemperature] = useState(1);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
+  const [aiInput, setAiInput] = useState<string[]>([]);
+  const [aiOutput, setAiOutput] = useState<string[]>([]);
+  const [editMode, setEditMode] = useState(false);
+
   const [tokenUsage, setTokenUsage] = useState<{
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
     estimatedCost: number;
   } | null>(null);
-const [globalLoading, setGlobalLoading] = useState(false);
+  const [globalLoading, setGlobalLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-    const adminRole = localStorage.getItem("adminRole") || "admin";
+  const adminRole = localStorage.getItem("adminRole") || "admin";
 
-
+  const toggleInputAccordion = () => setInputAccordionOpen((prev) => !prev);
+  const toggleOutputAccordion = () => setOutputAccordionOpen((prev) => !prev);
   const handleChange = (
     setter: React.Dispatch<React.SetStateAction<any>>,
     value: any
@@ -231,6 +239,8 @@ const [globalLoading, setGlobalLoading] = useState(false);
               response.data.data.fullPrompt?.temperatureUsed || null
             );
             setTokenUsage(response.data.data.fullPrompt?.tokenUsage || null);
+            setAiInput(response.data.data.input);
+            setAiOutput(response.data.data.output);
           } else if (selectedType === "ManualReply") {
             setResponses(response.data.data.reply || []);
             setTranslatedText(response.data.data.translatedText || []);
@@ -240,6 +250,8 @@ const [globalLoading, setGlobalLoading] = useState(false);
               response.data.data.fullPrompt?.temperatureUsed || null
             );
             setTokenUsage(response.data.data.fullPrompt?.tokenUsage || null);
+            setAiInput(response.data.data.input);
+            setAiOutput(response.data.data.output);
           } else if (selectedType === "ScreenshotReply") {
             setResponses(response.data.data.replies || []);
             setTranslatedText(response.data.data.translatedText || []);
@@ -249,6 +261,8 @@ const [globalLoading, setGlobalLoading] = useState(false);
               response.data.data.fullPrompt?.temperatureUsed || null
             );
             setTokenUsage(response.data.data.fullPrompt?.tokenUsage || null);
+            setAiInput(response.data.data.input);
+            setAiOutput(response.data.data.output);
           }
           setOutput("Success: Response generated");
         }
@@ -305,6 +319,11 @@ const [globalLoading, setGlobalLoading] = useState(false);
     setTranslatedAccordionOpen(!translatedAccordionOpen);
   };
 
+  const handleEditConvoPrompt = () => {
+    setActiveTab("conversation_prompt");
+    setEditMode(true);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -324,10 +343,30 @@ const [globalLoading, setGlobalLoading] = useState(false);
     setIsOpen(false);
   };
 
-   const visibleTabs =
+  const visibleTabs =
     adminRole === "superAdmin"
-      ? ["generator", "templates", "conversation"]
+      ? ["generator", "templates", "conversation", "conversation_prompt"]
       : ["conversation"];
+
+  const handleDownloadJson = () => {
+    const jsonData = {
+      input: aiInput,
+      output: aiOutput,
+      modelUsed,
+      temperatureUsed,
+      tokenUsage,
+    };
+
+    const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ai-response-${new Date().toISOString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-start p-4 sm:p-6">
@@ -361,7 +400,7 @@ const [globalLoading, setGlobalLoading] = useState(false);
         </div>
       </div>
 
-     <motion.div
+      <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -379,7 +418,7 @@ const [globalLoading, setGlobalLoading] = useState(false);
                 : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
-            Prompt Generator
+            Prompt Tester
           </button>
         )}
 
@@ -411,7 +450,21 @@ const [globalLoading, setGlobalLoading] = useState(false);
             Conversation Generator
           </button>
         )}
+
+        {visibleTabs.includes("conversation_prompt") && (
+          <button
+            onClick={() => handleEditConvoPrompt()}
+            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
+              activeTab === "conversation_prompt"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+           Edit Conversation Prompt
+          </button>
+        )}
       </motion.div>
+
       {activeTab === "generator" && (
         <motion.div
           variants={containerVariants}
@@ -420,7 +473,7 @@ const [globalLoading, setGlobalLoading] = useState(false);
           className="w-full max-w-3xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-gray-100 text-center mb-4 sm:mb-6">
-            Prompt Generator
+            Prompt Tester
           </h2>
 
           {/* Type Selection */}
@@ -543,25 +596,6 @@ const [globalLoading, setGlobalLoading] = useState(false);
                 )}
               </motion.div>
 
-              {/* Style Selection */}
-              <motion.div variants={itemVariants}>
-                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-                  Style
-                </label>
-                <select
-                  value={style}
-                  onChange={(e) => handleChange(setStyle, e.target.value)}
-                  className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-                  required
-                >
-                  {stylesOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
-
               {/* Language Selection */}
               <motion.div variants={itemVariants}>
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
@@ -607,21 +641,24 @@ const [globalLoading, setGlobalLoading] = useState(false);
                 )}
               </motion.div>
 
-              {/* Prompt Type Selection */}
-              {/* <motion.div variants={itemVariants}>
+              {/* Style Selection */}
+              <motion.div variants={itemVariants}>
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-                  Prompt Type
+                  Style
                 </label>
                 <select
-                  value={promptType}
-                  onChange={(e) => handleChange(setPromptType, e.target.value)}
+                  value={style}
+                  onChange={(e) => handleChange(setStyle, e.target.value)}
                   className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   required
                 >
-                  <option value="Optimized">Optimized</option>
-                  <option value="Full prompt">Full Prompt</option>
+                  {stylesOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </select>
-              </motion.div> */}
+              </motion.div>
             </div>
 
             {selectedType === "ScreenshotReply" && (
@@ -758,9 +795,114 @@ const [globalLoading, setGlobalLoading] = useState(false);
                 variants={itemVariants}
                 className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-700 rounded-lg text-gray-100 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto hide-scrollbar"
               >
-                <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">
-                  API Response
-                </h3>
+                {(aiInput || aiOutput) && (
+                  <div className="mt-5 sm:mt-6">
+                    {/* Input Accordion */}
+                    <motion.div
+                      onClick={toggleInputAccordion}
+                      whileHover={{
+                        backgroundColor: "rgba(55, 65, 81, 0.8)",
+                      }}
+                      className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs sm:text-sm font-medium text-gray-300">
+                          View Raw Input
+                        </h4>
+                        <motion.span
+                          animate={{ rotate: inputAccordionOpen ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-gray-400"
+                        >
+                          ▼
+                        </motion.span>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: inputAccordionOpen ? "auto" : 0,
+                        opacity: inputAccordionOpen ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700">
+                        <pre className="whitespace-pre-wrap">
+                          {JSON.stringify(aiInput, null, 2)}
+                        </pre>
+                      </div>
+                    </motion.div>
+
+                    {/* Output Accordion */}
+                    <motion.div
+                      onClick={toggleOutputAccordion}
+                      whileHover={{
+                        backgroundColor: "rgba(55, 65, 81, 0.8)",
+                      }}
+                      className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300 mt-4"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs sm:text-sm font-medium text-gray-300">
+                          View Raw Output
+                        </h4>
+                        <motion.span
+                          animate={{ rotate: outputAccordionOpen ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-gray-400"
+                        >
+                          ▼
+                        </motion.span>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: outputAccordionOpen ? "auto" : 0,
+                        opacity: outputAccordionOpen ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700">
+                        <pre className="whitespace-pre-wrap">
+                          {JSON.stringify(aiOutput, null, 2)}
+                        </pre>
+                      </div>
+                    </motion.div>
+
+                    {/* Download Button */}
+                    <div className="flex justify-end mt-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleDownloadJson}
+                        disabled={loading || !aiOutput}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium text-xs sm:text-sm shadow-md transition-all duration-300 touch-manipulation mb-4 ${
+                          loading
+                            ? "bg-blue-400 text-white cursor-not-allowed"
+                            : !aiOutput
+                            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        }`}
+                        title={
+                          loading
+                            ? "Preparing file..."
+                            : !aiOutput
+                            ? "No data available to download."
+                            : "Click to download JSON file."
+                        }
+                      >
+                        <span>
+                          {loading ? "Preparing..." : "Download JSON"}
+                        </span>
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-3 sm:mb-4">
                   <motion.div
                     onClick={togglePromptAccordion}
@@ -813,16 +955,6 @@ const [globalLoading, setGlobalLoading] = useState(false);
                           </pre>
                         </div>
 
-                        {/* Style */}
-                        <div>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Style
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {fullPrompt.style}
-                          </pre>
-                        </div>
-
                         {/* Language */}
                         <div>
                           <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
@@ -843,15 +975,35 @@ const [globalLoading, setGlobalLoading] = useState(false);
                           </pre>
                         </div>
 
-                        {/* Gender */}
+                        {/* Style */}
                         <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Style
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.style}
+                          </pre>
+                        </div>
+
+                        {/* Style */}
+                        <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Submission Prompt
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {fullPrompt.subPrmpt}
+                          </pre>
+                        </div>
+
+                        {/* Gender */}
+                        {/* <div>
                           <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Gender
                           </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {fullPrompt.gender}
                           </pre>
-                        </div>
+                        </div> */}
 
                         {/* User Instruction */}
                         <div>
@@ -1039,31 +1191,43 @@ const [globalLoading, setGlobalLoading] = useState(false);
         </motion.div>
       )}
 
-          {activeTab === "conversation" && (
+      {activeTab === "conversation" && (
         <motion.div
           variants={itemVariants}
           className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
         >
-<ConvoGenerator setGlobalLoading={setGlobalLoading} />        </motion.div>
+          <ConvoGenerator setGlobalLoading={setGlobalLoading} />{" "}
+        </motion.div>
+      )}
+
+      {activeTab === "conversation_prompt" && editMode && (
+        <motion.div
+          variants={itemVariants}
+          className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
+        >
+          <ConversationPromptEditor
+            keyValue="conversation_prompt_v5_1762836404699"
+            handleCancel={() => setEditMode(false)}
+          />
+        </motion.div>
       )}
 
       {loading && <TypingLoader />}
       <AnimatePresence>
-  {globalLoading && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
-    >
-  
-      <div className="relative z-10 pointer-events-auto">
-        <TypingLoader />
-      </div>
-    </motion.div>
-  )}
-</AnimatePresence>
+        {globalLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+          >
+            <div className="relative z-10 pointer-events-auto">
+              <TypingLoader />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

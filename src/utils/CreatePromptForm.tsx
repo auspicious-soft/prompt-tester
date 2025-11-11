@@ -43,6 +43,8 @@ interface PromptData {
   gender: "MALE" | "FEMALE" | "";
   isGenZ: boolean;
   role: string;
+  title:string;
+  submissionPrompt:string;
   messageTypes: Record<string, string>;
   styles: Record<string, string>;
   languages: Record<string, string>;
@@ -110,6 +112,7 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
     gender: "",
     isGenZ: false,
     role: "",
+    title:"",
     messageTypes: { uploadScreenshot: "", addManually: "", pickup: "" },
     styles: {
       CONSERVATIVE: "",
@@ -134,6 +137,7 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
       languages: {},
       dialects: {},
     },
+    submissionPrompt:""
   });
 
   const [loading, setLoading] = useState(false);
@@ -173,7 +177,8 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
     value: string,
     onChange: (value: string) => void,
     isTextarea: boolean = false,
-    isRequired: boolean = false
+    isRequired: boolean = false,
+    title = false
   ) => {
     const isEmpty = isRequired && !value.trim();
     return (
@@ -196,9 +201,10 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border ${
+            className={` px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border ${
               isEmpty ? "border-red-500" : "border-gray-600"
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200`}
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200
+          ${title ? "w-full h-12 sm:h-12 mb-2" : "w-full"}`}
             placeholder={`Enter ${label}`}
           />
         )}
@@ -351,6 +357,16 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
             "Role",
             formData.role,
             (val) => handleInputChange("role", val),
+            true,
+          
+          )}
+
+          {renderInputField(
+            "Title",
+            formData.title,
+            (val) => handleInputChange("title", val),
+            false,
+            false,
             true
           )}
 
@@ -358,6 +374,14 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
           {renderNestedFields("dialects", formData.dialects)}
           {renderNestedFields("styles", formData.styles)}
           {renderNestedFields("messageTypes", formData.messageTypes)}
+
+             {renderInputField(
+            "Submission Prompt",
+            formData.submissionPrompt,
+            (val) => handleInputChange("submissionPrompt", val),
+            true
+          )}
+
         </>
       )}
 

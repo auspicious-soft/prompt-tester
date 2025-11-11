@@ -45,6 +45,15 @@
     return await api.put(url, data, config);
   };
 
+  // ✅ PATCH request
+export const patchApi = async (
+  url: string,
+  data: any,
+  config: AxiosRequestConfig = {}
+): Promise<AxiosResponse> => {
+  return await api.patch(url, data, config);
+};
+
   // ✅ DELETE request
   export const deleteApi = async (
     url: string,

@@ -387,41 +387,48 @@ const confirmDeletePrompt = async () => {
   exit="exit"
   className="relative"
 >
-  <motion.button
-    className={`w-full px-5 py-3 pt-10 rounded-lg font-medium text-sm transition-all duration-300 min-w-[140px] text-left
-      ${
-        isSelected
-          ? "bg-blue-600 text-white shadow-lg"
-          : isActive && isActiveWeb
-          ? "bg-teal-600 text-white shadow-md"
-          : isActiveWeb
-          ? "bg-purple-600 text-white shadow-md hover:bg-purple-700"
-          : isActive
-          ? "bg-orange-600 text-white shadow-md hover:bg-orange-700"
-          : "bg-gray-700 text-white hover:bg-gray-600"
-      }`}
-    whileHover={{ scale: 1.03 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={() => handleSelectPrompt(prompt)}
-  >
-  <div className="font-semibold">{(prompt as any).title || formatPromptKey(prompt.key)}</div>
-    <div className="text-xs mt-2 opacity-80">
-      <div>
-        Created: {new Date((prompt as any).createdAt).toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })}
-      </div>
-      <div>
-        Modified: {new Date((prompt as any).updatedAt).toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })}
-      </div>
+ <motion.button
+  className={`w-full px-5 py-3 pt-10 rounded-lg font-medium text-sm transition-all duration-300 min-w-[140px] text-left border-4
+    ${
+      isSelected
+        ? "border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" // glow effect
+        : "border-transparent"
+    }
+    ${
+      isActive && isActiveWeb
+        ? "bg-teal-600 text-white shadow-md"
+        : isActiveWeb
+        ? "bg-purple-600 text-white shadow-md hover:bg-purple-700"
+        : isActive
+        ? "bg-orange-600 text-white shadow-md hover:bg-orange-700"
+        : "bg-gray-700 text-white hover:bg-gray-600"
+    }`}
+  whileHover={{ scale: 1.03 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => handleSelectPrompt(prompt)}
+>
+  <div className="font-semibold">
+    {(prompt as any).title || formatPromptKey(prompt.key)}
+  </div>
+  <div className="text-xs mt-2 opacity-80">
+    <div>
+      Created:{" "}
+      {new Date((prompt as any).createdAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })}
     </div>
-  </motion.button>
+    <div>
+      Modified:{" "}
+      {new Date((prompt as any).updatedAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })}
+    </div>
+  </div>
+</motion.button>
 
   <div className="absolute top-2 right-2 flex gap-4 z-10 ">
     <button
