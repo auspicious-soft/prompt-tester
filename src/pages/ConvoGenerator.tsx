@@ -44,6 +44,8 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [selectedScenario, setSelectedScenario] = useState<any>(null);
   const [selectedRelationshipLevel, setSelectedRelationshipLevel] =
     useState<any>(null);
+      const [selectedConversationLength, setSelectedConversationLength] =
+    useState<any>(null);
   // API Data
   const [scenariosData, setScenariosData] = useState<any[]>([]);
   const [relationshipLevelsData, setRelationshipLevelsData] = useState<any[]>(
@@ -395,7 +397,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
         personaDirection,
         isGenZ,
         conversationLength,
-        ...(conversationLength === "custom" && {
+        ...(selectedConversationLength?.value === "custom" && {
           customMin: Number(customMin),
           customMax: Number(customMax),
         }),
@@ -432,9 +434,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   };
 
 
-  const selectedConversationLength = conversationLengthsData.find(
-    (len) => len.value === conversationLength
-  );
+  // const selectedConversationLength = conversationLengthsData.find(
+  //   (len) => len.value === conversationLength
+  // );
 
   return (
     <div className="min-h-screen py-8 px-4">
@@ -814,21 +816,21 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 {/* ---- selector ---- */}
                 <select
                   value={conversationLength}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    setConversationLength(selectedId);
+                onChange={(e) => {
+      const selectedId = e.target.value;
+      setConversationLength(selectedId);
 
-                    const selected = conversationLengthsData.find(
-                      (l) => l._id === selectedId
-                    );
-                    setSelectedLengthObj(selected || null);
+      const selected = conversationLengthsData.find(
+        (l) => l._id === selectedId
+      );
+      setSelectedConversationLength(selected || null);   // <-- NEW
 
-                    // Reset custom fields if not custom
-                    if (!selected || selected.value !== "custom") {
-                      setCustomMin("");
-                      setCustomMax("");
-                    }
-                  }}
+      // Reset custom fields if not custom
+      if (!selected || selected.value !== "custom") {
+        setCustomMin("");
+        setCustomMax("");
+      }
+    }}
                   className="w-full p-3 bg-gray-700/50 rounded-xl outline-none border border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all"
                 >
                   <option value="">Select Length</option>
@@ -841,7 +843,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
 
                 {/* ---- custom min / max (always rendered, AnimatePresence handles show/hide) ---- */}
                 <AnimatePresence>
-                  {selectedLengthObj?.value === "custom" && (
+                  {selectedConversationLength?.value === "custom" && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
