@@ -72,8 +72,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     "flirty",
     "playful",
     "conservative",
-    "romantic",
-    "dramatic",
   ];
 
   const maleNames = [
