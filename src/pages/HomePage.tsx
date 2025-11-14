@@ -949,11 +949,11 @@ const PromptGenerator: React.FC = () => {
                       className="overflow-hidden"
                     >
                       <div className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700">
-                        <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+                      <ul className="list-none"> 
                     {responses.map((response, index) => (
                       <li
                         key={index}
-                        className={`${
+                        className={`no-underline ${
                           output.startsWith("Error:")
                             ? "text-red-400"
                             : "text-gray-100"
@@ -965,7 +965,8 @@ const PromptGenerator: React.FC = () => {
                           .trim()}
                       </li>
                     ))}
-                  </ul>
+                    </ul>
+               
                       </div>
                     </motion.div>
 
