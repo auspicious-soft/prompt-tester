@@ -9,6 +9,13 @@ interface ConvoGeneratorProps {
   setGlobalLoading: (loading: boolean) => void;
 }
 
+interface InputPrompt {
+  directionNote: string;
+  userPrompt:string; 
+  systemPrompt:string;
+}
+
+
 const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   setGlobalLoading,
 }) => {
@@ -17,16 +24,22 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [language, setLanguage] = useState("english");
   const [dialect, setDialect] = useState("");
   const [tone, setTone] = useState("flirty");
+   const [femaleTone, setFemaleTone] = useState("flirty");
   const [scenarioCategory, setScenarioCategory] = useState("");
   const [relationshipLevel, setRelationshipLevel] = useState("");
   const [conversationLength, setConversationLength] = useState("");
   const [selectedLengthObj, setSelectedLengthObj] = useState<any>(null);
   const [isGenZ, setIsGenZ] = useState(false);
   const [personaDirection, setPersonaDirection] = useState("male_to_female");
-
+   const [gptModel, setGptModel] = useState("gpt-4o-mini");
+   const [temperature, setTemperature] = useState(1);
   const [conversation, setConversation] = useState<string[]>([]);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [metaData, setMetaData] = useState<any>(null);
+
+  const [generatedMaleName, setGeneratedMaleName] = useState("");
+  const [generatedFemaleName, setGeneratedFemaleName] = useState("");
+const [hasSubmitted, setHasSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,7 +49,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [inputAccordionOpen, setInputAccordionOpen] = useState(false);
   const [outputAccordionOpen, setOutputAccordionOpen] = useState(false);
-  const [aiInput, setAiInput] = useState<any>(null);
+  const [aiInput,  setAiInput] =  useState<InputPrompt | null>(null);;
   const [aiOutput, setAiOutput] = useState<any>(null);
   const [promptUsed, setPromptUsed] = useState<any>(null);
   const [customScenario, setCustomScenario] = useState("");
@@ -76,211 +89,45 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     "conservative",
   ];
 
-  const maleNames = [
-    "Omar",
-    "Ali",
-    "Yousef",
-    "Hassan",
-    "Khalid",
-    "Zaid",
-    "Tariq",
-    "Fahad",
-    "Sultan",
-    "Rashid",
-    "Amir",
-    "Bilal",
-    "Nasser",
-    "Abdullah",
-    "Ibrahim",
-    "Sami",
-    "Kareem",
-    "Jamal",
-    "Hamza",
-    "Faisal",
-    "Mansoor",
-    "Tamer",
-    "Majid",
-    "Zain",
-    "Saif",
-    "Adnan",
-    "Basim",
-    "Rami",
-    "Nabil",
-    "Imran",
-    "Farid",
-    "Harith",
-    "Talal",
-    "Dmitri",
-    "Ivan",
-    "Alexei",
-    "Nikolai",
-    "Sergei",
-    "Mikhail",
-    "Yuri",
-    "Vladimir",
-    "Oleg",
-    "Pavel",
-    "Boris",
-    "Andrei",
-    "Konstantin",
-    "Roman",
-    "Artem",
-    "Grigori",
-    "Viktor",
-    "Anton",
-    "Leonid",
-    "Fyodor",
-    "Egor",
-    "Ruslan",
-    "Kirill",
-    "Ilya",
-    "Stanislav",
-    "Maxim",
-    "Timofey",
-    "Denis",
-    "Stepan",
-    "Gennadi",
-    "Igor",
-    "Anatoly",
-    "Valentin",
-    "James",
-    "Oliver",
-    "William",
-    "Henry",
-    "George",
-    "Edward",
-    "Harry",
-    "Jack",
-    "Thomas",
-    "Samuel",
-    "Charles",
-    "Alexander",
-    "Daniel",
-    "Benjamin",
-    "Liam",
-    "Noah",
-    "Lucas",
-    "Ethan",
-    "Jacob",
-    "Nathan",
-    "Leo",
-    "Finn",
-    "Oscar",
-    "Arthur",
-    "Matthew",
-    "Isaac",
-    "Harrison",
-    "Adam",
-    "Ryan",
-    "Callum",
-    "Jamie",
-    "Joseph",
-    "Owen",
-    "Luke",
+    const femaletones = [
+    "confident",
+    "flirty",
+    "modest",
+    "sassy",
   ];
 
-  const femaleNames = [
-    "Layla",
-    "Nour",
-    "Aisha",
-    "Hana",
-    "Rania",
-    "Mariam",
-    "Fatima",
-    "Sara",
-    "Huda",
-    "Amira",
-    "Yasmin",
-    "Salma",
-    "Lina",
-    "Zara",
-    "Dina",
-    "Reem",
-    "Asma",
-    "Laila",
-    "Najwa",
-    "Noor",
-    "Muna",
-    "Samar",
-    "Aaliyah",
-    "Iman",
-    "Ruqayyah",
-    "Nadia",
-    "Sahar",
-    "Farah",
-    "Rima",
-    "Amal",
-    "Zainab",
-    "Leen",
-    "Basma",
-    "Anastasia",
-    "Natalia",
-    "Svetlana",
-    "Ekaterina",
-    "Irina",
-    "Olga",
-    "Tatiana",
-    "Maria",
-    "Yelena",
-    "Daria",
-    "Valeria",
-    "Polina",
-    "Galina",
-    "Ksenia",
-    "Yulia",
-    "Veronika",
-    "Nadezhda",
-    "Viktoria",
-    "Larisa",
-    "Marina",
-    "Ludmila",
-    "Alina",
-    "Oksana",
-    "Elvira",
-    "Zoya",
-    "Milana",
-    "Yana",
-    "Vera",
-    "Elena",
-    "Taisiya",
-    "Dina",
-    "Karina",
-    "Nina",
-    "Emily",
-    "Sophia",
-    "Olivia",
-    "Amelia",
-    "Charlotte",
-    "Isabella",
-    "Grace",
-    "Chloe",
-    "Ella",
-    "Mia",
-    "Lily",
-    "Ava",
-    "Freya",
-    "Harper",
-    "Sophie",
-    "Emma",
-    "Isla",
-    "Lucy",
-    "Ruby",
-    "Hannah",
-    "Alice",
-    "Zoe",
-    "Scarlett",
-    "Molly",
-    "Evelyn",
-    "Florence",
-    "Georgia",
-    "Daisy",
-    "Jessica",
-    "Poppy",
-    "Lottie",
-    "Phoebe",
-    "Rosie",
-    "Elsie",
-  ];
+const maleNames = [
+  "Ahmed", "Mohammed", "Omar", "Ali", "Hassan", "Hussein", "Khalid", "Fahad",
+  "Abdullah", "Ibrahim", "Youssef", "Ismail", "Tariq", "Sultan", "Rashid",
+  "Amir", "Bilal", "Nasser", "Sami", "Kareem", "Jamal", "Hamza", "Faisal",
+  "Mansoor", "Zaid", "Saif", "Adnan", "Rami", "Nabil", "Imran", "Farid",
+  "Talal", "Majed", "Bader", "Anas", "Mahmoud", "Mustafa", "Ayoub", "Waleed",
+  "Hadi", "Marwan", "Bassam", "Hazem", "Kamal", "Yahya", "Ayman", "Samir",
+  "Luay", "Mutaz", "Zuhair", "Qasem", "Firas", "Tamer", "Ameen", "Anwar",
+  "Hisham", "Sameer", "Rafik", "Zaki", "Nadim", "Khalil", "Jabir", "Mazin",
+  "Rayan", "Yasser", "Wael", "Othman", "Salim", "Saeed", "Musa", "Laith",
+  "Jad", "Fadi", "Munir", "Ashraf", "Rasheed", "Adel", "Jaber", "Ghaith",
+  "Aref", "Hatem", "Qais", "Amer", "Shadi", "Murad", "Bakr", "Issa", "Alaa",
+  "Fawwaz", "Fahim", "Nawaf", "Thamer", "Bashir", "Wissam", "Rabi", "Harith",
+  "Younes", "Rayyan"
+];
+
+const femaleNames = [
+  "Aisha", "Fatima", "Zainab", "Khadija", "Maryam", "Huda", "Nour", "Layla",
+  "Aaliyah", "Amira", "Yasmin", "Sara", "Reem", "Lina", "Hana", "Rania",
+  "Iman", "Maha", "Ruqayya", "Samar", "Nadia", "Salma", "Noor", "Muna",
+  "Sahar", "Farah", "Rima", "Amal", "Basma", "Laila", "Najwa", "Asma",
+  "Dina", "Sumaya", "Rita", "Jana", "Rahaf", "Ahlam", "Razan", "Mariam",
+  "Abeer", "Nouran", "Dalia", "Rowan", "Jumana", "Maysaa", "Mira", "Wafa",
+  "Hanan", "Fajr", "Shaden", "Rawan", "Aseel", "Amani", "Malak", "Rimas",
+  "Tasneem", "Haneen", "Alya", "Jouri", "Lama", "Doaa", "Dalal", "Samira",
+  "Nawal", "Lubna", "Mona", "Salsabil", "Zahra", "Raya", "Safiya", "Ward",
+  "Shahed", "Yasmina", "Aseela", "Leen", "Tamara", "Rasha", "Rabab", "Nisreen",
+  "Thuraya", "Wijdan", "Rafif", "Reema", "Nourah", "Joud", "Ghada",
+  "Ikram", "Sundus", "Manar", "Kawthar", "Hadeel", "Maram", "Sally",
+  "Hessa", "Jannat", "Sirine", "Mais"
+];
+
 
   const togglePromptAccordion = () =>
     setPromptAccordionOpen(!promptAccordionOpen);
@@ -330,44 +177,96 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
 
   const generateRandomNames = () => {
     const randomMale = maleNames[Math.floor(Math.random() * maleNames.length)];
-    const randomFemale =
-      femaleNames[Math.floor(Math.random() * femaleNames.length)];
+    const randomFemale = femaleNames[Math.floor(Math.random() * femaleNames.length)];
     setMaleName(randomMale);
     setFemaleName(randomFemale);
+    
+    // Clear conversation when names change to prevent mismatch
+    if (conversation.length > 0) {
+      setConversation([]);
+      setMetaData(null);
+      setAiInput(null);
+      setAiOutput(null);
+      setPromptUsed(null);
+      setGeneratedMaleName("");
+      setGeneratedFemaleName("");
+    }
   };
 
   const handleEditPrompt = () => {
     setEditMode(true);
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!maleName.trim()) newErrors.maleName = "Male name is required";
-    if (!femaleName.trim()) newErrors.femaleName = "Female name is required";
-    if (!language) newErrors.language = "Language is required";
-    if ((language === "arabic" || language === "arabizi") && !dialect)
-      newErrors.dialect = "Dialect is required";
-    if (!tone) newErrors.tone = "Tone is required";
-    if (!scenarioCategory) newErrors.scenarioCategory = "Scenario is required";
-    if (!relationshipLevel)
-      newErrors.relationshipLevel = "Relationship level is required";
-    if (!conversationLength)
-      newErrors.conversationLength = "Conversation length is required";
+useEffect(() => {
+  if (!hasSubmitted) return; // ⛔ skip validation before first submit
 
-    if (conversationLength === "custom") {
-      if (!customMin) newErrors.customMin = "Min messages required";
-      if (!customMax) newErrors.customMax = "Max messages required";
-    }
+  const newErrors: Record<string, string> = {};
 
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      toast.error("Please fill all required fields");
-      return false;
-    }
-    return true;
-  };
+  if (!maleName.trim()) newErrors.maleName = "Male name is required";
+  if (!femaleName.trim()) newErrors.femaleName = "Female name is required";
+  if (!language) newErrors.language = "Language is required";
+
+  if ((language === "arabic" || language === "arabizi") && !dialect)
+    newErrors.dialect = "Dialect is required";
+
+  if (!tone) newErrors.tone = "Tone is required";
+  if (!femaleTone) newErrors.femaleTone = "Female tone is required";
+  if (!scenarioCategory) newErrors.scenarioCategory = "Scenario is required";
+  if (!relationshipLevel)
+    newErrors.relationshipLevel = "Relationship level is required";
+  if (!conversationLength)
+    newErrors.conversationLength = "Conversation length is required";
+
+  if (conversationLength === "custom" || selectedConversationLength?.value === "custom") {
+    if (!customMin || Number(customMin) < 1) newErrors.customMin = "Min must be ≥ 1";
+    if (!customMax || Number(customMax) < 1) newErrors.customMax = "Max must be ≥ 1";
+    if (customMin && customMax && Number(customMax) < Number(customMin))
+      newErrors.customMax = "Max must be ≥ Min";
+  }
+
+  if (selectedScenario?.value === "custom" && !customScenario.trim())
+    newErrors.customScenario = "Custom scenario is required";
+
+  if (selectedRelationshipLevel?.value === "custom" && !customRelationshipLevel.trim())
+    newErrors.customRelationshipLevel = "Custom relationship level is required";
+
+  setErrors(newErrors);
+}, [
+  hasSubmitted, // important!
+  maleName,
+  femaleName,
+  language,
+  dialect,
+  tone,
+  femaleTone,
+  scenarioCategory,
+  relationshipLevel,
+  conversationLength,
+  customMin,
+  customMax,
+  customScenario,
+  customRelationshipLevel,
+  selectedScenario,
+  selectedRelationshipLevel,
+  selectedConversationLength,
+]);
+
+
+const validateForm = () => {
+  setHasSubmitted(true); // 🔥 turn on validation mode
+
+  const hasErrors = Object.keys(errors).length > 0;
+
+  if (hasErrors) {
+    toast.error("Please fix all errors before generating");
+    return false;
+  }
+
+  return true;
+};
 
   const handleGenerate = async () => {
+    setHasSubmitted(true);
     if (!validateForm()) return;
     setLoading(true);
     setGlobalLoading(true);
@@ -380,6 +279,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     setPromptAccordionOpen(false);
     setInputAccordionOpen(false);
     setOutputAccordionOpen(false);
+
+       setGeneratedMaleName(maleName);
+    setGeneratedFemaleName(femaleName);
+
     try {
       const body = {
         maleName,
@@ -389,13 +292,15 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
         maleDialect: language === "english" ? "" : dialect,
         femaleDialect: language === "english" ? "" : dialect,
         maleTone: tone,
-        femaleTone: tone,
+        femaleTone: femaleTone,
         scenarioCategory,
         customScenario: selectedScenario?.value === "custom" ? customScenario : undefined,
         relationshipLevel,
         customRelationshipLevel: selectedRelationshipLevel?.value === "custom" ? customRelationshipLevel : undefined,
         personaDirection,
         isGenZ,
+        gptModel,
+        temperature,
         conversationLength,
         ...(selectedConversationLength?.value === "custom" && {
           customMin: Number(customMin),
@@ -406,27 +311,41 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
       const res = await postApi(URLS.generateConversation, body);
       if (res?.data?.success) {
         const data = res.data.data;
-        const convoArray = data.generatedConversation
-          .split("\n")
-          .filter((line: string) => line.trim() !== "");
-        setConversation(convoArray);
-        setSystemPrompt(data.systemPrompt || "");
-        setMetaData({
-          model: data.gptModel,
-          temperature: data.temperature,
-          tokens: data.tokenUsage?.totalTokens,
-          cost: data.tokenUsage?.estimatedCost,
-        });
-        setAiInput(data.input || null);
-        setAiOutput(data.output || null);
-        setPromptUsed(data.promptUsed || null);
-        toast.success("Conversation generated successfully!");
+       let convoArray = [];
+        if (data.generatedConversation) {
+          convoArray = data.generatedConversation
+            .split("\n")
+            .map((line:any) => line.trim())
+            .filter((line:any) => {
+              // Only include lines that start with either name followed by colon
+              return line.startsWith(`${maleName}:`) || line.startsWith(`${femaleName}:`);
+            });
+        }
+        
+        // Only set conversation if we have valid messages
+        if (convoArray.length > 0) {
+          setConversation(convoArray);
+          setSystemPrompt(data.systemPrompt || "");
+          setMetaData({
+            model: data.gptModel,
+            temperature: data.temperature,
+            tokens: data.tokenUsage?.totalTokens,
+            cost: data.tokenUsage?.estimatedCost,
+          });
+          setAiInput(data.input || null);
+          setAiOutput(data.output || null);
+          setPromptUsed(data.promptUsed || null);
+          toast.success("Conversation generated successfully!");
+          setHasSubmitted(false);
+        } else {
+          toast.error("Invalid conversation format received");
+        }
       } else {
         toast.error("Failed to generate conversation");
       }
-    } catch (err) {
+    } catch (err:any) {
       console.error(err);
-      toast.error("Error generating conversation");
+      toast.error(err?.response?.data?.message||"Failed To Generate conversation");
     } finally {
       setLoading(false);
       setGlobalLoading(false);
@@ -534,6 +453,49 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 </select>
               </motion.div>
 
+  <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+              >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+    GPT Model
+  </label>
+  <select
+    value={gptModel}
+    onChange={(e) => setGptModel(e.target.value)}
+    className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm"
+    required
+  >
+    <option value="gpt-4o-mini">GPT-4o Mini</option>
+    <option value="gpt-4o">GPT-4o</option>
+    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+  </select>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+              >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+    Temperature (0 – 2)
+  </label>
+  <input
+    type="number"
+    step="0.1"
+    min="0"
+    max="2"
+    value={temperature}
+    onChange={(e) => setTemperature(parseFloat(e.target.value) || 0)}
+    className="w-full p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    placeholder="e.g. 0.7"
+    required
+  />
+              </motion.div>
               {/* Male Name */}
               <motion.div
                 variants={{
@@ -548,11 +510,20 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   type="text"
                   value={maleName}
                   onChange={(e) => setMaleName(e.target.value)}
-                  className="p-3 bg-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500 w-full outline-none border border-gray-600/50 hover:border-blue-500/50 backdrop-blur-sm transition-all"
+                className={`
+  p-3 bg-gray-700/50 rounded-xl w-full outline-none
+  backdrop-blur-sm transition-all
+  ${
+    hasSubmitted && errors.maleName 
+      ? "border-2 border-red-500"                     // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+  }
+`}
+
                   placeholder="Enter Male Name"
                 />
                 <AnimatePresence>
-                  {errors.maleName && (
+                  { hasSubmitted && errors.maleName && (
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -578,11 +549,19 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   type="text"
                   value={femaleName}
                   onChange={(e) => setFemaleName(e.target.value)}
-                  className="p-3 bg-gray-700/50 rounded-xl focus:ring-2 focus:ring-pink-500 w-full outline-none border border-gray-600/50 hover:border-pink-500/50 backdrop-blur-sm transition-all"
+                  className={`
+  p-3 bg-gray-700/50 rounded-xl w-full outline-none
+  backdrop-blur-sm transition-all
+  ${
+    hasSubmitted && errors.femaleName 
+      ? "border-2 border-red-500"                     // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+  }
+`}
                   placeholder="Enter Female Name"
                 />
                 <AnimatePresence>
-                  {errors.femaleName && (
+                  { hasSubmitted && errors.femaleName && (
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -631,11 +610,18 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   value={dialect}
                   onChange={(e) => setDialect(e.target.value)}
                   disabled={language === "english"}
-                  className={`p-3 rounded-xl w-full outline-none transition-all duration-300 border ${
+                  className={`p-3 bg-gray-700/50 rounded-xl w-full outline-none
+  backdrop-blur-sm transition-all ${
                     language === "english"
                       ? "bg-gray-600/30 text-gray-500 cursor-not-allowed border-gray-600/30"
                       : "bg-gray-700/50 border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
-                  }`}
+                  }
+                  ${
+    language != "english" && hasSubmitted && errors.femaleName 
+      ? "border-2 border-red-500"                     // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+  }
+                  `}
                 >
                   <option value="">Select Dialect</option>
                   {dialects.map((d) => (
@@ -654,7 +640,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 }}
               >
                 <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Tone
+                  Male Tone
                 </label>
                 <select
                   value={tone}
@@ -669,6 +655,27 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 </select>
               </motion.div>
 
+ <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+              >
+                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                 Female Tone
+                </label>
+                <select
+                  value={femaleTone}
+                  onChange={(e) => setFemaleTone(e.target.value)}
+                  className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                >
+                  {femaletones.map((t) => (
+                    <option key={t} value={t}>
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>
               <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 20 },
@@ -713,38 +720,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 </AnimatePresence>
               </motion.div>
 
-              <AnimatePresence>
-                {selectedScenario?.value === "custom" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="sm:col-span-2 mt-3"
-                  >
-                    <textarea
-                      placeholder="Enter your custom scenario..."
-                      value={customScenario}
-                      onChange={(e) => setCustomScenario(e.target.value)}
-                      className="w-full h-24 p-3 bg-gray-700/50 rounded-xl outline-none border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 transition-all resize-y text-sm"
-                      rows={4}
-                    />
-
-                    {/* Errors for the custom textarea */}
-                    <AnimatePresence>
-                      {errors.customScenario && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-xs text-red-400 mt-1"
-                        >
-                          {errors.customScenario}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+         
 
               {/* ---------- Relationship Level ---------- */}
               <motion.div
@@ -781,7 +757,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
 
                 {/* Errors for the select */}
                 <AnimatePresence>
-                  {errors.relationshipLevel && (
+                   {  hasSubmitted && errors.relationshipLevel && (
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -873,7 +849,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
 
                 {/* ---- errors ---- */}
                 <AnimatePresence>
-                  {(errors.conversationLength ||
+                  {  hasSubmitted && (errors.conversationLength ||
                     errors.customMin ||
                     errors.customMax) && (
                     <motion.p
@@ -888,6 +864,47 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   )}
                 </AnimatePresence>
               </motion.div>
+
+                   <AnimatePresence>
+                {  selectedScenario?.value === "custom" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="sm:col-span-2 mt-3"
+                  >
+                    <textarea
+                      placeholder="Enter your custom scenario..."
+                      value={customScenario}
+                      onChange={(e) => setCustomScenario(e.target.value)}
+                                      className={`
+  p-3 bg-gray-700/50 rounded-xl w-full outline-none
+  backdrop-blur-sm transition-all
+  ${
+    hasSubmitted && errors.femaleName 
+      ? "border-2 border-red-500"                     // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+  }
+`}
+                      rows={4}
+                    />
+
+                    {/* Errors for the custom textarea */}
+                    <AnimatePresence>
+                      {hasSubmitted &&  errors.customScenario && (
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-xs text-red-400 mt-1"
+                        >
+                          {errors.customScenario}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
                   <AnimatePresence>
                 {selectedRelationshipLevel?.value === "custom" && (
@@ -904,13 +921,20 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                       onChange={(e) =>
                         setCustomRelationshipLevel(e.target.value)
                       }
-                      className="w-full h-24 p-3 bg-gray-700/50 rounded-xl outline-none border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 transition-all resize-y text-sm"
+                      className={` p-3 bg-gray-700/50 rounded-xl w-full outline-none
+  backdrop-blur-sm transition-all
+  
+   ${
+    hasSubmitted && errors.customRelationshipLevel 
+      ? "border-2 border-red-500"                     // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500  resize-y text-sm"  
+   }`}
                       rows={4}
                     />
 
                     {/* Errors for the custom textarea */}
                     <AnimatePresence>
-                      {errors.customRelationshipLevel && (
+                      {hasSubmitted && errors.customRelationshipLevel && (
                         <motion.p
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -943,42 +967,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               {loading ? "Generating..." : "Generate Conversation"}
             </motion.button>
 
-            {/* {systemPrompt && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-8 text-center"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowPrompt(!showPrompt)}
-                  className="text-sm text-blue-400 hover:text-blue-300 underline focus:outline-none transition-colors duration-200 font-medium"
-                >
-                  {showPrompt
-                    ? "Hide Prompt Context ▲"
-                    : "Show Prompt Context ▼"}
-                </motion.button>
-
-              <AnimatePresence>
-                  {showPrompt && (
-                    <motion.pre
-                      initial={{ opacity: 0, height: 0, y: -20 }}
-                      animate={{ opacity: 1, height: "auto", y: 0 }}
-                      exit={{ opacity: 0, height: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="bg-gray-900/80 backdrop-blur-sm text-gray-200 mt-4 p-5 rounded-xl text-xs sm:text-sm border border-gray-700/50 max-h-64 overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words shadow-inner select-text cursor-text"
-                      style={{
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#4B5563 transparent",
-                      }}
-                    >
-                      {systemPrompt}
-                    </motion.pre>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            )} */}
+          
 
             {(aiInput || aiOutput || promptUsed) && (
               <motion.div
@@ -992,11 +981,11 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                     <motion.div
                       onClick={toggleInputAccordion}
                       whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                      className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                     className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
                     >
                       <div className="flex justify-between items-center">
                         <h4 className="text-sm font-medium text-gray-300">
-                          View Raw Input
+                          View Input
                         </h4>
                         <motion.span
                           animate={{ rotate: inputAccordionOpen ? 180 : 0 }}
@@ -1009,30 +998,37 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                     </motion.div>
 
                     <motion.div
-                      initial={false}
-                      animate={{
-                        height: inputAccordionOpen ? "auto" : 0,
-                        opacity: inputAccordionOpen ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div
-                        className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700 max-h-96 overflow-y-auto"
-                        style={{
-                          scrollbarWidth: "thin",
-                          scrollbarColor: "#4B5563 transparent",
-                        }}
-                      >
-                        <pre className="whitespace-pre-wrap">
-                          {JSON.stringify(aiInput, null, 2)}
-                        </pre>
+                                       initial={false}
+                                       animate={{
+                                         height: inputAccordionOpen ? "auto" : 0,
+                                         opacity: inputAccordionOpen ? 1 : 0,
+                                       }}
+                                       transition={{ duration: 0.3, ease: "easeInOut" }}
+                                       className="overflow-hidden"
+                                     >
+                      {aiInput && (
+                      <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
+                        <div>
+                          <pre className="whitespace-pre-wrap text-gray-300 text-start ">
+                            {aiInput.directionNote}
+                          </pre>
+                        </div>
+                        <div>
+                          <pre className="whitespace-pre-wrap text-gray-300 text-start">
+                            {aiInput.userPrompt}
+                          </pre>
+                        </div>
+                        <div>
+                          <pre className="whitespace-pre-wrap text-gray-300 text-start">
+                            {aiInput.systemPrompt}
+                          </pre>
+                        </div>
                       </div>
+                    )}
                     </motion.div>
                   </div>
                 )}
 
-                {/* View Raw Output Accordion */}
                 {aiOutput && (
                   <div>
                     <motion.div
@@ -1070,9 +1066,11 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                           scrollbarColor: "#4B5563 transparent",
                         }}
                       >
-                        <pre className="whitespace-pre-wrap">
-                          {JSON.stringify(aiOutput, null, 2)}
-                        </pre>
+                       <pre className="whitespace-pre-wrap text-start leading-normal">
+  {typeof aiOutput === "string" 
+    ? aiOutput 
+    : aiOutput.output}
+</pre>
                       </div>
                     </motion.div>
                   </div>
@@ -1264,8 +1262,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   {/* ---- Messages ---- */}
                   {conversation.map((msg, i) => {
                     const trimmed = msg.trim();
-                    const isMale = trimmed.startsWith(maleName);
-                    const speakerName = isMale ? maleName : femaleName;
+  const isMale = msg.startsWith(`${generatedMaleName}:`);                    const speakerName = isMale ? maleName : femaleName;
                     const messageText = trimmed.startsWith(`${speakerName}:`)
                       ? trimmed.slice(speakerName.length + 1).trim()
                       : trimmed;

@@ -25,6 +25,16 @@ interface FullPrompt {
   lastReplies: string[] | null;
 }
 
+interface InputPrompt {
+  role: string;
+  messageType: string;
+  language: string;
+  dialect: string;
+  style: string;
+  subPrmpt: string;
+  userInstruction: string;
+}
+
 const PromptGenerator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "generator" | "templates" | "conversation" | "conversation_prompt"
@@ -62,7 +72,7 @@ const PromptGenerator: React.FC = () => {
   const [temperature, setTemperature] = useState(1);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
-  const [aiInput, setAiInput] = useState<string[]>([]);
+  const [aiInput,  setAiInput] =  useState<InputPrompt | null>(null);;
   const [aiOutput, setAiOutput] = useState<string[]>([]);
   const [editMode, setEditMode] = useState(false);
 
@@ -351,7 +361,7 @@ const PromptGenerator: React.FC = () => {
   const handleDownloadJson = () => {
     const jsonData = {
       input: aiInput,
-      output: aiOutput,
+      output: responses,
       modelUsed,
       temperatureUsed,
       tokenUsage,
@@ -807,7 +817,7 @@ const PromptGenerator: React.FC = () => {
                     >
                       <div className="flex justify-between items-center">
                         <h4 className="text-xs sm:text-sm font-medium text-gray-300">
-                          View Raw Input
+                          View Input
                         </h4>
                         <motion.span
                           animate={{ rotate: inputAccordionOpen ? 180 : 0 }}
@@ -819,21 +829,93 @@ const PromptGenerator: React.FC = () => {
                       </div>
                     </motion.div>
 
-                    <motion.div
-                      initial={false}
-                      animate={{
-                        height: inputAccordionOpen ? "auto" : 0,
-                        opacity: inputAccordionOpen ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700">
-                        <pre className="whitespace-pre-wrap">
-                          {JSON.stringify(aiInput, null, 2)}
-                        </pre>
+                   <motion.div
+                    initial={false}
+                    animate={{
+                      height: inputAccordionOpen ? "auto" : 0,
+                      opacity: inputAccordionOpen ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    {aiInput && (
+                      <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
+                        {/* Role */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Role
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.role}
+                          </pre>
+                        </div>
+
+                        {/* Message Type */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Message Type
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.messageType}
+                          </pre>
+                        </div>
+
+                        {/* Language */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Language
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.language}
+                          </pre>
+                        </div>
+
+                        {/* Dialect */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Dialect
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.dialect || "N/A"}
+                          </pre>
+                        </div>
+
+                        {/* Style */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Style
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.style}
+                          </pre>
+                        </div>
+
+                        {/* Style */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            Submission Prompt
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.subPrmpt}
+                          </pre>
+                        </div>
+
+                      
+
+                        {/* User Instruction */}
+                        <div>
+                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                            User Instruction
+                          </h5> */}
+                          <pre className="whitespace-pre-wrap text-gray-300">
+                            {aiInput.userInstruction}
+                          </pre>
+                        </div>
+
+                      
                       </div>
-                    </motion.div>
+                    )}
+                  </motion.div>
 
                     {/* Output Accordion */}
                     <motion.div
@@ -845,7 +927,7 @@ const PromptGenerator: React.FC = () => {
                     >
                       <div className="flex justify-between items-center">
                         <h4 className="text-xs sm:text-sm font-medium text-gray-300">
-                          View Raw Output
+                          View Output
                         </h4>
                         <motion.span
                           animate={{ rotate: outputAccordionOpen ? 180 : 0 }}
@@ -867,9 +949,23 @@ const PromptGenerator: React.FC = () => {
                       className="overflow-hidden"
                     >
                       <div className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700">
-                        <pre className="whitespace-pre-wrap">
-                          {JSON.stringify(aiOutput, null, 2)}
-                        </pre>
+                        <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+                    {responses.map((response, index) => (
+                      <li
+                        key={index}
+                        className={`${
+                          output.startsWith("Error:")
+                            ? "text-red-400"
+                            : "text-gray-100"
+                        }`}
+                      >
+                        {response
+                          .replace(/^\s*"\d+\.\s*|\s*"$/, "")
+                          .replace(/^"|"$/g, "")
+                          .trim()}
+                      </li>
+                    ))}
+                  </ul>
                       </div>
                     </motion.div>
 
