@@ -11,10 +11,9 @@ interface ConvoGeneratorProps {
 
 interface InputPrompt {
   directionNote: string;
-  userPrompt:string; 
-  systemPrompt:string;
+  userPrompt: string;
+  systemPrompt: string;
 }
-
 
 const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   setGlobalLoading,
@@ -24,22 +23,22 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [language, setLanguage] = useState("english");
   const [dialect, setDialect] = useState("");
   const [tone, setTone] = useState("flirty");
-   const [femaleTone, setFemaleTone] = useState("flirty");
+  const [femaleTone, setFemaleTone] = useState("flirty");
   const [scenarioCategory, setScenarioCategory] = useState("");
   const [relationshipLevel, setRelationshipLevel] = useState("");
   const [conversationLength, setConversationLength] = useState("");
   const [selectedLengthObj, setSelectedLengthObj] = useState<any>(null);
   const [isGenZ, setIsGenZ] = useState(false);
   const [personaDirection, setPersonaDirection] = useState("male_to_female");
-   const [gptModel, setGptModel] = useState("gpt-4o-mini");
-   const [temperature, setTemperature] = useState(1);
+  const [gptModel, setGptModel] = useState("gpt-4o-mini");
+  const [temperature, setTemperature] = useState(1);
   const [conversation, setConversation] = useState<string[]>([]);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [metaData, setMetaData] = useState<any>(null);
 
   const [generatedMaleName, setGeneratedMaleName] = useState("");
   const [generatedFemaleName, setGeneratedFemaleName] = useState("");
-const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +48,7 @@ const [hasSubmitted, setHasSubmitted] = useState(false);
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [inputAccordionOpen, setInputAccordionOpen] = useState(false);
   const [outputAccordionOpen, setOutputAccordionOpen] = useState(false);
-  const [aiInput,  setAiInput] =  useState<InputPrompt | null>(null);;
+  const [aiInput, setAiInput] = useState<InputPrompt | null>(null);
   const [aiOutput, setAiOutput] = useState<any>(null);
   const [promptUsed, setPromptUsed] = useState<any>(null);
   const [customScenario, setCustomScenario] = useState("");
@@ -57,7 +56,7 @@ const [hasSubmitted, setHasSubmitted] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState<any>(null);
   const [selectedRelationshipLevel, setSelectedRelationshipLevel] =
     useState<any>(null);
-      const [selectedConversationLength, setSelectedConversationLength] =
+  const [selectedConversationLength, setSelectedConversationLength] =
     useState<any>(null);
   // API Data
   const [scenariosData, setScenariosData] = useState<any[]>([]);
@@ -82,52 +81,211 @@ const [hasSubmitted, setHasSubmitted] = useState(false);
     { value: "north_african", label: "North African" },
   ];
 
-  const tones = [
-    "confident",
-    "flirty",
-    "playful",
-    "conservative",
+  const tones = ["confident", "flirty", "playful", "conservative"];
+
+  const femaletones = ["modest", "playful", "sassy", "flirty"];
+
+  const maleNames = [
+    "Ahmed",
+    "Mohammed",
+    "Omar",
+    "Ali",
+    "Hassan",
+    "Hussein",
+    "Khalid",
+    "Fahad",
+    "Abdullah",
+    "Ibrahim",
+    "Youssef",
+    "Ismail",
+    "Tariq",
+    "Sultan",
+    "Rashid",
+    "Amir",
+    "Bilal",
+    "Nasser",
+    "Sami",
+    "Kareem",
+    "Jamal",
+    "Hamza",
+    "Faisal",
+    "Mansoor",
+    "Zaid",
+    "Saif",
+    "Adnan",
+    "Rami",
+    "Nabil",
+    "Imran",
+    "Farid",
+    "Talal",
+    "Majed",
+    "Bader",
+    "Anas",
+    "Mahmoud",
+    "Mustafa",
+    "Ayoub",
+    "Waleed",
+    "Hadi",
+    "Marwan",
+    "Bassam",
+    "Hazem",
+    "Kamal",
+    "Yahya",
+    "Ayman",
+    "Samir",
+    "Luay",
+    "Mutaz",
+    "Zuhair",
+    "Qasem",
+    "Firas",
+    "Tamer",
+    "Ameen",
+    "Anwar",
+    "Hisham",
+    "Sameer",
+    "Rafik",
+    "Zaki",
+    "Nadim",
+    "Khalil",
+    "Jabir",
+    "Mazin",
+    "Rayan",
+    "Yasser",
+    "Wael",
+    "Othman",
+    "Salim",
+    "Saeed",
+    "Musa",
+    "Laith",
+    "Jad",
+    "Fadi",
+    "Munir",
+    "Ashraf",
+    "Rasheed",
+    "Adel",
+    "Jaber",
+    "Ghaith",
+    "Aref",
+    "Hatem",
+    "Qais",
+    "Amer",
+    "Shadi",
+    "Murad",
+    "Bakr",
+    "Issa",
+    "Alaa",
+    "Fawwaz",
+    "Fahim",
+    "Nawaf",
+    "Thamer",
+    "Bashir",
+    "Wissam",
+    "Rabi",
+    "Harith",
+    "Younes",
+    "Rayyan",
   ];
 
-    const femaletones = [
-    "confident",
-    "flirty",
-    "modest",
-    "sassy",
+  const femaleNames = [
+    "Aisha",
+    "Fatima",
+    "Zainab",
+    "Khadija",
+    "Maryam",
+    "Huda",
+    "Nour",
+    "Layla",
+    "Aaliyah",
+    "Amira",
+    "Yasmin",
+    "Sara",
+    "Reem",
+    "Lina",
+    "Hana",
+    "Rania",
+    "Iman",
+    "Maha",
+    "Ruqayya",
+    "Samar",
+    "Nadia",
+    "Salma",
+    "Noor",
+    "Muna",
+    "Sahar",
+    "Farah",
+    "Rima",
+    "Amal",
+    "Basma",
+    "Laila",
+    "Najwa",
+    "Asma",
+    "Dina",
+    "Sumaya",
+    "Rita",
+    "Jana",
+    "Rahaf",
+    "Ahlam",
+    "Razan",
+    "Mariam",
+    "Abeer",
+    "Nouran",
+    "Dalia",
+    "Rowan",
+    "Jumana",
+    "Maysaa",
+    "Mira",
+    "Wafa",
+    "Hanan",
+    "Fajr",
+    "Shaden",
+    "Rawan",
+    "Aseel",
+    "Amani",
+    "Malak",
+    "Rimas",
+    "Tasneem",
+    "Haneen",
+    "Alya",
+    "Jouri",
+    "Lama",
+    "Doaa",
+    "Dalal",
+    "Samira",
+    "Nawal",
+    "Lubna",
+    "Mona",
+    "Salsabil",
+    "Zahra",
+    "Raya",
+    "Safiya",
+    "Ward",
+    "Shahed",
+    "Yasmina",
+    "Aseela",
+    "Leen",
+    "Tamara",
+    "Rasha",
+    "Rabab",
+    "Nisreen",
+    "Thuraya",
+    "Wijdan",
+    "Rafif",
+    "Reema",
+    "Nourah",
+    "Joud",
+    "Ghada",
+    "Ikram",
+    "Sundus",
+    "Manar",
+    "Kawthar",
+    "Hadeel",
+    "Maram",
+    "Sally",
+    "Hessa",
+    "Jannat",
+    "Sirine",
+    "Mais",
   ];
-
-const maleNames = [
-  "Ahmed", "Mohammed", "Omar", "Ali", "Hassan", "Hussein", "Khalid", "Fahad",
-  "Abdullah", "Ibrahim", "Youssef", "Ismail", "Tariq", "Sultan", "Rashid",
-  "Amir", "Bilal", "Nasser", "Sami", "Kareem", "Jamal", "Hamza", "Faisal",
-  "Mansoor", "Zaid", "Saif", "Adnan", "Rami", "Nabil", "Imran", "Farid",
-  "Talal", "Majed", "Bader", "Anas", "Mahmoud", "Mustafa", "Ayoub", "Waleed",
-  "Hadi", "Marwan", "Bassam", "Hazem", "Kamal", "Yahya", "Ayman", "Samir",
-  "Luay", "Mutaz", "Zuhair", "Qasem", "Firas", "Tamer", "Ameen", "Anwar",
-  "Hisham", "Sameer", "Rafik", "Zaki", "Nadim", "Khalil", "Jabir", "Mazin",
-  "Rayan", "Yasser", "Wael", "Othman", "Salim", "Saeed", "Musa", "Laith",
-  "Jad", "Fadi", "Munir", "Ashraf", "Rasheed", "Adel", "Jaber", "Ghaith",
-  "Aref", "Hatem", "Qais", "Amer", "Shadi", "Murad", "Bakr", "Issa", "Alaa",
-  "Fawwaz", "Fahim", "Nawaf", "Thamer", "Bashir", "Wissam", "Rabi", "Harith",
-  "Younes", "Rayyan"
-];
-
-const femaleNames = [
-  "Aisha", "Fatima", "Zainab", "Khadija", "Maryam", "Huda", "Nour", "Layla",
-  "Aaliyah", "Amira", "Yasmin", "Sara", "Reem", "Lina", "Hana", "Rania",
-  "Iman", "Maha", "Ruqayya", "Samar", "Nadia", "Salma", "Noor", "Muna",
-  "Sahar", "Farah", "Rima", "Amal", "Basma", "Laila", "Najwa", "Asma",
-  "Dina", "Sumaya", "Rita", "Jana", "Rahaf", "Ahlam", "Razan", "Mariam",
-  "Abeer", "Nouran", "Dalia", "Rowan", "Jumana", "Maysaa", "Mira", "Wafa",
-  "Hanan", "Fajr", "Shaden", "Rawan", "Aseel", "Amani", "Malak", "Rimas",
-  "Tasneem", "Haneen", "Alya", "Jouri", "Lama", "Doaa", "Dalal", "Samira",
-  "Nawal", "Lubna", "Mona", "Salsabil", "Zahra", "Raya", "Safiya", "Ward",
-  "Shahed", "Yasmina", "Aseela", "Leen", "Tamara", "Rasha", "Rabab", "Nisreen",
-  "Thuraya", "Wijdan", "Rafif", "Reema", "Nourah", "Joud", "Ghada",
-  "Ikram", "Sundus", "Manar", "Kawthar", "Hadeel", "Maram", "Sally",
-  "Hessa", "Jannat", "Sirine", "Mais"
-];
-
 
   const togglePromptAccordion = () =>
     setPromptAccordionOpen(!promptAccordionOpen);
@@ -177,10 +335,11 @@ const femaleNames = [
 
   const generateRandomNames = () => {
     const randomMale = maleNames[Math.floor(Math.random() * maleNames.length)];
-    const randomFemale = femaleNames[Math.floor(Math.random() * femaleNames.length)];
+    const randomFemale =
+      femaleNames[Math.floor(Math.random() * femaleNames.length)];
     setMaleName(randomMale);
     setFemaleName(randomFemale);
-    
+
     // Clear conversation when names change to prevent mismatch
     if (conversation.length > 0) {
       setConversation([]);
@@ -197,73 +356,81 @@ const femaleNames = [
     setEditMode(true);
   };
 
-useEffect(() => {
-  if (!hasSubmitted) return; // ⛔ skip validation before first submit
+  useEffect(() => {
+    if (!hasSubmitted) return; // ⛔ skip validation before first submit
 
-  const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {};
 
-  if (!maleName.trim()) newErrors.maleName = "Male name is required";
-  if (!femaleName.trim()) newErrors.femaleName = "Female name is required";
-  if (!language) newErrors.language = "Language is required";
+    if (!maleName.trim()) newErrors.maleName = "Male name is required";
+    if (!femaleName.trim()) newErrors.femaleName = "Female name is required";
+    if (!language) newErrors.language = "Language is required";
 
-  if ((language === "arabic" || language === "arabizi") && !dialect)
-    newErrors.dialect = "Dialect is required";
+    if ((language === "arabic" || language === "arabizi") && !dialect)
+      newErrors.dialect = "Dialect is required";
 
-  if (!tone) newErrors.tone = "Tone is required";
-  if (!femaleTone) newErrors.femaleTone = "Female tone is required";
-  if (!scenarioCategory) newErrors.scenarioCategory = "Scenario is required";
-  if (!relationshipLevel)
-    newErrors.relationshipLevel = "Relationship level is required";
-  if (!conversationLength)
-    newErrors.conversationLength = "Conversation length is required";
+    if (!tone) newErrors.tone = "Tone is required";
+    if (!femaleTone) newErrors.femaleTone = "Female tone is required";
+    if (!scenarioCategory) newErrors.scenarioCategory = "Scenario is required";
+    if (!relationshipLevel)
+      newErrors.relationshipLevel = "Relationship level is required";
+    if (!conversationLength)
+      newErrors.conversationLength = "Conversation length is required";
 
-  if (conversationLength === "custom" || selectedConversationLength?.value === "custom") {
-    if (!customMin || Number(customMin) < 1) newErrors.customMin = "Min must be ≥ 1";
-    if (!customMax || Number(customMax) < 1) newErrors.customMax = "Max must be ≥ 1";
-    if (customMin && customMax && Number(customMax) < Number(customMin))
-      newErrors.customMax = "Max must be ≥ Min";
-  }
+    if (
+      conversationLength === "custom" ||
+      selectedConversationLength?.value === "custom"
+    ) {
+      if (!customMin || Number(customMin) < 1)
+        newErrors.customMin = "Min must be ≥ 1";
+      if (!customMax || Number(customMax) < 1)
+        newErrors.customMax = "Max must be ≥ 1";
+      if (customMin && customMax && Number(customMax) < Number(customMin))
+        newErrors.customMax = "Max must be ≥ Min";
+    }
 
-  if (selectedScenario?.value === "custom" && !customScenario.trim())
-    newErrors.customScenario = "Custom scenario is required";
+    if (selectedScenario?.value === "custom" && !customScenario.trim())
+      newErrors.customScenario = "Custom scenario is required";
 
-  if (selectedRelationshipLevel?.value === "custom" && !customRelationshipLevel.trim())
-    newErrors.customRelationshipLevel = "Custom relationship level is required";
+    if (
+      selectedRelationshipLevel?.value === "custom" &&
+      !customRelationshipLevel.trim()
+    )
+      newErrors.customRelationshipLevel =
+        "Custom relationship level is required";
 
-  setErrors(newErrors);
-}, [
-  hasSubmitted, // important!
-  maleName,
-  femaleName,
-  language,
-  dialect,
-  tone,
-  femaleTone,
-  scenarioCategory,
-  relationshipLevel,
-  conversationLength,
-  customMin,
-  customMax,
-  customScenario,
-  customRelationshipLevel,
-  selectedScenario,
-  selectedRelationshipLevel,
-  selectedConversationLength,
-]);
+    setErrors(newErrors);
+  }, [
+    hasSubmitted, // important!
+    maleName,
+    femaleName,
+    language,
+    dialect,
+    tone,
+    femaleTone,
+    scenarioCategory,
+    relationshipLevel,
+    conversationLength,
+    customMin,
+    customMax,
+    customScenario,
+    customRelationshipLevel,
+    selectedScenario,
+    selectedRelationshipLevel,
+    selectedConversationLength,
+  ]);
 
+  const validateForm = () => {
+    setHasSubmitted(true); // 🔥 turn on validation mode
 
-const validateForm = () => {
-  setHasSubmitted(true); // 🔥 turn on validation mode
+    const hasErrors = Object.keys(errors).length > 0;
 
-  const hasErrors = Object.keys(errors).length > 0;
+    if (hasErrors) {
+      toast.error("Please fix all errors before generating");
+      return false;
+    }
 
-  if (hasErrors) {
-    toast.error("Please fix all errors before generating");
-    return false;
-  }
-
-  return true;
-};
+    return true;
+  };
 
   const handleGenerate = async () => {
     setHasSubmitted(true);
@@ -280,7 +447,7 @@ const validateForm = () => {
     setInputAccordionOpen(false);
     setOutputAccordionOpen(false);
 
-       setGeneratedMaleName(maleName);
+    setGeneratedMaleName(maleName);
     setGeneratedFemaleName(femaleName);
 
     try {
@@ -294,9 +461,13 @@ const validateForm = () => {
         maleTone: tone,
         femaleTone: femaleTone,
         scenarioCategory,
-        customScenario: selectedScenario?.value === "custom" ? customScenario : undefined,
+        customScenario:
+          selectedScenario?.value === "custom" ? customScenario : undefined,
         relationshipLevel,
-        customRelationshipLevel: selectedRelationshipLevel?.value === "custom" ? customRelationshipLevel : undefined,
+        customRelationshipLevel:
+          selectedRelationshipLevel?.value === "custom"
+            ? customRelationshipLevel
+            : undefined,
         personaDirection,
         isGenZ,
         gptModel,
@@ -311,17 +482,20 @@ const validateForm = () => {
       const res = await postApi(URLS.generateConversation, body);
       if (res?.data?.success) {
         const data = res.data.data;
-       let convoArray = [];
+        let convoArray = [];
         if (data.generatedConversation) {
           convoArray = data.generatedConversation
             .split("\n")
-            .map((line:any) => line.trim())
-            .filter((line:any) => {
+            .map((line: any) => line.trim())
+            .filter((line: any) => {
               // Only include lines that start with either name followed by colon
-              return line.startsWith(`${maleName}:`) || line.startsWith(`${femaleName}:`);
+              return (
+                line.startsWith(`${maleName}:`) ||
+                line.startsWith(`${femaleName}:`)
+              );
             });
         }
-        
+
         // Only set conversation if we have valid messages
         if (convoArray.length > 0) {
           setConversation(convoArray);
@@ -343,15 +517,16 @@ const validateForm = () => {
       } else {
         toast.error("Failed to generate conversation");
       }
-    } catch (err:any) {
+    } catch (err: any) {
       console.error(err);
-      toast.error(err?.response?.data?.message||"Failed To Generate conversation");
+      toast.error(
+        err?.response?.data?.message || "Failed To Generate conversation"
+      );
     } finally {
       setLoading(false);
       setGlobalLoading(false);
     }
   };
-
 
   // const selectedConversationLength = conversationLengthsData.find(
   //   (len) => len.value === conversationLength
@@ -379,477 +554,472 @@ const validateForm = () => {
           </p>
         </motion.div>
 
-     
-          <>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="mb-8 flex justify-between"
+        <>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8 flex justify-between"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={generateRandomNames}
+              className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg flex items-center gap-3 text-sm"
             >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={generateRandomNames}
-                className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg flex items-center gap-3 text-sm"
+              <span>Pick Random Names</span>
+            </motion.button>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.06 } },
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8"
+          >
+            {/* Gen Z Mode */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 flex items-center justify-between"
+            >
+              <label className="block text-sm font-medium text-gray-300 text-start">
+                Gen Z Mode
+              </label>
+              <button
+                onClick={() => setIsGenZ(!isGenZ)}
+                className={`relative w-16 h-8 rounded-full transition-all duration-300 shadow-inner ${
+                  isGenZ
+                    ? "bg-gradient-to-r from-green-400 to-emerald-500"
+                    : "bg-gray-600"
+                }`}
               >
-                <span>Pick Random Names</span>
-              </motion.button>
-            
+                <div
+                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${
+                    isGenZ ? "translate-x-8" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </motion.div>
+
+            {/* Direction */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-3 text-start">
+                Direction
+              </label>
+              <select
+                value={personaDirection}
+                onChange={(e) => setPersonaDirection(e.target.value)}
+                className="w-full p-3 bg-gray-700/60 rounded-lg border border-gray-600 focus:ring-2 focus:ring-purple-400 focus:outline-none cursor-pointer text-sm"
+              >
+                <option value="male_to_female">Male to Female</option>
+                <option value="female_to_male">Female to Male</option>
+              </select>
             </motion.div>
 
             <motion.div
-              initial="hidden"
-              animate="visible"
               variants={{
-                visible: { transition: { staggerChildren: 0.06 } },
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
               }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8"
             >
-              {/* Gen Z Mode */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 flex items-center justify-between"
-              >
-                <label className="block text-sm font-medium text-gray-300 text-start">
-                  Gen Z Mode
-                </label>
-                <button
-                  onClick={() => setIsGenZ(!isGenZ)}
-                  className={`relative w-16 h-8 rounded-full transition-all duration-300 shadow-inner ${
-                    isGenZ
-                      ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                      : "bg-gray-600"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${
-                      isGenZ ? "translate-x-8" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </motion.div>
-
-              {/* Direction */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
-                <label className="block text-sm font-medium text-gray-300 mb-3 text-start">
-                  Direction
-                </label>
-                <select
-                  value={personaDirection}
-                  onChange={(e) => setPersonaDirection(e.target.value)}
-                  className="w-full p-3 bg-gray-700/60 rounded-lg border border-gray-600 focus:ring-2 focus:ring-purple-400 focus:outline-none cursor-pointer text-sm"
-                >
-                  <option value="male_to_female">Male to Female</option>
-                  <option value="female_to_male">Female to Male</option>
-                </select>
-              </motion.div>
-
-  <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
               <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-    GPT Model
-  </label>
-  <select
-    value={gptModel}
-    onChange={(e) => setGptModel(e.target.value)}
-    className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm"
-    required
-  >
-    <option value="gpt-4o-mini">GPT-4o Mini</option>
-    <option value="gpt-4o">GPT-4o</option>
-    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-  </select>
-              </motion.div>
+                GPT Model
+              </label>
+              <select
+                value={gptModel}
+                onChange={(e) => setGptModel(e.target.value)}
+                className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm"
+                required
+              >
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              </select>
+            </motion.div>
 
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
               <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-    Temperature (0 – 2)
-  </label>
-  <input
-    type="number"
-    step="0.1"
-    min="0"
-    max="2"
-    value={temperature}
-    onChange={(e) => setTemperature(parseFloat(e.target.value) || 0)}
-    className="w-full p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-    placeholder="e.g. 0.7"
-    required
-  />
-              </motion.div>
-              {/* Male Name */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Male Name
-                </label>
-                <input
-                  type="text"
-                  value={maleName}
-                  onChange={(e) => setMaleName(e.target.value)}
+                Temperature (0 – 2)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="2"
+                value={temperature}
+                onChange={(e) =>
+                  setTemperature(parseFloat(e.target.value) || 0)
+                }
+                className="w-full p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                placeholder="e.g. 0.7"
+                required
+              />
+            </motion.div>
+            {/* Male Name */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Male Name
+              </label>
+              <input
+                type="text"
+                value={maleName}
+                onChange={(e) => setMaleName(e.target.value)}
                 className={`
   p-3 bg-gray-700/50 rounded-xl w-full outline-none
   backdrop-blur-sm transition-all
   ${
-    hasSubmitted && errors.maleName 
-      ? "border-2 border-red-500"                     // 🔴 show red when error
-      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+    hasSubmitted && errors.maleName
+      ? "border-2 border-red-500" // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"
   }
 `}
+                placeholder="Enter Male Name"
+              />
+              <AnimatePresence>
+                {hasSubmitted && errors.maleName && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-red-400 mt-1"
+                  >
+                    {errors.maleName}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
-                  placeholder="Enter Male Name"
-                />
-                <AnimatePresence>
-                  { hasSubmitted && errors.maleName && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-red-400 mt-1"
-                    >
-                      {errors.maleName}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* Female Name */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Female Name
-                </label>
-                <input
-                  type="text"
-                  value={femaleName}
-                  onChange={(e) => setFemaleName(e.target.value)}
-                  className={`
+            {/* Female Name */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Female Name
+              </label>
+              <input
+                type="text"
+                value={femaleName}
+                onChange={(e) => setFemaleName(e.target.value)}
+                className={`
   p-3 bg-gray-700/50 rounded-xl w-full outline-none
   backdrop-blur-sm transition-all
   ${
-    hasSubmitted && errors.femaleName 
-      ? "border-2 border-red-500"                     // 🔴 show red when error
-      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+    hasSubmitted && errors.femaleName
+      ? "border-2 border-red-500" // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"
   }
 `}
-                  placeholder="Enter Female Name"
-                />
-                <AnimatePresence>
-                  { hasSubmitted && errors.femaleName && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-red-400 mt-1"
-                    >
-                      {errors.femaleName}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                placeholder="Enter Female Name"
+              />
+              <AnimatePresence>
+                {hasSubmitted && errors.femaleName && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-red-400 mt-1"
+                  >
+                    {errors.femaleName}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
-              {/* Language */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
+            {/* Language */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Language
+              </label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
               >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Language
-                </label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
-                >
-                  {languages.map((l) => (
-                    <option key={l.value} value={l.value}>
-                      {l.label}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
+                {languages.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </motion.div>
 
-              {/* Dialect */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-              >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Dialect
-                </label>
-                <select
-                  value={dialect}
-                  onChange={(e) => setDialect(e.target.value)}
-                  disabled={language === "english"}
-                  className={`p-3 bg-gray-700/50 rounded-xl w-full outline-none
+            {/* Dialect */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Dialect
+              </label>
+              <select
+                value={dialect}
+                onChange={(e) => setDialect(e.target.value)}
+                disabled={language === "english"}
+                className={`p-3 bg-gray-700/50 rounded-xl w-full outline-none
   backdrop-blur-sm transition-all ${
-                    language === "english"
-                      ? "bg-gray-600/30 text-gray-500 cursor-not-allowed border-gray-600/30"
-                      : "bg-gray-700/50 border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
-                  }
-                  ${
-    language != "english" && hasSubmitted && errors.femaleName 
-      ? "border-2 border-red-500"                     // 🔴 show red when error
-      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+    language === "english"
+      ? "bg-gray-600/30 text-gray-500 cursor-not-allowed border-gray-600/30"
+      : "bg-gray-700/50 border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
   }
+                  ${
+                    language != "english" && hasSubmitted && errors.femaleName
+                      ? "border-2 border-red-500" // 🔴 show red when error
+                      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"
+                  }
                   `}
-                >
-                  <option value="">Select Dialect</option>
-                  {dialects.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
-
-              {/* Tone */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
               >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Male Tone
-                </label>
-                <select
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value)}
-                  className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                >
-                  {tones.map((t) => (
-                    <option key={t} value={t}>
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
+                <option value="">Select Dialect</option>
+                {dialects.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </motion.div>
 
- <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
+            {/* Tone */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Male Tone
+              </label>
+              <select
+                value={tone}
+                onChange={(e) => setTone(e.target.value)}
+                className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
               >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                 Female Tone
-                </label>
-                <select
-                  value={femaleTone}
-                  onChange={(e) => setFemaleTone(e.target.value)}
-                  className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                >
-                  {femaletones.map((t) => (
-                    <option key={t} value={t}>
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                className="sm:col-span-1"
+                {tones.map((t) => (
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </motion.div>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Female Tone
+              </label>
+              <select
+                value={femaleTone}
+                onChange={(e) => setFemaleTone(e.target.value)}
+                className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
               >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Scenario
-                </label>
+                {femaletones.map((t) => (
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </motion.div>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="sm:col-span-1"
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Scenario
+              </label>
 
-                <select
-                  value={scenarioCategory}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setScenarioCategory(id);
-                    const sel = scenariosData.find((s) => s._id === id);
-                    setSelectedScenario(sel || null);
-                    if (sel?.value !== "custom") setCustomScenario("");
-                  }}
-                  className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                >
-                  <option value="">Select Scenario</option>
-                  {scenariosData.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.title}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Errors for the select */}
-                <AnimatePresence>
-                  {errors.scenarioCategory && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-red-400 mt-1"
-                    >
-                      {errors.scenarioCategory}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-         
-
-              {/* ---------- Relationship Level ---------- */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                className="sm:col-span-1"
-              >
-                <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                  Relationship Level
-                </label>
-
-                <select
-                  value={relationshipLevel}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setRelationshipLevel(id);
-                    const sel = relationshipLevelsData.find(
-                      (r) => r._id === id
-                    );
-                    setSelectedRelationshipLevel(sel || null);
-                    if (sel?.value !== "custom") setCustomRelationshipLevel("");
-                  }}
-                  className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                >
-                  <option value="">Select Relationship Level</option>
-                  {relationshipLevelsData.map((l) => (
-                    <option key={l._id} value={l._id}>
-                      {l.title}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Errors for the select */}
-                <AnimatePresence>
-                   {  hasSubmitted && errors.relationshipLevel && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-red-400 mt-1"
-                    >
-                      {errors.relationshipLevel}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-        
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                className="sm:col-span-1"
-              >
-                <label className="block text-sm font-medium text-gray-300 mb-3 text-start">
-                  Conversation Length
-                  {/* Show range only for preset lengths */}
-                  {selectedLengthObj?.range?.length > 0 &&
-                    selectedLengthObj?.value !== "custom" && (
-                      <span className="text-xs text-gray-400 ml-2">
-                        ({selectedLengthObj.range[0]} -{" "}
-                        {selectedLengthObj.range[1]} messages)
-                      </span>
-                    )}
-                </label>
-
-                {/* ---- selector ---- */}
-                <select
-                  value={conversationLength}
+              <select
+                value={scenarioCategory}
                 onChange={(e) => {
-      const selectedId = e.target.value;
-      setConversationLength(selectedId);
+                  const id = e.target.value;
+                  setScenarioCategory(id);
+                  const sel = scenariosData.find((s) => s._id === id);
+                  setSelectedScenario(sel || null);
+                  if (sel?.value !== "custom") setCustomScenario("");
+                }}
+                className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="">Select Scenario</option>
+                {scenariosData.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.title}
+                  </option>
+                ))}
+              </select>
 
-      const selected = conversationLengthsData.find(
-        (l) => l._id === selectedId
-      );
-      setSelectedConversationLength(selected || null);   // <-- NEW
+              {/* Errors for the select */}
+              <AnimatePresence>
+                {errors.scenarioCategory && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-red-400 mt-1"
+                  >
+                    {errors.scenarioCategory}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
-      // Reset custom fields if not custom
-      if (!selected || selected.value !== "custom") {
-        setCustomMin("");
-        setCustomMax("");
-      }
-    }}
-                  className="w-full p-3 bg-gray-700/50 rounded-xl outline-none border border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all"
-                >
-                  <option value="">Select Length</option>
-                  {conversationLengthsData.map((len) => (
-                    <option key={len._id} value={len._id}>
-                      {len.title}
-                    </option>
-                  ))}
-                </select>
+            {/* ---------- Relationship Level ---------- */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="sm:col-span-1"
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
+                Relationship Level
+              </label>
 
-                {/* ---- custom min / max (always rendered, AnimatePresence handles show/hide) ---- */}
-                <AnimatePresence>
-                  {selectedConversationLength?.value === "custom" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="mt-3 grid grid-cols-2 gap-3"
-                    >
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Min"
-                        value={customMin}
-                        onChange={(e) => setCustomMin(e.target.value)}
-                        className="p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Max"
-                        value={customMax}
-                        onChange={(e) => setCustomMax(e.target.value)}
-                        className="p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <select
+                value={relationshipLevel}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setRelationshipLevel(id);
+                  const sel = relationshipLevelsData.find((r) => r._id === id);
+                  setSelectedRelationshipLevel(sel || null);
+                  if (sel?.value !== "custom") setCustomRelationshipLevel("");
+                }}
+                className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
+              >
+                <option value="">Select Relationship Level</option>
+                {relationshipLevelsData.map((l) => (
+                  <option key={l._id} value={l._id}>
+                    {l.title}
+                  </option>
+                ))}
+              </select>
 
-                {/* ---- errors ---- */}
-                <AnimatePresence>
-                  {  hasSubmitted && (errors.conversationLength ||
+              {/* Errors for the select */}
+              <AnimatePresence>
+                {hasSubmitted && errors.relationshipLevel && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-red-400 mt-1"
+                  >
+                    {errors.relationshipLevel}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="sm:col-span-1"
+            >
+              <label className="block text-sm font-medium text-gray-300 mb-3 text-start">
+                Conversation Length
+                {/* Show range only for preset lengths */}
+                {/* {selectedLengthObj?.range?.length > 0 &&
+                  selectedLengthObj?.value !== "custom" && (
+                    <span className="text-xs text-gray-400 ml-2">
+                      ({selectedLengthObj.range[0]} -{" "}
+                      {selectedLengthObj.range[1]} messages)
+                    </span>
+                  )} */}
+              </label>
+
+              {/* ---- selector ---- */}
+              <select
+                value={conversationLength}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  setConversationLength(selectedId);
+
+                  const selected = conversationLengthsData.find(
+                    (l) => l._id === selectedId
+                  );
+                  setSelectedConversationLength(selected || null); // <-- NEW
+
+                  // Reset custom fields if not custom
+                  if (!selected || selected.value !== "custom") {
+                    setCustomMin("");
+                    setCustomMax("");
+                  }
+                }}
+                className="w-full p-3 bg-gray-700/50 rounded-xl outline-none border border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all"
+              >
+                <option value="">Select Length</option>
+                {conversationLengthsData.map((len) => (
+                  <option key={len._id} value={len._id}>
+                    {len.title}
+                  </option>
+                ))}
+              </select>
+
+              {/* ---- custom min / max (always rendered, AnimatePresence handles show/hide) ---- */}
+              <AnimatePresence>
+                {selectedConversationLength?.value === "custom" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="mt-3 grid grid-cols-2 gap-3"
+                  >
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Min"
+                      value={customMin}
+                      onChange={(e) => setCustomMin(e.target.value)}
+                      className="p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Max"
+                      value={customMax}
+                      onChange={(e) => setCustomMax(e.target.value)}
+                      className="p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ---- errors ---- */}
+              <AnimatePresence>
+                {hasSubmitted &&
+                  (errors.conversationLength ||
                     errors.customMin ||
                     errors.customMax) && (
                     <motion.p
@@ -862,151 +1032,146 @@ const validateForm = () => {
                       {errors.customMax && `• ${errors.customMax}`}
                     </motion.p>
                   )}
-                </AnimatePresence>
-              </motion.div>
+              </AnimatePresence>
+            </motion.div>
 
-                   <AnimatePresence>
-                {  selectedScenario?.value === "custom" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="sm:col-span-2 mt-3"
-                  >
-                    <textarea
-                      placeholder="Enter your custom scenario..."
-                      value={customScenario}
-                      onChange={(e) => setCustomScenario(e.target.value)}
-                                      className={`
+            <AnimatePresence>
+              {selectedScenario?.value === "custom" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="sm:col-span-2 mt-3"
+                >
+                  <textarea
+                    placeholder="Enter your custom scenario..."
+                    value={customScenario}
+                    onChange={(e) => setCustomScenario(e.target.value)}
+                    className={`
   p-3 bg-gray-700/50 rounded-xl w-full outline-none
   backdrop-blur-sm transition-all
   ${
-    hasSubmitted && errors.femaleName 
-      ? "border-2 border-red-500"                     // 🔴 show red when error
-      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"  
+    hasSubmitted && errors.femaleName
+      ? "border-2 border-red-500" // 🔴 show red when error
+      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"
   }
 `}
-                      rows={4}
-                    />
+                    rows={4}
+                  />
 
-                    {/* Errors for the custom textarea */}
-                    <AnimatePresence>
-                      {hasSubmitted &&  errors.customScenario && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-xs text-red-400 mt-1"
-                        >
-                          {errors.customScenario}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
+                  {/* Errors for the custom textarea */}
                   <AnimatePresence>
-                {selectedRelationshipLevel?.value === "custom" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="sm:col-span-2 mt-3"
-                  >
-                    <textarea
-                      placeholder="Enter your custom relationship level..."
-                      value={customRelationshipLevel}
-                      onChange={(e) =>
-                        setCustomRelationshipLevel(e.target.value)
-                      }
-                      className={` p-3 bg-gray-700/50 rounded-xl w-full outline-none
+                    {hasSubmitted && errors.customScenario && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-red-400 mt-1"
+                      >
+                        {errors.customScenario}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {selectedRelationshipLevel?.value === "custom" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="sm:col-span-2 mt-3"
+                >
+                  <textarea
+                    placeholder="Enter your custom relationship level..."
+                    value={customRelationshipLevel}
+                    onChange={(e) => setCustomRelationshipLevel(e.target.value)}
+                    className={` p-3 bg-gray-700/50 rounded-xl w-full outline-none
   backdrop-blur-sm transition-all
   
    ${
-    hasSubmitted && errors.customRelationshipLevel 
-      ? "border-2 border-red-500"                     // 🔴 show red when error
-      : "border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500  resize-y text-sm"  
+     hasSubmitted && errors.customRelationshipLevel
+       ? "border-2 border-red-500" // 🔴 show red when error
+       : "border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500  resize-y text-sm"
    }`}
-                      rows={4}
-                    />
+                    rows={4}
+                  />
 
-                    {/* Errors for the custom textarea */}
-                    <AnimatePresence>
-                      {hasSubmitted && errors.customRelationshipLevel && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-xs text-red-400 mt-1"
-                        >
-                          {errors.customRelationshipLevel}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  {/* Errors for the custom textarea */}
+                  <AnimatePresence>
+                    {hasSubmitted && errors.customRelationshipLevel && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-red-400 mt-1"
+                      >
+                        {errors.customRelationshipLevel}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
-            </motion.div>
+          <motion.button
+            onClick={handleGenerate}
+            disabled={loading}
+            whileHover={{
+              scale: loading ? 1 : 1.05,
+              boxShadow: "0 0 15px rgba(59, 130, 246, 0.4)",
+            }}
+            whileTap={{ scale: loading ? 1 : 0.95 }}
+            className={`w-full py-4 rounded-xl font-semibold text-base shadow-md transition-all duration-300 ${
+              loading
+                ? "bg-blue-400 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Generating..." : "Generate Conversation"}
+          </motion.button>
 
-            <motion.button
-              onClick={handleGenerate}
-              disabled={loading}
-              whileHover={{
-                scale: loading ? 1 : 1.05,
-                boxShadow: "0 0 15px rgba(59, 130, 246, 0.4)",
-              }}
-              whileTap={{ scale: loading ? 1 : 0.95 }}
-              className={`w-full py-4 rounded-xl font-semibold text-base shadow-md transition-all duration-300 ${
-                loading
-                  ? "bg-blue-400 text-white cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
+          {(aiInput || aiOutput || promptUsed) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 space-y-4"
             >
-              {loading ? "Generating..." : "Generate Conversation"}
-            </motion.button>
+              {/* View Raw Input Accordion */}
+              {aiInput && (
+                <div>
+                  <motion.div
+                    onClick={toggleInputAccordion}
+                    whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                    className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                  >
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-sm font-medium text-gray-300">
+                        View Input
+                      </h4>
+                      <motion.span
+                        animate={{ rotate: inputAccordionOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-gray-400"
+                      >
+                        ▼
+                      </motion.span>
+                    </div>
+                  </motion.div>
 
-          
-
-            {(aiInput || aiOutput || promptUsed) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 space-y-4"
-              >
-                {/* View Raw Input Accordion */}
-                {aiInput && (
-                  <div>
-                    <motion.div
-                      onClick={toggleInputAccordion}
-                      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                     className="cursor-pointer p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-medium text-gray-300">
-                          View Input
-                        </h4>
-                        <motion.span
-                          animate={{ rotate: inputAccordionOpen ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="text-gray-400"
-                        >
-                          ▼
-                        </motion.span>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                                       initial={false}
-                                       animate={{
-                                         height: inputAccordionOpen ? "auto" : 0,
-                                         opacity: inputAccordionOpen ? 1 : 0,
-                                       }}
-                                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                                       className="overflow-hidden"
-                                     >
-                      {aiInput && (
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      height: inputAccordionOpen ? "auto" : 0,
+                      opacity: inputAccordionOpen ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    {aiInput && (
                       <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
                         <div>
                           <pre className="whitespace-pre-wrap text-gray-300 text-start ">
@@ -1025,350 +1190,350 @@ const validateForm = () => {
                         </div>
                       </div>
                     )}
-                    </motion.div>
-                  </div>
-                )}
+                  </motion.div>
+                </div>
+              )}
 
-                {aiOutput && (
-                  <div>
-                    <motion.div
-                      onClick={toggleOutputAccordion}
-                      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                      className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-medium text-gray-300">
-                          View Raw Output
-                        </h4>
-                        <motion.span
-                          animate={{ rotate: outputAccordionOpen ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="text-gray-400"
-                        >
-                          ▼
-                        </motion.span>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      initial={false}
-                      animate={{
-                        height: outputAccordionOpen ? "auto" : 0,
-                        opacity: outputAccordionOpen ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div
-                        className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700 max-h-96 overflow-y-auto"
-                        style={{
-                          scrollbarWidth: "thin",
-                          scrollbarColor: "#4B5563 transparent",
-                        }}
-                      >
-                       <pre className="whitespace-pre-wrap text-start leading-normal">
-  {typeof aiOutput === "string" 
-    ? aiOutput 
-    : aiOutput.output}
-</pre>
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
-
-                {/* View Prompt Used Accordion */}
-                {promptUsed && (
-                  <div>
-                    <motion.div
-                      onClick={togglePromptAccordion}
-                      whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                      className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-medium text-gray-300">
-                          View Prompt Used
-                        </h4>
-                        <motion.span
-                          animate={{ rotate: promptAccordionOpen ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="text-gray-400"
-                        >
-                          ▼
-                        </motion.span>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      initial={false}
-                      animate={{
-                        height: promptAccordionOpen ? "auto" : 0,
-                        opacity: promptAccordionOpen ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div
-                        className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200 max-h-96 overflow-y-auto"
-                        style={{
-                          scrollbarWidth: "thin",
-                          scrollbarColor: "#4B5563 transparent",
-                        }}
-                      >
-                        {/* System Prompt */}
-                        {promptUsed.systemPrompt && (
-                          <div className="text-start">
-                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                              System Prompt
-                            </h5>
-                            <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
-                              {promptUsed.systemPrompt}
-                            </pre>
-                          </div>
-                        )}
-
-                        {/* User Prompt */}
-                        {promptUsed.userPrompt && (
-                          <div className="text-start">
-                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                              User Instruction
-                            </h5>
-                            <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
-                              {promptUsed.userPrompt}
-                            </pre>
-                          </div>
-                        )}
-
-                        {/* Direction Note */}
-                        {promptUsed.directionNote && (
-                          <div className="text-start">
-                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                              Direction Note
-                            </h5>
-                            <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
-                              {promptUsed.directionNote}
-                            </pre>
-                          </div>
-                        )}
-
-                        {/* Male Persona Details */}
-                        {promptUsed.male && (
-                          <div className="text-start">
-                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                              Male Persona
-                            </h5>
-                            <div className="space-y-3 bg-gray-900/50 p-3 rounded-lg">
-                              {promptUsed.male.language && (
-                                <div>
-                                  <h6 className="text-xs font-medium text-blue-400 mb-1">
-                                    Language
-                                  </h6>
-                                  <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                    {promptUsed.male.language}
-                                  </pre>
-                                </div>
-                              )}
-                              {promptUsed.male.dialect && (
-                                <div>
-                                  <h6 className="text-xs font-medium text-blue-400 mb-1">
-                                    Dialect
-                                  </h6>
-                                  <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                    {promptUsed.male.dialect}
-                                  </pre>
-                                </div>
-                              )}
-                              {promptUsed.male.tone && (
-                                <div>
-                                  <h6 className="text-xs font-medium text-blue-400 mb-1">
-                                    Tone
-                                  </h6>
-                                  <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                    {promptUsed.male.tone}
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Female Persona Details */}
-                        {promptUsed.female && (
-                          <div className="text-start">
-                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                              Female Persona
-                            </h5>
-                            <div className="space-y-3 bg-gray-900/50 p-3 rounded-lg">
-                              {promptUsed.female.language && (
-                                <div>
-                                  <h6 className="text-xs font-medium text-pink-400 mb-1">
-                                    Language
-                                  </h6>
-                                  <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                    {promptUsed.female.language}
-                                  </pre>
-                                </div>
-                              )}
-                              {promptUsed.female.dialect && (
-                                <div>
-                                  <h6 className="text-xs font-medium text-pink-400 mb-1">
-                                    Dialect
-                                  </h6>
-                                  <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                    {promptUsed.female.dialect}
-                                  </pre>
-                                </div>
-                              )}
-                              {promptUsed.female.tone && (
-                                <div>
-                                  <h6 className="text-xs font-medium text-pink-400 mb-1">
-                                    Tone
-                                  </h6>
-                                  <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                    {promptUsed.female.tone}
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            <AnimatePresence>
-              {conversation.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.4 }}
-                  className="mt-8 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl max-h-[500px] overflow-y-auto space-y-4"
-                  style={{
-                    scrollbarWidth: "thin",
-                    scrollbarColor: "#4B5563 transparent",
-                  }}
-                >
-                  <motion.h3
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-lg font-semibold text-center mb-4 bg-gradient-to-r from-blue-400 to-pink-400 bg-clip-text text-transparent"
+              {aiOutput && (
+                <div>
+                  <motion.div
+                    onClick={toggleOutputAccordion}
+                    whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                    className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
                   >
-                    Generated Conversation
-                  </motion.h3>
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-sm font-medium text-gray-300">
+                        View Raw Output
+                      </h4>
+                      <motion.span
+                        animate={{ rotate: outputAccordionOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-gray-400"
+                      >
+                        ▼
+                      </motion.span>
+                    </div>
+                  </motion.div>
 
-                  {/* ---- Messages ---- */}
-                  {conversation.map((msg, i) => {
-                    const trimmed = msg.trim();
-  const isMale = msg.startsWith(`${generatedMaleName}:`);                    const speakerName = isMale ? maleName : femaleName;
-                    const messageText = trimmed.startsWith(`${speakerName}:`)
-                      ? trimmed.slice(speakerName.length + 1).trim()
-                      : trimmed;
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      height: outputAccordionOpen ? "auto" : 0,
+                      opacity: outputAccordionOpen ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div
+                      className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700 max-h-96 overflow-y-auto"
+                      style={{
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "#4B5563 transparent",
+                      }}
+                    >
+                      <pre className="whitespace-pre-wrap text-start leading-normal">
+                        {typeof aiOutput === "string"
+                          ? aiOutput
+                          : aiOutput.output}
+                      </pre>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
 
-                    return (
+              {/* View Prompt Used Accordion */}
+              {promptUsed && (
+                <div>
+                  <motion.div
+                    onClick={togglePromptAccordion}
+                    whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                    className="cursor-pointer p-3 bg-gray-800 rounded-lg border border-gray-600 hover:border-gray-500 transition-all duration-300"
+                  >
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-sm font-medium text-gray-300">
+                        View Prompt Used
+                      </h4>
+                      <motion.span
+                        animate={{ rotate: promptAccordionOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-gray-400"
+                      >
+                        ▼
+                      </motion.span>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      height: promptAccordionOpen ? "auto" : 0,
+                      opacity: promptAccordionOpen ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div
+                      className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200 max-h-96 overflow-y-auto"
+                      style={{
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "#4B5563 transparent",
+                      }}
+                    >
+                      {/* System Prompt */}
+                      {promptUsed.systemPrompt && (
+                        <div className="text-start">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
+                            System Prompt
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
+                            {promptUsed.systemPrompt}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* User Prompt */}
+                      {promptUsed.userPrompt && (
+                        <div className="text-start">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
+                            User Instruction
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
+                            {promptUsed.userPrompt}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Direction Note */}
+                      {promptUsed.directionNote && (
+                        <div className="text-start">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
+                            Direction Note
+                          </h5>
+                          <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
+                            {promptUsed.directionNote}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Male Persona Details */}
+                      {promptUsed.male && (
+                        <div className="text-start">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
+                            Male Persona
+                          </h5>
+                          <div className="space-y-3 bg-gray-900/50 p-3 rounded-lg">
+                            {promptUsed.male.language && (
+                              <div>
+                                <h6 className="text-xs font-medium text-blue-400 mb-1">
+                                  Language
+                                </h6>
+                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
+                                  {promptUsed.male.language}
+                                </pre>
+                              </div>
+                            )}
+                            {promptUsed.male.dialect && (
+                              <div>
+                                <h6 className="text-xs font-medium text-blue-400 mb-1">
+                                  Dialect
+                                </h6>
+                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
+                                  {promptUsed.male.dialect}
+                                </pre>
+                              </div>
+                            )}
+                            {promptUsed.male.tone && (
+                              <div>
+                                <h6 className="text-xs font-medium text-blue-400 mb-1">
+                                  Tone
+                                </h6>
+                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
+                                  {promptUsed.male.tone}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Female Persona Details */}
+                      {promptUsed.female && (
+                        <div className="text-start">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
+                            Female Persona
+                          </h5>
+                          <div className="space-y-3 bg-gray-900/50 p-3 rounded-lg">
+                            {promptUsed.female.language && (
+                              <div>
+                                <h6 className="text-xs font-medium text-pink-400 mb-1">
+                                  Language
+                                </h6>
+                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
+                                  {promptUsed.female.language}
+                                </pre>
+                              </div>
+                            )}
+                            {promptUsed.female.dialect && (
+                              <div>
+                                <h6 className="text-xs font-medium text-pink-400 mb-1">
+                                  Dialect
+                                </h6>
+                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
+                                  {promptUsed.female.dialect}
+                                </pre>
+                              </div>
+                            )}
+                            {promptUsed.female.tone && (
+                              <div>
+                                <h6 className="text-xs font-medium text-pink-400 mb-1">
+                                  Tone
+                                </h6>
+                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
+                                  {promptUsed.female.tone}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          <AnimatePresence>
+            {conversation.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className="mt-8 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl max-h-[500px] overflow-y-auto space-y-4"
+                style={{
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#4B5563 transparent",
+                }}
+              >
+                <motion.h3
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-lg font-semibold text-center mb-4 bg-gradient-to-r from-blue-400 to-pink-400 bg-clip-text text-transparent"
+                >
+                  Generated Conversation
+                </motion.h3>
+
+                {/* ---- Messages ---- */}
+                {conversation.map((msg, i) => {
+                  const trimmed = msg.trim();
+                  const isMale = msg.startsWith(`${generatedMaleName}:`);
+                  const speakerName = isMale ? maleName : femaleName;
+                  const messageText = trimmed.startsWith(`${speakerName}:`)
+                    ? trimmed.slice(speakerName.length + 1).trim()
+                    : trimmed;
+
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{
+                        opacity: 0,
+                        x: isMale ? -50 : 50,
+                        scale: 0.8,
+                      }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      transition={{
+                        duration: 0.4,
+                        delay: i * 0.1,
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                      }}
+                      className={`flex ${
+                        isMale ? "justify-start" : "justify-end"
+                      }`}
+                    >
                       <motion.div
-                        key={i}
-                        initial={{
-                          opacity: 0,
-                          x: isMale ? -50 : 50,
-                          scale: 0.8,
+                        whileHover={{
+                          y: -2,
+                          boxShadow: isMale
+                            ? "0 8px 20px rgba(59, 130, 246, 0.4)"
+                            : "0 8px 20px rgba(236, 72, 153, 0.4)",
                         }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        transition={{
-                          duration: 0.4,
-                          delay: i * 0.1,
-                          type: "spring",
-                          stiffness: 260,
-                          damping: 20,
+                        onClick={() => {
+                          navigator.clipboard.writeText(messageText);
+                          toast.success("Message copied!");
                         }}
-                        className={`flex ${
-                          isMale ? "justify-start" : "justify-end"
+                        className={`px-5 py-3 rounded-2xl max-w-[80%] sm:max-w-[70%] text-sm sm:text-base relative cursor-pointer select-text transition-all ${
+                          isMale
+                            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/50"
+                            : "bg-gradient-to-br from-pink-600 to-pink-700 text-white shadow-lg shadow-pink-900/50"
                         }`}
                       >
                         <motion.div
-                          whileHover={{
-                            y: -2,
-                            boxShadow: isMale
-                              ? "0 8px 20px rgba(59, 130, 246, 0.4)"
-                              : "0 8px 20px rgba(236, 72, 153, 0.4)",
-                          }}
-                          onClick={() => {
-                            navigator.clipboard.writeText(messageText);
-                            toast.success("Message copied!");
-                          }}
-                          className={`px-5 py-3 rounded-2xl max-w-[80%] sm:max-w-[70%] text-sm sm:text-base relative cursor-pointer select-text transition-all ${
-                            isMale
-                              ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/50"
-                              : "bg-gradient-to-br from-pink-600 to-pink-700 text-white shadow-lg shadow-pink-900/50"
-                          }`}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: i * 0.1 + 0.2 }}
+                          className="select-text"
                         >
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: i * 0.1 + 0.2 }}
-                            className="select-text"
-                          >
-                            {msg}
-                          </motion.div>
-
-                          {/* Hover overlay */}
-                          <div
-                            className={`absolute inset-0 rounded-2xl opacity-0 hover:opacity-20 transition-opacity duration-300 pointer-events-none ${
-                              isMale ? "bg-blue-400" : "bg-pink-400"
-                            }`}
-                          />
+                          {msg}
                         </motion.div>
+
+                        {/* Hover overlay */}
+                        <div
+                          className={`absolute inset-0 rounded-2xl opacity-0 hover:opacity-20 transition-opacity duration-300 pointer-events-none ${
+                            isMale ? "bg-blue-400" : "bg-pink-400"
+                          }`}
+                        />
                       </motion.div>
-                    );
-                  })}
+                    </motion.div>
+                  );
+                })}
 
-                  {/* ---- Copy Full Chat Button ---- */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      const fullText = conversation
-                        .map((msg) => msg.trim())
-                        .join("\n");
-                      navigator.clipboard.writeText(fullText);
-                      toast.success("Full chat copied!");
-                    }}
-                    className="w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
-                  >
-                    Copy Full Chat
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {metaData && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-6 text-xs sm:text-sm text-gray-400 text-center bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/30"
-              >
-                <p className="flex flex-wrap justify-center gap-x-4 gap-y-2">
-                  <span className="text-blue-400 font-medium">Model:</span>
-                  <span>{metaData.model}</span>
-                  <span className="text-purple-400">•</span>
-                  <span className="text-blue-400 font-medium">Temp:</span>
-                  <span>{metaData.temperature}</span>
-                  <span className="text-purple-400">•</span>
-                  <span className="text-blue-400 font-medium">Tokens:</span>
-                  <span>{metaData.tokens}</span>
-                  <span className="text-purple-400">•</span>
-                  <span className="text-blue-400 font-medium">Est. Cost:</span>
-                  <span className="text-green-400">
-                    ${metaData.cost?.toFixed(6)}
-                  </span>
-                </p>
+                {/* ---- Copy Full Chat Button ---- */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const fullText = conversation
+                      .map((msg) => msg.trim())
+                      .join("\n");
+                    navigator.clipboard.writeText(fullText);
+                    toast.success("Full chat copied!");
+                  }}
+                  className="w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                  Copy Full Chat
+                </motion.button>
               </motion.div>
             )}
-          </>
-       
+          </AnimatePresence>
+
+          {metaData && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-6 text-xs sm:text-sm text-gray-400 text-center bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/30"
+            >
+              <p className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                <span className="text-blue-400 font-medium">Model:</span>
+                <span>{metaData.model}</span>
+                <span className="text-purple-400">•</span>
+                <span className="text-blue-400 font-medium">Temp:</span>
+                <span>{metaData.temperature}</span>
+                <span className="text-purple-400">•</span>
+                <span className="text-blue-400 font-medium">Tokens:</span>
+                <span>{metaData.tokens}</span>
+                <span className="text-purple-400">•</span>
+                <span className="text-blue-400 font-medium">Est. Cost:</span>
+                <span className="text-green-400">
+                  ${metaData.cost?.toFixed(6)}
+                </span>
+              </p>
+            </motion.div>
+          )}
+        </>
       </motion.div>
     </div>
   );
