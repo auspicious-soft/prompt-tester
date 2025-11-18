@@ -10,8 +10,6 @@ interface ConvoGeneratorProps {
 }
 
 interface InputPrompt {
-  directionNote: string;
-  userPrompt: string;
   systemPrompt: string;
 }
 
@@ -48,7 +46,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [inputAccordionOpen, setInputAccordionOpen] = useState(false);
   const [outputAccordionOpen, setOutputAccordionOpen] = useState(false);
-  const [aiInput, setAiInput] = useState<InputPrompt | null>(null);
+  const [aiInput, setAiInput] = useState("");
   const [aiOutput, setAiOutput] = useState<any>(null);
   const [promptUsed, setPromptUsed] = useState<any>(null);
   const [customScenario, setCustomScenario] = useState("");
@@ -344,7 +342,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     if (conversation.length > 0) {
       setConversation([]);
       setMetaData(null);
-      setAiInput(null);
+      setAiInput("");
       setAiOutput(null);
       setPromptUsed(null);
       setGeneratedMaleName("");
@@ -440,7 +438,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     setConversation([]);
     setSystemPrompt("");
     setMetaData(null);
-    setAiInput(null);
+    setAiInput("");
     setAiOutput(null);
     setPromptUsed(null);
     setPromptAccordionOpen(false);
@@ -480,7 +478,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
       };
 
       const res = await postApi(URLS.generateConversation, body);
-      if (res?.data?.success) {
+      if (res.status === 200) {
         const data = res.data.data;
         let convoArray = [];
         if (data.generatedConversation) {
@@ -506,7 +504,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
             tokens: data.tokenUsage?.totalTokens,
             cost: data.tokenUsage?.estimatedCost,
           });
-          setAiInput(data.input || null);
+          setAiInput(data.input || "");
           setAiOutput(data.output || null);
           setPromptUsed(data.promptUsed || null);
           toast.success("Conversation generated successfully!");
@@ -1173,7 +1171,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                   >
                     {aiInput && (
                       <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
-                        <div>
+                        {/* <div>
                           <pre className="whitespace-pre-wrap text-gray-300 text-start ">
                             {aiInput.directionNote}
                           </pre>
@@ -1182,10 +1180,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                           <pre className="whitespace-pre-wrap text-gray-300 text-start">
                             {aiInput.userPrompt}
                           </pre>
-                        </div>
+                        </div> */}
                         <div>
                           <pre className="whitespace-pre-wrap text-gray-300 text-start">
-                            {aiInput.systemPrompt}
+                            {aiInput}
                           </pre>
                         </div>
                       </div>
@@ -1291,30 +1289,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                         </div>
                       )}
 
-                      {/* User Prompt */}
-                      {promptUsed.userPrompt && (
-                        <div className="text-start">
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                            User Instruction
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
-                            {promptUsed.userPrompt}
-                          </pre>
-                        </div>
-                      )}
-
-                      {/* Direction Note */}
-                      {promptUsed.directionNote && (
-                        <div className="text-start">
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                            Direction Note
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300 bg-gray-900/50 p-3 rounded-lg">
-                            {promptUsed.directionNote}
-                          </pre>
-                        </div>
-                      )}
-
                       {/* Male Persona Details */}
                       {promptUsed.male && (
                         <div className="text-start">
@@ -1356,46 +1330,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                         </div>
                       )}
 
-                      {/* Female Persona Details */}
-                      {promptUsed.female && (
-                        <div className="text-start">
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-2">
-                            Female Persona
-                          </h5>
-                          <div className="space-y-3 bg-gray-900/50 p-3 rounded-lg">
-                            {promptUsed.female.language && (
-                              <div>
-                                <h6 className="text-xs font-medium text-pink-400 mb-1">
-                                  Language
-                                </h6>
-                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                  {promptUsed.female.language}
-                                </pre>
-                              </div>
-                            )}
-                            {promptUsed.female.dialect && (
-                              <div>
-                                <h6 className="text-xs font-medium text-pink-400 mb-1">
-                                  Dialect
-                                </h6>
-                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                  {promptUsed.female.dialect}
-                                </pre>
-                              </div>
-                            )}
-                            {promptUsed.female.tone && (
-                              <div>
-                                <h6 className="text-xs font-medium text-pink-400 mb-1">
-                                  Tone
-                                </h6>
-                                <pre className="whitespace-pre-wrap text-gray-300 text-xs">
-                                  {promptUsed.female.tone}
-                                </pre>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </motion.div>
                 </div>
