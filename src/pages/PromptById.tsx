@@ -39,7 +39,7 @@ const excludedFields = [
 interface PromptData {
   _id: string;
   key: string;
-    title?: string;
+  title?: string;
   generation: string;
   persona: string;
   role: string;
@@ -54,7 +54,7 @@ interface PromptData {
   dialects: Record<string, string>;
   languages: Record<string, string>;
   styles: Record<string, string>;
-  submissionPrompt?:string;
+  submissionPrompt?: string;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -67,7 +67,11 @@ interface PromptByIdProps {
   onPromptUpdated?: () => void;
 }
 
-function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptByIdProps) {
+function PromptById({
+  id,
+  onRequestLoadToProduction,
+  onPromptUpdated,
+}: PromptByIdProps) {
   const [loading, setLoading] = useState(false);
   const [promptData, setPromptData] = useState<PromptData | null>(null);
   const [formData, setFormData] = useState<PromptData | null>(null);
@@ -221,17 +225,18 @@ function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptB
         setTimeout(() => setSuccess(null), 3000);
         setIsModified(false);
         setOriginalData(formData);
-       await  getPromptById();
- if (onPromptUpdated) {
+        await getPromptById();
+        if (onPromptUpdated) {
           onPromptUpdated();
-        }      } else {
+        }
+      } else {
         setError("Failed to update prompt.");
-        toast.error("Failed")
+        toast.error("Failed");
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error);
       setError(error.response.data.message);
-      toast.error(error.response.data.message)
+      toast.error(error.response.data.message);
     } finally {
       setLoading(false);
     }
@@ -355,12 +360,12 @@ function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptB
   ) => (
     <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
       {!hideLabel && (
-      <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
-        {label
-          .replace(/([A-Z])/g, " $1")
-          .replace(/_/g, " ")
-          .trim()}
-      </label>
+        <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
+          {label
+            .replace(/([A-Z])/g, " $1")
+            .replace(/_/g, " ")
+            .trim()}
+        </label>
       )}
       {isTextarea ? (
         <textarea
@@ -599,11 +604,11 @@ function PromptById({ id, onRequestLoadToProduction, onPromptUpdated  }: PromptB
   //   );
   // }
 
-const simpleFields = ["title", "key", "generation", "persona"];
+  const simpleFields = ["title", "key", "generation", "persona"];
   const textareaFields = ["role"];
-    const textareaFields2 = ["submissionPrompt"];
+  const textareaFields2 = ["submissionPrompt"];
 
-  const accordionFields = ["messageTypes","languages", "dialects", "styles"];
+  const accordionFields = ["messageTypes", "languages", "dialects", "styles"];
 
   return (
     <>
@@ -698,47 +703,50 @@ const simpleFields = ["title", "key", "generation", "persona"];
               </motion.div>
             ))}
 
-             {textareaFields2.map((field) => (
-  <motion.div key={field} variants={itemVariants} className="mb-4 sm:mb-6">
-    <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-      <motion.div
-        onClick={() => toggleAccordion(field)}
-        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-        className="cursor-pointer"
-      >
-        <div className="flex justify-between items-center">
-          <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-            {field
-              .replace(/([A-Z])/g, " $1")
-              .replace(/_/g, " ")
-              .trim()}
-          </h4>
-          <motion.span
-            animate={{ rotate: openAccordions[field] ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="text-gray-400"
-          >
-            ▼
-          </motion.span>
-        </div>
-      </motion.div>
+            {textareaFields2.map((field) => (
+              <motion.div
+                key={field}
+                variants={itemVariants}
+                className="mb-4 sm:mb-6"
+              >
+                <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+                  <motion.div
+                    onClick={() => toggleAccordion(field)}
+                    whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+                        {field
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/_/g, " ")
+                          .trim()}
+                      </h4>
+                      <motion.span
+                        animate={{ rotate: openAccordions[field] ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-gray-400"
+                      >
+                        ▼
+                      </motion.span>
+                    </div>
+                  </motion.div>
 
-      {openAccordions[field] && (
-        <div className="pt-3">
-          {renderInputField(
-            field,
-            formData[field] || "",
-            (value) => handleInputChange(field, value),
-            true,
-            excludedFields.includes(field),
-              true
-          )}
-        </div>
-      )}
-    </div>
-  </motion.div>
-))}
-
+                  {openAccordions[field] && (
+                    <div className="pt-3">
+                      {renderInputField(
+                        field,
+                        formData[field] || "",
+                        (value) => handleInputChange(field, value),
+                        true,
+                        excludedFields.includes(field),
+                        true
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
 
             <div className="flex flex-row justify-between">
               {isModified ? (
@@ -768,9 +776,9 @@ const simpleFields = ["title", "key", "generation", "persona"];
                   >
                     <button
                       onClick={promotePromptWeb}
-                      disabled={loading}
+                      disabled={loading || promptData?.isActiveWeb}
                       className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-                        loading
+                        loading || promptData?.isActiveWeb
                           ? "bg-gray-600 cursor-not-allowed"
                           : "bg-purple-600 hover:bg-purple-700"
                       }`}
@@ -785,9 +793,9 @@ const simpleFields = ["title", "key", "generation", "persona"];
                   >
                     <button
                       onClick={promotePrompt}
-                      disabled={loading}
+                      disabled={loading || promptData?.isActive}
                       className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-                        loading
+                        loading || promptData?.isActive
                           ? "bg-gray-600 cursor-not-allowed"
                           : "bg-orange-600 hover:bg-orange-700"
                       }`}
