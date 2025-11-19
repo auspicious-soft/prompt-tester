@@ -118,11 +118,28 @@ const PromptGenerator: React.FC = () => {
         setStyle("Modest");
         setIsGenxz(false);
       }
-    } else if (setter === setLanguage) {
-      if (value === "en") {
-        setDialect("");
-      }
+    }else if (setter === setLanguage) {
+  const prevLanguage = language;  
+  const prevDialect = dialect;    
+  if (value === "en") {
+    setDialect("");
+  } 
+
+  else if (prevLanguage === "en" && (value === "ar" || value === "arbz")) {
+    setDialect("LEVANTINE");  
+  } 
+  
+  else if (
+    (prevLanguage === "ar" && value === "arbz") ||
+    (prevLanguage === "arbz" && value === "ar")
+  ) {
+    if (prevDialect) {
+      setDialect(prevDialect); 
+    } else {
+      setDialect("LEVANTINE"); 
     }
+  }
+}
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -842,9 +859,9 @@ const PromptGenerator: React.FC = () => {
                       <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
                         {/* Role */}
                         <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Role
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.role}
                           </pre>
@@ -852,9 +869,9 @@ const PromptGenerator: React.FC = () => {
 
                         {/* Message Type */}
                         <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Message Type
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.messageType}
                           </pre>
@@ -862,9 +879,9 @@ const PromptGenerator: React.FC = () => {
 
                         {/* Language */}
                         <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Language
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.language}
                           </pre>
@@ -872,19 +889,23 @@ const PromptGenerator: React.FC = () => {
 
                         {/* Dialect */}
                         <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                          {aiInput.dialect && 
+                          <>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Dialect
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.dialect || "N/A"}
                           </pre>
+                          </>
+                          }
                         </div>
 
                         {/* Style */}
                         <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Style
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.style}
                           </pre>
@@ -892,9 +913,9 @@ const PromptGenerator: React.FC = () => {
 
                         {/* Style */}
                         <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             Submission Prompt
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.subPrmpt}
                           </pre>
@@ -903,14 +924,14 @@ const PromptGenerator: React.FC = () => {
                       
 
                         {/* User Instruction */}
-                        <div>
-                          {/* <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                        {/* <div>
+                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             User Instruction
-                          </h5> */}
+                          </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {aiInput.userInstruction}
                           </pre>
-                        </div>
+                        </div> */}
 
                       
                       </div>
@@ -1103,14 +1124,14 @@ const PromptGenerator: React.FC = () => {
                         </div> */}
 
                         {/* User Instruction */}
-                        <div>
+                        {/* <div>
                           <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             User Instruction
                           </h5>
                           <pre className="whitespace-pre-wrap text-gray-300">
                             {fullPrompt.userInstruction}
                           </pre>
-                        </div>
+                        </div> */}
 
                         {/* Previous Replies */}
                         {fullPrompt.lastReplies && (
