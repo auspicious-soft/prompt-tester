@@ -395,7 +395,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
 
   if (!promptData || !editedData) return null;
 
-  const {
+const {
     personaPrompts,
     relationshipLevels,
     scenarios,
@@ -468,13 +468,11 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                           className="cursor-pointer flex justify-between items-center p-2"
                         >
                           <h5 className="text-sm sm:text-base font-medium text-gray-200 text-left">
-                         {promptData?.personaPrompts?.[key]?.title || key}
+                            {promptData?.personaPrompts?.[key]?.title || key}
                           </h5>
                           <motion.span
                             animate={{
-                              rotate: openAccordions[`persona-${key}`]
-                                ? 180
-                                : 0,
+                              rotate: openAccordions[`persona-${key}`] ? 180 : 0,
                             }}
                             transition={{ duration: 0.3 }}
                             className="text-gray-400"
@@ -486,22 +484,23 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                         {/* PERSONA CONTENT */}
                         {openAccordions[`persona-${key}`] && (
                           <div className="space-y-3 pt-3 px-2">
-
-
                             <div className="p-2 bg-gray-600 rounded-lg border border-gray-500 mb-3">
-  <label className="block text-xs font-medium text-gray-300 mb-1 text-left">
-    Title
-  </label>
-  <input
-    type="text"
-    value={persona.title || ""}
-    onChange={(e) =>
-      updateField(["personaPrompts", key, "title"], e.target.value)
-    }
-    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-    placeholder="Enter persona title..."
-  />
-</div>
+                              <label className="block text-xs font-medium text-gray-300 mb-1 text-left">
+                                Title
+                              </label>
+                              <input
+                                type="text"
+                                value={persona.title || ""}
+                                onChange={(e) =>
+                                  updateField(
+                                    ["personaPrompts", key, "title"],
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                                placeholder="Enter persona title..."
+                              />
+                            </div>
 
                             {/* Role */}
                             <div className="p-2 bg-gray-600 rounded-lg border border-gray-500">
@@ -517,9 +516,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                 </h6>
                                 <motion.span
                                   animate={{
-                                    rotate: openAccordions[`role-${key}`]
-                                      ? 180
-                                      : 0,
+                                    rotate: openAccordions[`role-${key}`] ? 180 : 0,
                                   }}
                                   transition={{ duration: 0.3 }}
                                   className="text-gray-400 text-sm"
@@ -537,7 +534,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                         e.target.value
                                       )
                                     }
-                                    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[200px] resize-none"
+                                    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[200px] resize-y"
                                   />
                                 </div>
                               )}
@@ -548,9 +545,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                               Object.keys(persona.languages).length > 0 && (
                                 <div className="p-2 bg-gray-600 rounded-lg border border-gray-500">
                                   <motion.div
-                                    onClick={() =>
-                                      toggleAccordion(`languages-${key}`)
-                                    }
+                                    onClick={() => toggleAccordion(`languages-${key}`)}
                                     whileHover={{
                                       backgroundColor: "rgba(75, 85, 99, 0.6)",
                                     }}
@@ -561,11 +556,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                     </h6>
                                     <motion.span
                                       animate={{
-                                        rotate: openAccordions[
-                                          `languages-${key}`
-                                        ]
-                                          ? 180
-                                          : 0,
+                                        rotate: openAccordions[`languages-${key}`] ? 180 : 0,
                                       }}
                                       transition={{ duration: 0.3 }}
                                       className="text-gray-400 text-sm"
@@ -594,7 +585,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                                   e.target.value
                                                 )
                                               }
-                                              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[150px] resize-none"
+                                              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[150px] resize-y"
                                             />
                                           </div>
                                         )
@@ -609,9 +600,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                               Object.keys(persona.dialects).length > 0 && (
                                 <div className="p-2 bg-gray-600 rounded-lg border border-gray-500">
                                   <motion.div
-                                    onClick={() =>
-                                      toggleAccordion(`dialects-${key}`)
-                                    }
+                                    onClick={() => toggleAccordion(`dialects-${key}`)}
                                     whileHover={{
                                       backgroundColor: "rgba(75, 85, 99, 0.6)",
                                     }}
@@ -622,11 +611,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                     </h6>
                                     <motion.span
                                       animate={{
-                                        rotate: openAccordions[
-                                          `dialects-${key}`
-                                        ]
-                                          ? 180
-                                          : 0,
+                                        rotate: openAccordions[`dialects-${key}`] ? 180 : 0,
                                       }}
                                       transition={{ duration: 0.3 }}
                                       className="text-gray-400 text-sm"
@@ -655,7 +640,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                                   e.target.value
                                                 )
                                               }
-                                              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[150px] resize-none"
+                                              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[150px] resize-y"
                                             />
                                           </div>
                                         )
@@ -670,9 +655,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                               Object.keys(persona.styles).length > 0 && (
                                 <div className="p-2 bg-gray-600 rounded-lg border border-gray-500">
                                   <motion.div
-                                    onClick={() =>
-                                      toggleAccordion(`styles-${key}`)
-                                    }
+                                    onClick={() => toggleAccordion(`styles-${key}`)}
                                     whileHover={{
                                       backgroundColor: "rgba(75, 85, 99, 0.6)",
                                     }}
@@ -683,9 +666,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                     </h6>
                                     <motion.span
                                       animate={{
-                                        rotate: openAccordions[`styles-${key}`]
-                                          ? 180
-                                          : 0,
+                                        rotate: openAccordions[`styles-${key}`] ? 180 : 0,
                                       }}
                                       transition={{ duration: 0.3 }}
                                       className="text-gray-400 text-sm"
@@ -696,9 +677,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                   {openAccordions[`styles-${key}`] && (
                                     <div className="space-y-2 pt-2">
                                       {Object.entries(persona.styles)
-                                        .filter(([style]) =>
-                                          stylesToShow.includes(style)
-                                        )
+                                        .filter(([style]) => stylesToShow.includes(style))
                                         .map(([style, val]) => (
                                           <div key={style}>
                                             <label className="block text-xs font-medium text-gray-300 mb-1 text-left capitalize">
@@ -708,16 +687,11 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                                               value={String(val)}
                                               onChange={(e) =>
                                                 updateField(
-                                                  [
-                                                    "personaPrompts",
-                                                    key,
-                                                    "styles",
-                                                    style,
-                                                  ],
+                                                  ["personaPrompts", key, "styles", style],
                                                   e.target.value
                                                 )
                                               }
-                                              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[150px] resize-none"
+                                              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[150px] resize-y"
                                             />
                                           </div>
                                         ))}
@@ -736,75 +710,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-          <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-            <motion.div
-              onClick={() => toggleAccordion("relationshipLevels")}
-              whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-              className="cursor-pointer flex justify-between items-center"
-            >
-              <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-                Relationship Levels
-              </h4>
-              <motion.span
-                animate={{
-                  rotate: openAccordions["relationshipLevels"] ? 180 : 0,
-                }}
-                transition={{ duration: 0.3 }}
-                className="text-gray-400"
-              >
-                ▼
-              </motion.span>
-            </motion.div>
-
-            {openAccordions["relationshipLevels"] && (
-              <div className="pt-3 space-y-3 sm:space-y-4">
-                {/* ✅ Create New Relationship Button */}
-                <button
-                  onClick={() => {
-                    setModalType("relationshipLevel");
-                    setIsModalOpen(true);
-                  }}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-2"
-                >
-                  + Add Relationship Level
-                </button>
-
-                {relationshipLevels
-                  ?.filter((r: any) => r.value !== "custom")
-                  .map((r: any) => (
-                    <div
-                      key={r._id}
-                      className="p-2 bg-gray-700 rounded-lg border border-gray-600 relative"
-                    >
-                      {/* Delete Icon */}
-                      <button
-                        onClick={() => handleDeleteRelationshipLevel(r._id)}
-                        className="absolute top-2 right-2 text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-
-                      <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
-                        {r.title}
-                      </label>
-                      <textarea
-                        value={String(r.promptAddOn ?? "")}
-                        onChange={(e) =>
-                          updateField(
-                            ["relationshipLevels", r._id, "promptAddOn"],
-                            e.target.value
-                          )
-                        }
-                        className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
-                      />
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        </motion.div>
-
+        {/* Scenarios */}
         <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
           <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
             <motion.div
@@ -816,9 +722,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                 Scenarios
               </h4>
               <motion.span
-                animate={{
-                  rotate: openAccordions["scenarios"] ? 180 : 0,
-                }}
+                animate={{ rotate: openAccordions["scenarios"] ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
                 className="text-gray-400"
               >
@@ -828,7 +732,6 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
 
             {openAccordions["scenarios"] && (
               <div className="pt-3 space-y-3 sm:space-y-4">
-                {/* ✅ Create New Scenario Button */}
                 <button
                   onClick={() => {
                     setModalType("scenario");
@@ -846,7 +749,6 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                       key={s._id}
                       className="p-2 bg-gray-700 rounded-lg border border-gray-600 relative"
                     >
-                      {/* Delete Icon */}
                       <button
                         onClick={() => handleDeleteScenario(s._id)}
                         className="absolute top-2 right-2 text-red-400 hover:text-red-600"
@@ -860,12 +762,9 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                       <textarea
                         value={s.promptAddOn || ""}
                         onChange={(e) =>
-                          updateField(
-                            ["scenarios", s._id, "promptAddOn"],
-                            e.target.value
-                          )
+                          updateField(["scenarios", s._id, "promptAddOn"], e.target.value)
                         }
-                        className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
+                        className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-y"
                       />
                     </div>
                   ))}
@@ -873,6 +772,8 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
             )}
           </div>
         </motion.div>
+
+        {/* Conversation Lengths */}
         <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
           <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
             <motion.div
@@ -884,9 +785,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                 Conversation Lengths
               </h4>
               <motion.span
-                animate={{
-                  rotate: openAccordions["conversationLengths"] ? 180 : 0,
-                }}
+                animate={{ rotate: openAccordions["conversationLengths"] ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
                 className="text-gray-400"
               >
@@ -902,18 +801,14 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                     className="p-2 bg-gray-700 rounded-lg border border-gray-600"
                   >
                     <label className="block text-sm font-medium text-gray-300 mb-1 text-left">
-                      {c.title}{" "}
-                      {c.range?.length ? `(${c.range[0]} - ${c.range[1]})` : ""}
+                      {c.title} {c.range?.length ? `(${c.range[0]} - ${c.range[1]})` : ""}
                     </label>
                     <textarea
                       value={c.promptAddOn || ""}
                       onChange={(e) =>
-                        updateField(
-                          ["conversationLengths", c._id, "promptAddOn"], // ✅ changed idx → c._id
-                          e.target.value
-                        )
+                        updateField(["conversationLengths", c._id, "promptAddOn"], e.target.value)
                       }
-                      className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[80px] resize-none"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-600 text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-y"
                     />
                   </div>
                 ))}
@@ -922,6 +817,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
           </div>
         </motion.div>
 
+        {/* Submission Prompt */}
         <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
           <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
             <motion.div
@@ -933,9 +829,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
                 Submission Prompt
               </h4>
               <motion.span
-                animate={{
-                  rotate: openAccordions["submissionPrompt"] ? 180 : 0,
-                }}
+                animate={{ rotate: openAccordions["submissionPrompt"] ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
                 className="text-gray-400"
               >
@@ -947,10 +841,8 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
               <div className="pt-3">
                 <textarea
                   value={submissionPrompt || ""}
-                  onChange={(e) =>
-                    updateField(["submissionPrompt"], e.target.value)
-                  }
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[200px] resize-none"
+                  onChange={(e) => updateField(["submissionPrompt"], e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[200px] resize-y"
                 />
               </div>
             )}
@@ -966,16 +858,6 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
         >
           {saving ? "Saving…" : "Save"}
         </button>
-
-        {/* <button
-          onClick={() => {
-        handleCancelMain()
-          }}
-          disabled={saving}
-          className="px-5 py-2 bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white rounded-lg font-medium transition"
-        >
-          Cancel
-        </button> */}
       </div>
 
       <AddPromptModal

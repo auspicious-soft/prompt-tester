@@ -350,137 +350,153 @@ function PromptById({
     }));
   };
 
-  const renderInputField = (
-    label: string,
-    value: string,
-    onChange: (value: string) => void,
-    isTextarea: boolean = false,
-    isReadOnly: boolean = false,
-    hideLabel = false
-  ) => (
-    <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
-      {!hideLabel && (
-        <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
-          {label
-            .replace(/([A-Z])/g, " $1")
-            .replace(/_/g, " ")
-            .trim()}
-        </label>
-      )}
-      {isTextarea ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          readOnly={isReadOnly}
-          className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-none hide-scrollbar transition-all duration-200 ${
-            isReadOnly ? "cursor-not-allowed opacity-70" : ""
-          }`}
-          placeholder={
-            isReadOnly
-              ? ""
-              : `Enter ${label
-                  .replace(/([A-Z])/g, " $1")
-                  .replace(/_/g, " ")
-                  .trim()
-                  .toLowerCase()}`
-          }
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          readOnly={isReadOnly}
-          className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200 ${
-            isReadOnly ? "cursor-not-allowed opacity-70" : ""
-          }`}
-          placeholder={
-            isReadOnly
-              ? ""
-              : `Enter ${label
-                  .replace(/([A-Z])/g, " $1")
-                  .replace(/_/g, " ")
-                  .trim()
-                  .toLowerCase()}`
-          }
-        />
-      )}
-    </motion.div>
-  );
+const renderInputField = (
+  label: string,
+  value: string,
+  onChange: (value: string) => void,
+  isTextarea: boolean = false,
+  isReadOnly: boolean = false,
+  hideLabel = false
+) => (
+  <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
+    {!hideLabel && (
+      <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
+        {label
+          .replace(/([A-Z])/g, " $1")
+          .replace(/_/g, " ")
+          .trim()}
+      </label>
+    )}
 
-  const renderNestedFields = (
-    title: string,
-    obj: Record<string, any>,
-    isAccordion: boolean = true
-  ) => (
-    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-        <motion.div
-          onClick={() => toggleAccordion(title)}
-          whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-          className="cursor-pointer"
-        >
-          <div className="flex justify-between items-center">
-            <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-              {title
+    {isTextarea ? (
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        readOnly={isReadOnly}
+        className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-y hide-scrollbar transition-all duration-200 ${
+          isReadOnly ? "cursor-not-allowed opacity-70" : ""
+        }`}
+        placeholder={
+          isReadOnly
+            ? ""
+            : `Enter ${label
                 .replace(/([A-Z])/g, " $1")
                 .replace(/_/g, " ")
-                .trim()}
-            </h4>
-            <motion.span
-              animate={{ rotate: openAccordions[title] ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-gray-400"
-            >
-              ▼
-            </motion.span>
-          </div>
-        </motion.div>
-        {openAccordions[title] && (
-          <div className="space-y-3 sm:space-y-4 pt-3">
-            {Object.entries(obj).map(([key, value]) => (
+                .trim()
+                .toLowerCase()}`
+        }
+      />
+    ) : (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        readOnly={isReadOnly}
+        className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200 ${
+          isReadOnly ? "cursor-not-allowed opacity-70" : ""
+        }`}
+        placeholder={
+          isReadOnly
+            ? ""
+            : `Enter ${label
+                .replace(/([A-Z])/g, " $1")
+                .replace(/_/g, " ")
+                .trim()
+                .toLowerCase()}`
+        }
+      />
+    )}
+  </motion.div>
+);
+
+
+
+const renderNestedFields = (
+  title: string,
+  obj: Record<string, any>,
+  isAccordion: boolean = true
+) => (
+  <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+    <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+      <motion.div
+        onClick={() => toggleAccordion(title)}
+        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+        className="cursor-pointer"
+      >
+        <div className="flex justify-between items-center">
+          <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+            {title
+              .replace(/([A-Z])/g, " $1")
+              .replace(/_/g, " ")
+              .trim()}
+          </h4>
+          <motion.span
+            animate={{ rotate: openAccordions[title] ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-gray-400"
+          >
+            ▼
+          </motion.span>
+        </div>
+      </motion.div>
+
+      {openAccordions[title] && (
+        <div className="space-y-3 sm:space-y-4 pt-3">
+          {Object.entries(obj).map(([key, value]) => {
+            const lcKey = String(key).toLowerCase();
+            const isSimpleField = ["title", "key", "generation", "persona"].includes(lcKey);
+
+            return (
               <div key={key}>
                 {renderInputField(
                   key,
                   typeof value === "string" ? value : JSON.stringify(value),
                   (newValue) => handleNestedChange(title, key, newValue),
-                  typeof value === "string" && value.length > 100
+                  !isSimpleField // textarea for all except the four simple fields
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </motion.div>
+);
 
-  const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
-    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-        <motion.div
-          onClick={() => toggleAccordion(parentTitle)}
-          whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-          className="cursor-pointer"
-        >
-          <div className="flex justify-between items-center">
-            <h4 className="text-lg sm:text-xl font-semibold text-gray-100 capitalize text-left">
-              {parentTitle
-                .replace(/([A-Z])/g, " $1")
-                .replace(/_/g, " ")
-                .trim()}
-            </h4>
-            <motion.span
-              animate={{ rotate: openAccordions[parentTitle] ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-gray-400"
-            >
-              ▼
-            </motion.span>
-          </div>
-        </motion.div>
-        {openAccordions[parentTitle] && (
-          <div className="space-y-3 sm:space-y-4 pt-3">
-            {Object.entries(parentObj).map(([key, value]) => (
+
+
+const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
+  <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+    <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+      <motion.div
+        onClick={() => toggleAccordion(parentTitle)}
+        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+        className="cursor-pointer"
+      >
+        <div className="flex justify-between items-center">
+          <h4 className="text-lg sm:text-xl font-semibold text-gray-100 capitalize text-left">
+            {parentTitle
+              .replace(/([A-Z])/g, " $1")
+              .replace(/_/g, " ")
+              .trim()}
+          </h4>
+          <motion.span
+            animate={{ rotate: openAccordions[parentTitle] ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-gray-400"
+          >
+            ▼
+          </motion.span>
+        </div>
+      </motion.div>
+
+      {openAccordions[parentTitle] && (
+        <div className="space-y-3 sm:space-y-4 pt-3">
+          {Object.entries(parentObj).map(([key, value]) => {
+            const lcKeyLevel1 = String(key).toLowerCase();
+            const isSimpleFieldLevel1 = ["title", "key", "generation", "persona"].includes(lcKeyLevel1);
+
+            return (
               <div key={key}>
                 {typeof value === "object" && value !== null ? (
                   <div className="mb-3">
@@ -490,9 +506,13 @@ function PromptById({
                         .replace(/_/g, " ")
                         .trim()}
                     </h5>
+
                     <div className="space-y-3">
-                      {Object.entries(value as Record<string, any>).map(
-                        ([subKey, subValue]) => (
+                      {Object.entries(value).map(([subKey, subValue]) => {
+                        const lcSubKey = String(subKey).toLowerCase();
+                        const isSimpleField = ["title", "key", "generation", "persona"].includes(lcSubKey);
+
+                        return (
                           <div key={subKey}>
                             {renderInputField(
                               subKey,
@@ -506,12 +526,11 @@ function PromptById({
                                   subKey,
                                   newValue
                                 ),
-                              typeof subValue === "string" &&
-                                subValue.length > 100
+                              !isSimpleField // textarea except the four
                             )}
                           </div>
-                        )
-                      )}
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -520,29 +539,19 @@ function PromptById({
                     typeof value === "string" ? value : JSON.stringify(value),
                     (newValue) =>
                       handleNestedChange(parentTitle, key, newValue),
-                    typeof value === "string" && value.length > 100
+                    !isSimpleFieldLevel1 // textarea except the four
                   )
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </motion.div>
+);
 
-  // if (loading) {
-  //   return (
-  //     <motion.div
-  //       variants={containerVariants}
-  //       initial="hidden"
-  //       animate="visible"
-  //       className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
-  //     >
-  //       <p className="text-gray-300 text-left">Loading prompt details...</p>
-  //     </motion.div>
-  //   );
-  // }
+
 
   if (error) {
     return (
@@ -578,31 +587,7 @@ function PromptById({
     );
   }
 
-  // if (promptData?.key === "HABIBTI_GENZ") {
-  //   return (
-  //     <>
-  //       {loading ? (
-  //         <TypingLoader />
-  //       ) : (
-  //         <>
-  //           <motion.div
-  //             variants={containerVariants}
-  //             initial="hidden"
-  //             animate="visible"
-  //             className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
-  //           >
-  //             <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 text-center mb-6">
-  //               {promptData.key}
-  //             </h2>
-  //             <p className="text-gray-300 text-center text-lg">
-  //               🚀 Coming Soon
-  //             </p>
-  //           </motion.div>
-  //         </>
-  //       )}
-  //     </>
-  //   );
-  // }
+
 
   const simpleFields = ["title", "key", "generation", "persona"];
   const textareaFields = ["role"];

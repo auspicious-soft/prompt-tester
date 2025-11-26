@@ -4,6 +4,7 @@ import { getApi, postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { toast } from "sonner";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
+import { useConvoGenerator } from "../context/ConvoGeneratorContext";
 
 interface ConvoGeneratorProps {
   setGlobalLoading: (loading: boolean) => void;
@@ -16,33 +17,36 @@ interface InputPrompt {
 const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   setGlobalLoading,
 }) => {
+  const { settings, updateSettings } = useConvoGenerator();
+
   const [maleName, setMaleName] = useState("");
   const [femaleName, setFemaleName] = useState("");
-  const [language, setLanguage] = useState("english");
-  const [dialect, setDialect] = useState("");
-  const [tone, setTone] = useState("flirty");
-  const [femaleTone, setFemaleTone] = useState("flirty");
+
+  const [language, setLanguage] = useState(settings.language);
+  const [dialect, setDialect] = useState(settings.dialect);
+  const [tone, setTone] = useState(settings.tone);
+  const [femaleTone, setFemaleTone] = useState(settings.femaleTone);
+  const [isGenZ, setIsGenZ] = useState(settings.isGenZ);
+  const [gptModel, setGptModel] = useState(settings.gptModel);
+  const [temperature, setTemperature] = useState(settings.temperature);
+
   const [scenarioCategory, setScenarioCategory] = useState("");
   const [relationshipLevel, setRelationshipLevel] = useState("");
-  const [conversationLength, setConversationLength] = useState("");
-  const [selectedLengthObj, setSelectedLengthObj] = useState<any>(null);
-  const [isGenZ, setIsGenZ] = useState(false);
-  const [personaDirection, setPersonaDirection] = useState("male_to_female");
-  const [gptModel, setGptModel] = useState("gpt-4o-mini");
-  const [temperature, setTemperature] = useState(1);
+  const [conversationLength, setConversationLength] = useState(
+    settings.conversationLength
+  );
+  const [personaDirection, setPersonaDirection] = useState(
+    settings.personaDirection
+  );
   const [conversation, setConversation] = useState<string[]>([]);
-  const [systemPrompt, setSystemPrompt] = useState("");
   const [metaData, setMetaData] = useState<any>(null);
 
   const [generatedMaleName, setGeneratedMaleName] = useState("");
-  const [generatedFemaleName, setGeneratedFemaleName] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPrompt, setShowPrompt] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [customMin, setCustomMin] = useState("");
   const [customMax, setCustomMax] = useState("");
-  const [editMode, setEditMode] = useState(false);
   const [promptAccordionOpen, setPromptAccordionOpen] = useState(false);
   const [inputAccordionOpen, setInputAccordionOpen] = useState(false);
   const [outputAccordionOpen, setOutputAccordionOpen] = useState(false);
@@ -58,9 +62,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     useState<any>(null);
   // API Data
   const [scenariosData, setScenariosData] = useState<any[]>([]);
-  const [relationshipLevelsData, setRelationshipLevelsData] = useState<any[]>(
-    []
-  );
+
   const [conversationLengthsData, setConversationLengthsData] = useState<any[]>(
     []
   );
@@ -299,7 +301,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
         if (res?.status === 200) {
           const data = res.data.data;
           setScenariosData(data.scenarios || []);
-          setRelationshipLevelsData(data.relationshipLevels || []);
           setConversationLengthsData(data.conversationLengths || []);
 
           // Set defaults
@@ -315,10 +316,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
             setRelationshipLevel(defaultRelationship._id);
             setSelectedRelationshipLevel(defaultRelationship);
           }
-          if (defaultLength) {
-            setConversationLength(defaultLength._id);
-            setSelectedLengthObj(defaultLength);
-          }
+        
         } else {
           toast.error("Failed to fetch prompts data");
         }
@@ -346,12 +344,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
       setAiOutput(null);
       setPromptUsed(null);
       setGeneratedMaleName("");
-      setGeneratedFemaleName("");
     }
-  };
-
-  const handleEditPrompt = () => {
-    setEditMode(true);
   };
 
   useEffect(() => {
@@ -436,7 +429,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     setLoading(true);
     setGlobalLoading(true);
     setConversation([]);
-    setSystemPrompt("");
     setMetaData(null);
     setAiInput("");
     setAiOutput(null);
@@ -446,7 +438,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     setOutputAccordionOpen(false);
 
     setGeneratedMaleName(maleName);
-    setGeneratedFemaleName(femaleName);
 
     try {
       const body = {
@@ -457,15 +448,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
         maleDialect: language === "english" ? "" : dialect,
         femaleDialect: language === "english" ? "" : dialect,
         maleTone: tone,
-        femaleTone: femaleTone,
         scenarioCategory,
         customScenario:
           selectedScenario?.value === "custom" ? customScenario : undefined,
-        relationshipLevel,
-        customRelationshipLevel:
-          selectedRelationshipLevel?.value === "custom"
-            ? customRelationshipLevel
-            : undefined,
         personaDirection,
         isGenZ,
         gptModel,
@@ -486,7 +471,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
             .split("\n")
             .map((line: any) => line.trim())
             .filter((line: any) => {
-              // Only include lines that start with either name followed by colon
               return (
                 line.startsWith(`${maleName}:`) ||
                 line.startsWith(`${femaleName}:`)
@@ -494,10 +478,8 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
             });
         }
 
-        // Only set conversation if we have valid messages
         if (convoArray.length > 0) {
           setConversation(convoArray);
-          setSystemPrompt(data.systemPrompt || "");
           setMetaData({
             model: data.gptModel,
             temperature: data.temperature,
@@ -589,7 +571,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 Gen Z Mode
               </label>
               <button
-                onClick={() => setIsGenZ(!isGenZ)}
+                onClick={() => {
+                  setIsGenZ(!isGenZ);
+                  updateSettings({ isGenZ: !isGenZ });
+                }}
                 className={`relative w-16 h-8 rounded-full transition-all duration-300 shadow-inner ${
                   isGenZ
                     ? "bg-gradient-to-r from-green-400 to-emerald-500"
@@ -616,7 +601,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </label>
               <select
                 value={personaDirection}
-                onChange={(e) => setPersonaDirection(e.target.value)}
+                onChange={(e) => {
+                  setPersonaDirection(e.target.value);
+                  updateSettings({ personaDirection: e.target.value });
+                }}
                 className="w-full p-3 bg-gray-700/60 rounded-lg border border-gray-600 focus:ring-2 focus:ring-purple-400 focus:outline-none cursor-pointer text-sm"
               >
                 <option value="male_to_female">Male to Female</option>
@@ -635,10 +623,14 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </label>
               <select
                 value={gptModel}
-                onChange={(e) => setGptModel(e.target.value)}
+                onChange={(e) => {
+                  setGptModel(e.target.value);
+                  updateSettings({ gptModel: e.target.value });
+                }}
                 className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm"
                 required
               >
+                <option value="gpt-5">GPT-5</option>
                 <option value="gpt-4o-mini">GPT-4o Mini</option>
                 <option value="gpt-4o">GPT-4o</option>
                 <option value="gpt-4-turbo">GPT-4 Turbo</option>
@@ -661,9 +653,11 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 min="0"
                 max="2"
                 value={temperature}
-                onChange={(e) =>
-                  setTemperature(parseFloat(e.target.value) || 0)
-                }
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  setTemperature(val);
+                  updateSettings({ temperature: val });
+                }}
                 className="w-full p-3 bg-gray-700/50 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600/50 hover:border-blue-500/50 transition-all text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 placeholder="e.g. 0.7"
                 required
@@ -757,7 +751,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </label>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => {
+                  setLanguage(e.target.value);
+                  updateSettings({ language: e.target.value });
+                }}
                 className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
               >
                 {languages.map((l) => (
@@ -780,7 +777,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </label>
               <select
                 value={dialect}
-                onChange={(e) => setDialect(e.target.value)}
+                onChange={(e) => {
+                  setDialect(e.target.value);
+                  updateSettings({ dialect: e.target.value });
+                }}
                 disabled={language === "english"}
                 className={`p-3 bg-gray-700/50 rounded-xl w-full outline-none
   backdrop-blur-sm transition-all ${
@@ -816,7 +816,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </label>
               <select
                 value={tone}
-                onChange={(e) => setTone(e.target.value)}
+                onChange={(e) => {
+                  setTone(e.target.value);
+                  updateSettings({ tone: e.target.value });
+                }}
                 className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
               >
                 {tones.map((t) => (
@@ -827,27 +830,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </select>
             </motion.div>
 
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0 },
-              }}
-            >
-              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                Female Tone
-              </label>
-              <select
-                value={femaleTone}
-                onChange={(e) => setFemaleTone(e.target.value)}
-                className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
-              >
-                {femaletones.map((t) => (
-                  <option key={t} value={t}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </motion.div>
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -892,51 +874,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </AnimatePresence>
             </motion.div>
 
-            {/* ---------- Relationship Level ---------- */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              className="sm:col-span-1"
-            >
-              <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                Relationship Level
-              </label>
-
-              <select
-                value={relationshipLevel}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setRelationshipLevel(id);
-                  const sel = relationshipLevelsData.find((r) => r._id === id);
-                  setSelectedRelationshipLevel(sel || null);
-                  if (sel?.value !== "custom") setCustomRelationshipLevel("");
-                }}
-                className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500 cursor-pointer"
-              >
-                <option value="">Select Relationship Level</option>
-                {relationshipLevelsData.map((l) => (
-                  <option key={l._id} value={l._id}>
-                    {l.title}
-                  </option>
-                ))}
-              </select>
-
-              {/* Errors for the select */}
-              <AnimatePresence>
-                {hasSubmitted && errors.relationshipLevel && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-xs text-red-400 mt-1"
-                  >
-                    {errors.relationshipLevel}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -962,13 +899,13 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 onChange={(e) => {
                   const selectedId = e.target.value;
                   setConversationLength(selectedId);
+                  updateSettings({ conversationLength: selectedId });
 
                   const selected = conversationLengthsData.find(
                     (l) => l._id === selectedId
                   );
-                  setSelectedConversationLength(selected || null); // <-- NEW
+                  setSelectedConversationLength(selected || null);
 
-                  // Reset custom fields if not custom
                   if (!selected || selected.value !== "custom") {
                     setCustomMin("");
                     setCustomMax("");
@@ -1067,46 +1004,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                         className="text-xs text-red-400 mt-1"
                       >
                         {errors.customScenario}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {selectedRelationshipLevel?.value === "custom" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="sm:col-span-2 mt-3"
-                >
-                  <textarea
-                    placeholder="Enter your custom relationship level..."
-                    value={customRelationshipLevel}
-                    onChange={(e) => setCustomRelationshipLevel(e.target.value)}
-                    className={` p-3 bg-gray-700/50 rounded-xl w-full outline-none
-  backdrop-blur-sm transition-all
-  
-   ${
-     hasSubmitted && errors.customRelationshipLevel
-       ? "border-2 border-red-500" // 🔴 show red when error
-       : "border border-gray-600/50 hover:border-pink-500/50 focus:ring-2 focus:ring-pink-500  resize-y text-sm"
-   }`}
-                    rows={4}
-                  />
-
-                  {/* Errors for the custom textarea */}
-                  <AnimatePresence>
-                    {hasSubmitted && errors.customRelationshipLevel && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-xs text-red-400 mt-1"
-                      >
-                        {errors.customRelationshipLevel}
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -1329,7 +1226,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                           </div>
                         </div>
                       )}
-
                     </div>
                   </motion.div>
                 </div>

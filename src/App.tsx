@@ -2,11 +2,15 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import PromptGenerator from "./pages/HomePage";
+import { PromptGeneratorProvider } from "./context/PromptGeneratorContext";
+import { ConvoGeneratorProvider } from "./context/ConvoGeneratorContext";
 
 function App() {
   const token = localStorage.getItem("token");
 
   return (
+        <PromptGeneratorProvider>
+      <ConvoGeneratorProvider>
     <Routes>
       {/* Login route */}
       <Route path="/" element={<LoginPage />} />
@@ -31,6 +35,8 @@ function App() {
         }
       />
     </Routes>
+    </ConvoGeneratorProvider>
+    </PromptGeneratorProvider>
   );
 }
 

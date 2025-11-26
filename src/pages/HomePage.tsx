@@ -10,6 +10,8 @@ import { User, User2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ConvoGenerator from "./ConvoGenerator";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
+import { usePromptGenerator } from "../context/PromptGeneratorContext";
+import { useConvoGenerator } from "../context/ConvoGeneratorContext";
 
 interface FullPrompt {
   role: string;
@@ -36,19 +38,16 @@ interface InputPrompt {
 }
 
 const PromptGenerator: React.FC = () => {
+  const { settings, updateSettings, resetSettings } = usePromptGenerator();
+  const {  resetConvoSettings } = useConvoGenerator();
+
   const [activeTab, setActiveTab] = useState<
     "generator" | "templates" | "conversation" | "conversation_prompt"
   >("conversation");
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
   >("GetPickUpLine");
-  const [gender, setGender] = useState<"MALE" | "FEMALE">("MALE");
-  const [isGenxz, setIsGenxz] = useState<boolean>(false);
-  const [style, setStyle] = useState<string>("Conservative");
-  const [language, setLanguage] = useState<"en" | "ar" | "arbz">("en");
-  const [dialect, setDialect] = useState<
-    "LEVANTINE" | "EGYPTIAN" | "GULF" | "IRAQI" | "NORTH_AFRICAN" | ""
-  >("");
+
   const [message, setMessage] = useState("");
   const [context, setContext] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -65,14 +64,24 @@ const PromptGenerator: React.FC = () => {
   const [outputAccordionOpen, setOutputAccordionOpen] = useState(false);
   const maleStyles = ["Conservative", "Playful", "Confident", "Flirty"];
   const femaleStyles = ["Modest", "Playful", "Sassy", "Flirty"];
+
+  const [gender, setGender] = useState<"MALE" | "FEMALE">(settings.gender);
+  const [isGenxz, setIsGenxz] = useState<boolean>(settings.isGenZ);
+  const [style, setStyle] = useState<string>(settings.style);
+  const [language, setLanguage] = useState<"en" | "ar" | "arbz">(
+    settings.language
+  );
+  const [dialect, setDialect] = useState<
+    "LEVANTINE" | "EGYPTIAN" | "GULF" | "IRAQI" | "NORTH_AFRICAN" | ""
+  >(settings.dialect);
   const stylesOptions =
     gender === "MALE" ? maleStyles : gender === "FEMALE" ? femaleStyles : [];
 
-  const [gptModel, setGptModel] = useState("gpt-4o-mini");
-  const [temperature, setTemperature] = useState(1);
+  const [gptModel, setGptModel] = useState(settings.gptModel);
+  const [temperature, setTemperature] = useState(settings.temperature);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
-  const [aiInput,  setAiInput] =  useState<InputPrompt | null>(null);;
+  const [aiInput, setAiInput] = useState<InputPrompt | null>(null);
   const [aiOutput, setAiOutput] = useState<string[]>([]);
   const [editMode, setEditMode] = useState(false);
 
@@ -97,6 +106,14 @@ const PromptGenerator: React.FC = () => {
   ) => {
     setter(value);
 
+    if (setter === setGptModel) updateSettings({ gptModel: value });
+    if (setter === setTemperature) updateSettings({ temperature: value });
+    if (setter === setLanguage) updateSettings({ language: value });
+    if (setter === setDialect) updateSettings({ dialect: value });
+    if (setter === setIsGenxz) updateSettings({ isGenZ: value });
+    if (setter === setStyle) updateSettings({ style: value });
+    if (setter === setGender) updateSettings({ gender: value });
+
     if (setter === setSelectedType) {
       setOutput("");
       setFullPrompt(null);
@@ -118,28 +135,27 @@ const PromptGenerator: React.FC = () => {
         setStyle("Modest");
         setIsGenxz(false);
       }
-    }else if (setter === setLanguage) {
-  const prevLanguage = language;  
-  const prevDialect = dialect;    
-  if (value === "en") {
-    setDialect("");
-  } 
-
-  else if (prevLanguage === "en" && (value === "ar" || value === "arbz")) {
-    setDialect("LEVANTINE");  
-  } 
-  
-  else if (
-    (prevLanguage === "ar" && value === "arbz") ||
-    (prevLanguage === "arbz" && value === "ar")
-  ) {
-    if (prevDialect) {
-      setDialect(prevDialect); 
-    } else {
-      setDialect("LEVANTINE"); 
+    } else if (setter === setLanguage) {
+      const prevLanguage = language;
+      const prevDialect = dialect;
+      if (value === "en") {
+        setDialect("");
+      } else if (
+        prevLanguage === "en" &&
+        (value === "ar" || value === "arbz")
+      ) {
+        setDialect("LEVANTINE");
+      } else if (
+        (prevLanguage === "ar" && value === "arbz") ||
+        (prevLanguage === "arbz" && value === "ar")
+      ) {
+        if (prevDialect) {
+          setDialect(prevDialect);
+        } else {
+          setDialect("LEVANTINE");
+        }
+      }
     }
-  }
-}
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -365,7 +381,8 @@ const PromptGenerator: React.FC = () => {
   const handleLogout = async () => {
     localStorage.removeItem("token");
     localStorage.removeItem("adminRole");
-
+   resetSettings(); 
+  resetConvoSettings();
     navigate("/");
     setIsOpen(false);
   };
@@ -487,7 +504,7 @@ const PromptGenerator: React.FC = () => {
                 : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
-           Edit Conversation Prompt
+            Edit Conversation Prompt
           </button>
         )}
       </motion.div>
@@ -544,6 +561,7 @@ const PromptGenerator: React.FC = () => {
           focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   required
                 >
+                  <option value="gpt-5">GPT-5</option>
                   <option value="gpt-4o-mini">GPT-4o Mini</option>
                   <option value="gpt-4o">GPT-4o</option>
                   <option value="gpt-4-turbo">GPT-4 Turbo</option>
@@ -846,85 +864,83 @@ const PromptGenerator: React.FC = () => {
                       </div>
                     </motion.div>
 
-                   <motion.div
-                    initial={false}
-                    animate={{
-                      height: inputAccordionOpen ? "auto" : 0,
-                      opacity: inputAccordionOpen ? 1 : 0,
-                    }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    {aiInput && (
-                      <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
-                        {/* Role */}
-                        <div>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Role
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {aiInput.role}
-                          </pre>
-                        </div>
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: inputAccordionOpen ? "auto" : 0,
+                        opacity: inputAccordionOpen ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      {aiInput && (
+                        <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-5 text-xs sm:text-sm text-gray-200">
+                          {/* Role */}
+                          <div>
+                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                              Role
+                            </h5>
+                            <pre className="whitespace-pre-wrap text-gray-300">
+                              {aiInput.role}
+                            </pre>
+                          </div>
 
-                        {/* Message Type */}
-                        <div>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Message Type
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {aiInput.messageType}
-                          </pre>
-                        </div>
+                          {/* Message Type */}
+                          <div>
+                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                              Message Type
+                            </h5>
+                            <pre className="whitespace-pre-wrap text-gray-300">
+                              {aiInput.messageType}
+                            </pre>
+                          </div>
 
-                        {/* Language */}
-                        <div>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Language
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {aiInput.language}
-                          </pre>
-                        </div>
+                          {/* Language */}
+                          <div>
+                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                              Language
+                            </h5>
+                            <pre className="whitespace-pre-wrap text-gray-300">
+                              {aiInput.language}
+                            </pre>
+                          </div>
 
-                        {/* Dialect */}
-                        <div>
-                          {aiInput.dialect && 
-                          <>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Dialect
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {aiInput.dialect || "N/A"}
-                          </pre>
-                          </>
-                          }
-                        </div>
+                          {/* Dialect */}
+                          <div>
+                            {aiInput.dialect && (
+                              <>
+                                <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                                  Dialect
+                                </h5>
+                                <pre className="whitespace-pre-wrap text-gray-300">
+                                  {aiInput.dialect || "N/A"}
+                                </pre>
+                              </>
+                            )}
+                          </div>
 
-                        {/* Style */}
-                        <div>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Style
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {aiInput.style}
-                          </pre>
-                        </div>
+                          {/* Style */}
+                          <div>
+                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                              Style
+                            </h5>
+                            <pre className="whitespace-pre-wrap text-gray-300">
+                              {aiInput.style}
+                            </pre>
+                          </div>
 
-                        {/* Style */}
-                        <div>
-                          <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                            Submission Prompt
-                          </h5>
-                          <pre className="whitespace-pre-wrap text-gray-300">
-                            {aiInput.subPrmpt}
-                          </pre>
-                        </div>
+                          {/* Style */}
+                          <div>
+                            <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
+                              Submission Prompt
+                            </h5>
+                            <pre className="whitespace-pre-wrap text-gray-300">
+                              {aiInput.subPrmpt}
+                            </pre>
+                          </div>
 
-                      
-
-                        {/* User Instruction */}
-                        {/* <div>
+                          {/* User Instruction */}
+                          {/* <div>
                           <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
                             User Instruction
                           </h5>
@@ -932,11 +948,9 @@ const PromptGenerator: React.FC = () => {
                             {aiInput.userInstruction}
                           </pre>
                         </div> */}
-
-                      
-                      </div>
-                    )}
-                  </motion.div>
+                        </div>
+                      )}
+                    </motion.div>
 
                     {/* Output Accordion */}
                     <motion.div
@@ -970,24 +984,23 @@ const PromptGenerator: React.FC = () => {
                       className="overflow-hidden"
                     >
                       <div className="mt-3 p-3 bg-gray-800 rounded-lg text-xs sm:text-sm text-gray-200 border border-gray-700">
-                      <ul className="list-none"> 
-                    {responses.map((response, index) => (
-                      <li
-                        key={index}
-                        className={`no-underline ${
-                          output.startsWith("Error:")
-                            ? "text-red-400"
-                            : "text-gray-100"
-                        }`}
-                      >
-                        {response
-                          .replace(/^\s*"\d+\.\s*|\s*"$/, "")
-                          .replace(/^"|"$/g, "")
-                          .trim()}
-                      </li>
-                    ))}
-                    </ul>
-               
+                        <ul className="list-none">
+                          {responses.map((response, index) => (
+                            <li
+                              key={index}
+                              className={`no-underline ${
+                                output.startsWith("Error:")
+                                  ? "text-red-400"
+                                  : "text-gray-100"
+                              }`}
+                            >
+                              {response
+                                .replace(/^\s*"\d+\.\s*|\s*"$/, "")
+                                .replace(/^"|"$/g, "")
+                                .trim()}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </motion.div>
 
@@ -1326,7 +1339,7 @@ const PromptGenerator: React.FC = () => {
           <ConversationPromptEditor
             keyValue="conversation_prompt_v5_1762836404699"
             handleCancel={() => setEditMode(false)}
-             setGlobalLoading={setGlobalLoading}
+            setGlobalLoading={setGlobalLoading}
           />
         </motion.div>
       )}
