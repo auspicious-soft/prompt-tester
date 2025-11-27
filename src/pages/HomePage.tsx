@@ -12,6 +12,7 @@ import ConvoGenerator from "./ConvoGenerator";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
 import { usePromptGenerator } from "../context/PromptGeneratorContext";
 import { useConvoGenerator } from "../context/ConvoGeneratorContext";
+import Select, { SingleValue } from "react-select";
 
 interface FullPrompt {
   role: string;
@@ -37,9 +38,14 @@ interface InputPrompt {
   userInstruction: string;
 }
 
+type DialectOption = {
+  value: string;
+  label: string;
+};
+
 const PromptGenerator: React.FC = () => {
   const { settings, updateSettings, resetSettings } = usePromptGenerator();
-  const {  resetConvoSettings } = useConvoGenerator();
+  const { resetConvoSettings } = useConvoGenerator();
 
   const [activeTab, setActiveTab] = useState<
     "generator" | "templates" | "conversation" | "conversation_prompt"
@@ -72,7 +78,32 @@ const PromptGenerator: React.FC = () => {
     settings.language
   );
   const [dialect, setDialect] = useState<
-    "LEVANTINE" | "EGYPTIAN" | "GULF" | "IRAQI" | "NORTH_AFRICAN" | ""
+    | "LEVANTINE"
+    | "EGYPTIAN"
+    | "GULF"
+    | "IRAQI"
+    | "NORTH_AFRICAN"
+    | "LEBANESE"
+    | "PALESTINIAN"
+    | "JORDANIAN"
+    | "MOROCCAN"
+    | "ALGERIAN"
+    | "SYRIAN"
+    | "SUDANESE"
+    | "SOMALI"
+    | "YEMENI"
+    | "TUNISIAN"
+    | "SAUDI"
+    | "EMIRATI"
+    | "KUWAITI"
+    | "QATARI"
+    | "BAHRAINI"
+    | "OMANI"
+    | "LIBYAN"
+    | "MAURITANIAN"
+    | "DJIBOUTIAN"
+    | "COMORIAN"
+    | ""
   >(settings.dialect);
   const stylesOptions =
     gender === "MALE" ? maleStyles : gender === "FEMALE" ? femaleStyles : [];
@@ -381,8 +412,8 @@ const PromptGenerator: React.FC = () => {
   const handleLogout = async () => {
     localStorage.removeItem("token");
     localStorage.removeItem("adminRole");
-   resetSettings(); 
-  resetConvoSettings();
+    resetSettings();
+    resetConvoSettings();
     navigate("/");
     setIsOpen(false);
   };
@@ -410,6 +441,132 @@ const PromptGenerator: React.FC = () => {
     a.download = `ai-response-${new Date().toISOString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+  const dialectOptions = [
+    { name: "Levantine", value: "LEVANTINE" },
+    { name: "Egyptian", value: "EGYPTIAN" },
+    { name: "Gulf", value: "GULF" },
+    { name: "Iraqi", value: "IRAQI" },
+    { name: "North African", value: "NORTH_AFRICAN" },
+    { name: "Lebanese", value: "LEBANESE" },
+    { name: "Palestinian", value: "PALESTINIAN" },
+    { name: "Jordanian", value: "JORDANIAN" },
+    { name: "Moroccan", value: "MOROCCAN" },
+    { name: "Algerian", value: "ALGERIAN" },
+    { name: "Syrian", value: "SYRIAN" },
+    { name: "Sudanese", value: "SUDANESE" },
+    { name: "Somali", value: "SOMALI" },
+    { name: "Yemeni", value: "YEMENI" },
+    { name: "Tunisian", value: "TUNISIAN" },
+    { name: "Saudi", value: "SAUDI" },
+    { name: "Emirati", value: "EMIRATI" },
+    { name: "Kuwaiti", value: "KUWAITI" },
+    { name: "Qatari", value: "QATARI" },
+    { name: "Bahraini", value: "BAHRAINI" },
+    { name: "Omani", value: "OMANI" },
+    { name: "Libyan", value: "LIBYAN" },
+    { name: "Mauritanian", value: "MAURITANIAN" },
+    { name: "Djiboutian", value: "DJIBOUTIAN" },
+    { name: "Comorian", value: "COMORIAN" },
+  ];
+
+  const options: DialectOption[] = dialectOptions.map((d) => ({
+    value: d.value,
+    label: d.name,
+  }));
+
+  const customStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      padding: "2px",
+      backgroundColor:
+        language === "en" ? "rgba(75, 85, 99, 0.3)" : "rgba(55, 65, 81, 0.5)",
+      backdropFilter: "blur(4px)",
+      borderRadius: "0.5rem",
+      border:
+        language === "en"
+          ? "1px solid rgba(75, 85, 99, 0.3)"
+          : state.isFocused
+          ? "1px solid rgba(59, 130, 246, 0.5)"
+          : "1px solid rgba(75, 85, 99, 0.5)",
+      boxShadow:
+        state.isFocused && language !== "en"
+          ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+          : "none",
+      "&:hover": {
+        borderColor:
+          language === "en"
+            ? "rgba(75, 85, 99, 0.3)"
+            : "rgba(59, 130, 246, 0.5)",
+      },
+      minHeight: "38px",
+      cursor: language === "en" ? "not-allowed" : "pointer",
+      transition: "all 0.2s",
+    }),
+    menu: (base: any) => ({
+      ...base,
+      backgroundColor: "rgba(55, 65, 81, 0.95)",
+      backdropFilter: "blur(8px)",
+      border: "1px solid rgba(75, 85, 99, 0.5)",
+      borderRadius: "0.5rem",
+      maxHeight: "200px",
+      overflow: "hidden",
+      scrollbarWidth: "none",
+      msOverflowStyle: "none",
+      "&::-webkit-scrollbar": {
+        display: "none",
+      },
+    }),
+    menuList: (base: any) => ({
+      ...base,
+      maxHeight: "200px",
+      paddingTop: 0,
+      paddingBottom: 0,
+      scrollbarWidth: "none",
+      msOverflowStyle: "none",
+      "&::-webkit-scrollbar": {
+        display: "none",
+      },
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isFocused
+        ? "rgba(59, 130, 246, 0.2)"
+        : state.isSelected
+        ? "rgba(59, 130, 246, 0.5)"
+        : "transparent",
+      color: "#f3f4f6",
+      padding: "6px 12px",
+      cursor: "pointer",
+      textAlign: "left",
+      transition: "all 0.2s",
+      "&:active": {
+        backgroundColor: "rgba(59, 130, 246, 0.3)",
+      },
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: language === "en" ? "#9ca3af" : "#f3f4f6",
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: "#f3f4f6",
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: "#9ca3af",
+    }),
+    dropdownIndicator: (base: any) => ({
+      ...base,
+      color: language === "en" ? "#9ca3af" : "#d1d5db",
+      padding: "4px",
+      "&:hover": {
+        color: language === "en" ? "#9ca3af" : "#60a5fa",
+      },
+    }),
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
   };
 
   return (
@@ -658,27 +815,25 @@ const PromptGenerator: React.FC = () => {
                 </select>
               </motion.div>
 
-              {/* Dialect Selection */}
               <motion.div variants={itemVariants}>
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Dialect
                 </label>
-                <select
-                  value={dialect}
-                  onChange={(e) => handleChange(setDialect, e.target.value)}
-                  className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm ${
-                    language === "en" ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  disabled={language === "en"}
-                  required
-                >
-                  {language === "en" && <option value="">None</option>}
-                  <option value="LEVANTINE">Levantine</option>
-                  <option value="EGYPTIAN">Egyptian</option>
-                  <option value="GULF">Gulf</option>
-                  <option value="IRAQI">Iraqi</option>
-                  <option value="NORTH_AFRICAN">North African</option>
-                </select>
+                <Select<DialectOption>
+                  value={options.find((opt) => opt.value === dialect) || null}
+                  onChange={(selectedOption: SingleValue<DialectOption>) => {
+                    const value = selectedOption?.value || "";
+                    handleChange(setDialect, value);
+                  }}
+                  options={options}
+                  styles={customStyles}
+                  isDisabled={language === "en"}
+                  isSearchable={true}
+                  placeholder="Select dialect..."
+                  className="text-xs sm:text-sm"
+                  classNamePrefix="react-select"
+                  menuPlacement="top"
+                />
                 {language === "en" && (
                   <p className="text-xs text-gray-400 mt-1">
                     Dialect is disabled for English

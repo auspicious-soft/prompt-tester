@@ -5,14 +5,16 @@ import { URLS } from "../utils/urls";
 import { toast } from "sonner";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
 import { useConvoGenerator } from "../context/ConvoGeneratorContext";
+import Select, { SingleValue } from "react-select";
 
 interface ConvoGeneratorProps {
   setGlobalLoading: (loading: boolean) => void;
 }
 
-interface InputPrompt {
-  systemPrompt: string;
-}
+type DialectOption = {
+  value: string;
+  label: string;
+};
 
 const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   setGlobalLoading,
@@ -74,12 +76,96 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   ];
 
   const dialects = [
-    { value: "levantine", label: "Levantine" },
-    { value: "egyptian", label: "Egyptian" },
-    { value: "gulf", label: "Gulf" },
-    { value: "iraqi", label: "Iraqi" },
-    { value: "north_african", label: "North African" },
+    { label: "Levantine", value: "LEVANTINE" },
+    { label: "Egyptian", value: "EGYPTIAN" },
+    { label: "Gulf", value: "GULF" },
+    { label: "Iraqi", value: "IRAQI" },
+    { label: "North African", value: "NORTH_AFRICAN" },
+    { label: "Lebanese", value: "LEBANESE" },
+    { label: "Palestinian", value: "PALESTINIAN" },
+    { label: "Jordanian", value: "JORDANIAN" },
+    { label: "Moroccan", value: "MOROCCAN" },
+    { label: "Algerian", value: "ALGERIAN" },
+    { label: "Syrian", value: "SYRIAN" },
+    { label: "Sudanese", value: "SUDANESE" },
+    { label: "Somali", value: "SOMALI" },
+    { label: "Yemeni", value: "YEMENI" },
+    { label: "Tunisian", value: "TUNISIAN" },
+    { label: "Saudi", value: "SAUDI" },
+    { label: "Emirati", value: "EMIRATI" },
+    { label: "Kuwaiti", value: "KUWAITI" },
+    { label: "Qatari", value: "QATARI" },
+    { label: "Bahraini", value: "BAHRAINI" },
+    { label: "Omani", value: "OMANI" },
+    { label: "Libyan", value: "LIBYAN" },
+    { label: "Mauritanian", value: "MAURITANIAN" },
+    { label: "Djiboutian", value: "DJIBOUTIAN" },
+    { label: "Comorian", value: "COMORIAN" },
   ];
+
+  const options: DialectOption[] = dialects.map((d) => ({
+    value: d.value,
+    label: d.label,
+  }));
+
+  const customStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: "#374151",
+      borderColor: state.isFocused ? "#3b82f6" : "#4b5563",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+      "&:hover": {
+        borderColor: state.isFocused ? "#3b82f6" : "#4b5563",
+      },
+
+      minHeight: "38px",
+      opacity: language === "en" ? 0.5 : 1,
+      cursor: language === "en" ? "not-allowed" : "default",
+    }),
+    menu: (base: any) => ({
+      ...base,
+      backgroundColor: "#374151",
+      border: "1px solid #4b5563",
+      maxHeight: "200px",
+    }),
+    menuList: (base: any) => ({
+      ...base,
+      maxHeight: "200px",
+      paddingTop: 0,
+      paddingBottom: 0,
+      scrollbarWidth: "none" /* Firefox */,
+      msOverflowStyle: "none" /* IE and Edge */,
+      "&::-webkit-scrollbar": {
+        display: "none" /* Chrome, Safari, Opera */,
+      },
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isFocused
+        ? "#4b5563"
+        : state.isSelected
+        ? "#3b82f6"
+        : "#374151",
+      color: "#f3f4f6",
+      padding: "8px 12px",
+      cursor: "pointer",
+      "&:active": {
+        backgroundColor: "#3b82f6",
+      },
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: "#f3f4f6",
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: "#f3f4f6",
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: "#9ca3af",
+    }),
+  };
 
   const tones = ["confident", "flirty", "playful", "conservative"];
 
@@ -316,7 +402,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
             setRelationshipLevel(defaultRelationship._id);
             setSelectedRelationshipLevel(defaultRelationship);
           }
-        
         } else {
           toast.error("Failed to fetch prompts data");
         }
@@ -765,7 +850,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               </select>
             </motion.div>
 
-            {/* Dialect */}
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -775,33 +859,119 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
                 Dialect
               </label>
-              <select
-                value={dialect}
-                onChange={(e) => {
-                  setDialect(e.target.value);
-                  updateSettings({ dialect: e.target.value });
+              <Select<DialectOption>
+                value={options.find((opt) => opt.value === dialect) || null}
+                onChange={(selectedOption: SingleValue<DialectOption>) => {
+                  const value = selectedOption?.value || "";
+                  setDialect(value);
+                  updateSettings({ dialect: value });
                 }}
-                disabled={language === "english"}
-                className={`p-3 bg-gray-700/50 rounded-xl w-full outline-none
-  backdrop-blur-sm transition-all ${
-    language === "english"
-      ? "bg-gray-600/30 text-gray-500 cursor-not-allowed border-gray-600/30"
-      : "bg-gray-700/50 border-gray-600/50 hover:border-purple-500/50 focus:ring-2 focus:ring-purple-500 cursor-pointer"
-  }
-                  ${
-                    language != "english" && hasSubmitted && errors.femaleName
-                      ? "border-2 border-red-500" // 🔴 show red when error
-                      : "border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500"
-                  }
-                  `}
-              >
-                <option value="">Select Dialect</option>
-                {dialects.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+                options={options}
+                styles={{
+                  control: (base: any, state: any) => ({
+                    ...base,
+                    padding: "4px",
+                    backgroundColor:
+                      language === "english"
+                        ? "rgba(75, 85, 99, 0.3)"
+                        : "rgba(55, 65, 81, 0.5)",
+                    backdropFilter: "blur(4px)",
+                    borderRadius: "0.75rem",
+                    border:
+                      language === "english"
+                        ? "1px solid rgba(75, 85, 99, 0.3)"
+                        : language !== "english" &&
+                          hasSubmitted &&
+                          errors.femaleName
+                        ? "2px solid rgb(239, 68, 68)"
+                        : state.isFocused
+                        ? "1px solid rgba(168, 85, 247, 0.5)"
+                        : "1px solid rgba(75, 85, 99, 0.5)",
+                    boxShadow:
+                      state.isFocused && language !== "english"
+                        ? "0 0 0 2px rgba(168, 85, 247, 0.5)"
+                        : "none",
+                    "&:hover": {
+                      borderColor:
+                        language === "english"
+                          ? "rgba(75, 85, 99, 0.3)"
+                          : "rgba(168, 85, 247, 0.5)",
+                    },
+                    minHeight: "48px",
+                    cursor: language === "english" ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                  }),
+                  menu: (base: any) => ({
+                    ...base,
+                    backgroundColor: "rgba(55, 65, 81, 0.95)",
+                    backdropFilter: "blur(8px)",
+                    border: "1px solid rgba(75, 85, 99, 0.5)",
+                    borderRadius: "0.75rem",
+                    maxHeight: "200px",
+                    overflow: "hidden",
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    "&::-webkit-scrollbar": {
+                      display: "none",
+                    },
+                  }),
+                  menuList: (base: any) => ({
+                    ...base,
+                    maxHeight: "200px",
+                    paddingTop: 0,
+                    paddingBottom: 0,
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    "&::-webkit-scrollbar": {
+                      display: "none",
+                    },
+                  }),
+                  option: (base: any, state: any) => ({
+                    ...base,
+                    backgroundColor: state.isFocused
+                      ? "rgba(168, 85, 247, 0.2)"
+                      : state.isSelected
+                      ? "rgba(168, 85, 247, 0.5)"
+                      : "transparent",
+                    color: "#d1d5db",
+                    padding: "8px 12px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "all 0.2s",
+                    "&:active": {
+                      backgroundColor: "rgba(168, 85, 247, 0.3)",
+                    },
+                  }),
+                  singleValue: (base: any) => ({
+                    ...base,
+                    color: language === "english" ? "#9ca3af" : "#d1d5db",
+                    textAlign: "left",
+                  }),
+                  input: (base: any) => ({
+                    ...base,
+                    color: "#d1d5db",
+                  }),
+                  placeholder: (base: any) => ({
+                    ...base,
+                    color: "#9ca3af",
+                  }),
+                  dropdownIndicator: (base: any) => ({
+                    ...base,
+                    color: language === "english" ? "#9ca3af" : "#d1d5db",
+                    "&:hover": {
+                      color: language === "english" ? "#9ca3af" : "#a78bfa",
+                    },
+                  }),
+                  indicatorSeparator: () => ({
+                    display: "none",
+                  }),
+                }}
+                isDisabled={language === "english"}
+                isSearchable={true}
+                placeholder="Select Dialect"
+                classNamePrefix="react-select"
+                menuPlacement="top"
+              />
             </motion.div>
 
             {/* Tone */}

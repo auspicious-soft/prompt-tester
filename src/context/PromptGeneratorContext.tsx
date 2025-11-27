@@ -4,7 +4,32 @@ interface PromptGeneratorSettings {
   gptModel: string;
   temperature: number;
   language: "en" | "ar" | "arbz";
-  dialect: "LEVANTINE" | "EGYPTIAN" | "GULF" | "IRAQI" | "NORTH_AFRICAN" | "";
+  dialect: "LEVANTINE"
+  | "EGYPTIAN"
+  | "GULF"
+  | "IRAQI"
+  | "NORTH_AFRICAN"
+  | "LEBANESE"
+  | "PALESTINIAN"
+  | "JORDANIAN"
+  | "MOROCCAN"
+  | "ALGERIAN"
+  | "SYRIAN"
+  | "SUDANESE"
+  | "SOMALI"
+  | "YEMENI"
+  | "TUNISIAN"
+  | "SAUDI"
+  | "EMIRATI"
+  | "KUWAITI"
+  | "QATARI"
+  | "BAHRAINI"
+  | "OMANI"
+  | "LIBYAN"
+  | "MAURITANIAN"
+  | "DJIBOUTIAN"
+  | "COMORIAN"
+  | "";
   isGenZ: boolean;
   style: string;
   gender: "MALE" | "FEMALE";
