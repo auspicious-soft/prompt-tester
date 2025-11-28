@@ -4,11 +4,8 @@ interface PromptGeneratorSettings {
   gptModel: string;
   temperature: number;
   language: "en" | "ar" | "arbz";
-  dialect: "LEVANTINE"
-  | "EGYPTIAN"
-  | "GULF"
+  dialect:  "EGYPTIAN"
   | "IRAQI"
-  | "NORTH_AFRICAN"
   | "LEBANESE"
   | "PALESTINIAN"
   | "JORDANIAN"

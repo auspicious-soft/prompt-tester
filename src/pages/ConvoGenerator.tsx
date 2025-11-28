@@ -76,11 +76,8 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   ];
 
   const dialects = [
-    { label: "Levantine", value: "LEVANTINE" },
     { label: "Egyptian", value: "EGYPTIAN" },
-    { label: "Gulf", value: "GULF" },
     { label: "Iraqi", value: "IRAQI" },
-    { label: "North African", value: "NORTH_AFRICAN" },
     { label: "Lebanese", value: "LEBANESE" },
     { label: "Palestinian", value: "PALESTINIAN" },
     { label: "Jordanian", value: "JORDANIAN" },
@@ -107,65 +104,6 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
     value: d.value,
     label: d.label,
   }));
-
-  const customStyles = {
-    control: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: "#374151",
-      borderColor: state.isFocused ? "#3b82f6" : "#4b5563",
-      boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
-      "&:hover": {
-        borderColor: state.isFocused ? "#3b82f6" : "#4b5563",
-      },
-
-      minHeight: "38px",
-      opacity: language === "en" ? 0.5 : 1,
-      cursor: language === "en" ? "not-allowed" : "default",
-    }),
-    menu: (base: any) => ({
-      ...base,
-      backgroundColor: "#374151",
-      border: "1px solid #4b5563",
-      maxHeight: "200px",
-    }),
-    menuList: (base: any) => ({
-      ...base,
-      maxHeight: "200px",
-      paddingTop: 0,
-      paddingBottom: 0,
-      scrollbarWidth: "none" /* Firefox */,
-      msOverflowStyle: "none" /* IE and Edge */,
-      "&::-webkit-scrollbar": {
-        display: "none" /* Chrome, Safari, Opera */,
-      },
-    }),
-    option: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: state.isFocused
-        ? "#4b5563"
-        : state.isSelected
-        ? "#3b82f6"
-        : "#374151",
-      color: "#f3f4f6",
-      padding: "8px 12px",
-      cursor: "pointer",
-      "&:active": {
-        backgroundColor: "#3b82f6",
-      },
-    }),
-    singleValue: (base: any) => ({
-      ...base,
-      color: "#f3f4f6",
-    }),
-    input: (base: any) => ({
-      ...base,
-      color: "#f3f4f6",
-    }),
-    placeholder: (base: any) => ({
-      ...base,
-      color: "#9ca3af",
-    }),
-  };
 
   const tones = ["confident", "flirty", "playful", "conservative"];
 

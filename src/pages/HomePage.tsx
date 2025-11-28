@@ -78,11 +78,8 @@ const PromptGenerator: React.FC = () => {
     settings.language
   );
   const [dialect, setDialect] = useState<
-    | "LEVANTINE"
-    | "EGYPTIAN"
-    | "GULF"
+    "EGYPTIAN"
     | "IRAQI"
-    | "NORTH_AFRICAN"
     | "LEBANESE"
     | "PALESTINIAN"
     | "JORDANIAN"
@@ -175,7 +172,7 @@ const PromptGenerator: React.FC = () => {
         prevLanguage === "en" &&
         (value === "ar" || value === "arbz")
       ) {
-        setDialect("LEVANTINE");
+        setDialect("EGYPTIAN");
       } else if (
         (prevLanguage === "ar" && value === "arbz") ||
         (prevLanguage === "arbz" && value === "ar")
@@ -183,7 +180,7 @@ const PromptGenerator: React.FC = () => {
         if (prevDialect) {
           setDialect(prevDialect);
         } else {
-          setDialect("LEVANTINE");
+          setDialect("EGYPTIAN");
         }
       }
     }
@@ -443,11 +440,8 @@ const PromptGenerator: React.FC = () => {
     URL.revokeObjectURL(url);
   };
   const dialectOptions = [
-    { name: "Levantine", value: "LEVANTINE" },
     { name: "Egyptian", value: "EGYPTIAN" },
-    { name: "Gulf", value: "GULF" },
     { name: "Iraqi", value: "IRAQI" },
-    { name: "North African", value: "NORTH_AFRICAN" },
     { name: "Lebanese", value: "LEBANESE" },
     { name: "Palestinian", value: "PALESTINIAN" },
     { name: "Jordanian", value: "JORDANIAN" },
