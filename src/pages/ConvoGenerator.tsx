@@ -32,7 +32,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [gptModel, setGptModel] = useState(settings.gptModel);
   const [temperature, setTemperature] = useState(settings.temperature);
 
-  const [scenarioCategory, setScenarioCategory] = useState("");
+  const [scenarioCategory, setScenarioCategory] = useState(
+    settings.scenarioCategory
+  );
   const [relationshipLevel, setRelationshipLevel] = useState("");
   const [conversationLength, setConversationLength] = useState(
     settings.conversationLength
@@ -332,10 +334,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
           const defaultRelationship = data.relationshipLevels?.[0];
           const defaultLength = data.conversationLengths?.[0];
 
-          if (defaultScenario) {
-            setScenarioCategory(defaultScenario._id);
-            setSelectedScenario(defaultScenario);
-          }
+          // if (defaultScenario) {
+          //   setScenarioCategory(defaultScenario._id);
+          //   setSelectedScenario(defaultScenario);
+          // }
           if (defaultRelationship) {
             setRelationshipLevel(defaultRelationship._id);
             setSelectedRelationshipLevel(defaultRelationship);
@@ -953,9 +955,13 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
                 value={scenarioCategory}
                 onChange={(e) => {
                   const id = e.target.value;
+
                   setScenarioCategory(id);
+                  updateSettings({ scenarioCategory: id });
+
                   const sel = scenariosData.find((s) => s._id === id);
                   setSelectedScenario(sel || null);
+
                   if (sel?.value !== "custom") setCustomScenario("");
                 }}
                 className="p-3 bg-gray-700/50 rounded-xl w-full outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer"

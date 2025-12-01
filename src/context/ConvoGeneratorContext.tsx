@@ -10,6 +10,7 @@ interface ConvoGeneratorSettings {
   isGenZ: boolean;
   personaDirection: string;
   conversationLength:string;
+  scenarioCategory:string;
 }
 
 interface ConvoGeneratorContextType {
@@ -27,7 +28,8 @@ const defaultSettings: ConvoGeneratorSettings = {
   femaleTone: 'flirty',
   isGenZ: false,
   personaDirection: 'male_to_female',
-  conversationLength:"short"
+  conversationLength:"short",
+  scenarioCategory: "", 
 };
 
 const ConvoGeneratorContext = createContext<ConvoGeneratorContextType | undefined>(undefined);
