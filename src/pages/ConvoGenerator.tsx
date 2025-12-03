@@ -537,6 +537,32 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   //   (len) => len.value === conversationLength
   // );
 
+  const handleDownloadJson = () => {
+  const jsonData = {
+    input: aiInput,
+    output: aiOutput,
+    conversation: conversation,
+    metadata: {
+      modelUsed: metaData?.model,
+      temperatureUsed: metaData?.temperature,
+      tokenUsage: {
+        totalTokens: metaData?.tokens,
+        estimatedCost: metaData?.cost,
+      },
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `conversation-${maleName}-${femaleName}-${new Date().toISOString()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
   return (
     <div className="min-h-screen py-8 px-4">
       <motion.div
@@ -1346,6 +1372,34 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               )}
             </motion.div>
           )}
+
+
+          {(aiInput || aiOutput || promptUsed) && (
+  <div className="flex justify-end mt-4">
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={handleDownloadJson}
+      disabled={loading || !aiOutput}
+      className={`flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium text-xs sm:text-sm shadow-md transition-all duration-300 touch-manipulation ${
+        loading
+          ? "bg-blue-400 text-white cursor-not-allowed"
+          : !aiOutput
+          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+          : "bg-blue-600 text-white hover:bg-blue-700"
+      }`}
+      title={
+        loading
+          ? "Preparing file..."
+          : !aiOutput
+          ? "No data available to download."
+          : "Click to download JSON file."
+      }
+    >
+      <span>{loading ? "Preparing..." : "Download JSON"}</span>
+    </motion.button>
+  </div>
+)}
 
           <AnimatePresence>
             {conversation.length > 0 && (
