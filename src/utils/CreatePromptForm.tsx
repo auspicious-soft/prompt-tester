@@ -32,12 +32,30 @@ const languageLabels: Record<string, string> = {
 };
 
 const dialectLabels: Record<string, string> = {
-  LEVANTINE: "Levantine",
   EGYPTIAN: "Egyptian",
-  GULF: "Gulf",
   IRAQI: "Iraqi",
-  NORTH_AFRICAN: "North African",
+  LEBANESE: "Lebanese",
+  PALESTINIAN: "Palestinian",
+  JORDANIAN: "Jordanian",
+  MOROCCAN: "Moroccan",
+  ALGERIAN: "Algerian",
+  SYRIAN: "Syrian",
+  SUDANESE: "Sudanese",
+  SOMALI: "Somali",
+  YEMENI: "Yemeni",
+  TUNISIAN: "Tunisian",
+  SAUDI: "Saudi",
+  EMIRATI: "Emirati",
+  KUWAITI: "Kuwaiti",
+  QATARI: "Qatari",
+  BAHRANI: "Bahraini",
+  OMANI: "Omani",
+  LIBYAN: "Libyan",
+  MAURITANIAN: "Mauritanian",
+  DJIBOUTIAN: "Djiboutian",
+  COMORIAN: "Comorian",
 };
+
 
 interface PromptData {
   gender: "MALE" | "FEMALE" | "";
@@ -66,7 +84,30 @@ const cleanPayload = (data: any) => {
   const requiredKeysMap: Record<string, string[]> = {
     messageTypes: ["uploadScreenshot", "addManually", "pickup"],
     languages: ["en", "ar", "arbz"],
-    dialects: ["LEVANTINE", "EGYPTIAN", "GULF", "IRAQI", "NORTH_AFRICAN"],
+dialects: [
+  "EGYPTIAN",
+  "IRAQI",
+  "LEBANESE",
+  "PALESTINIAN",
+  "JORDANIAN",
+  "MOROCCAN",
+  "ALGERIAN",
+  "SYRIAN",
+  "SUDANESE",
+  "SOMALI",
+  "YEMENI",
+  "TUNISIAN",
+  "SAUDI",
+  "EMIRATI",
+  "KUWAITI",
+  "QATARI",
+  "BAHRANI",
+  "OMANI",
+  "LIBYAN",
+  "MAURITANIAN",
+  "DJIBOUTIAN",
+  "COMORIAN"
+],
     styles: [
       "CONSERVATIVE",
       "PLAYFUL",
@@ -123,13 +164,30 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
       SASSY: "",
     },
     languages: { en: "", ar: "", arbz: "" },
-    dialects: {
-      LEVANTINE: "",
-      EGYPTIAN: "",
-      GULF: "",
-      IRAQI: "",
-      NORTH_AFRICAN: "",
-    },
+dialects: {
+  EGYPTIAN: "",
+  IRAQI: "",
+  LEBANESE: "",
+  PALESTINIAN: "",
+  JORDANIAN: "",
+  MOROCCAN: "",
+  ALGERIAN: "",
+  SYRIAN: "",
+  SUDANESE: "",
+  SOMALI: "",
+  YEMENI: "",
+  TUNISIAN: "",
+  SAUDI: "",
+  EMIRATI: "",
+  KUWAITI: "",
+  QATARI: "",
+  BAHRANI: "",
+  OMANI: "",
+  LIBYAN: "",
+  MAURITANIAN: "",
+  DJIBOUTIAN: "",
+  COMORIAN: ""
+},
     optimized: {
       role: "",
       messageTypes: {},
@@ -172,45 +230,56 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
     setOpenAccordions((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const renderInputField = (
-    label: string,
-    value: string,
-    onChange: (value: string) => void,
-    isTextarea: boolean = false,
-    isRequired: boolean = false,
-    title = false
-  ) => {
-    const isEmpty = isRequired && !value.trim();
+const renderInputField = (
+  label: string,
+  value: string,
+  onChange: (value: string) => void,
+  isTextarea: boolean = true,  // default to textarea
+  isRequired: boolean = false,
+  titleField = false
+) => {
+  const isEmpty = isRequired && !value.trim();
+
+  // Title field ONLY stays input
+  if (titleField) {
     return (
       <motion.div variants={itemVariants} className="flex-1 min-w-[200px] mb-3">
-        <label className=" text-sm sm:text-base font-medium text-gray-300 mb-1 text-left flex items-center gap-1">
+        <label className="text-sm sm:text-base font-medium text-gray-300 mb-1 text-left flex items-center gap-1">
           {label}
           {isRequired && <span className="text-red-500">*</span>}
         </label>
-        {isTextarea ? (
-          <textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border ${
-              isEmpty ? "border-red-500" : "border-gray-600"
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[100px] resize-none transition-all duration-200`}
-            placeholder={`Enter ${label}`}
-          />
-        ) : (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className={` px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border ${
-              isEmpty ? "border-red-500" : "border-gray-600"
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200
-          ${title ? "w-full h-12 sm:h-12 mb-2" : "w-full"}`}
-            placeholder={`Enter ${label}`}
-          />
-        )}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full h-12 px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border ${
+            isEmpty ? "border-red-500" : "border-gray-600"
+          } focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm`}
+          placeholder={`Enter ${label}`}
+        />
       </motion.div>
     );
-  };
+  }
+
+  // All other fields use textarea
+  return (
+    <motion.div variants={itemVariants} className="flex-1 min-w-[200px] mb-3">
+      <label className="text-sm sm:text-base font-medium text-gray-300 mb-1 text-left flex items-center gap-1">
+        {label}
+        {isRequired && <span className="text-red-500">*</span>}
+      </label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-100 border ${
+          isEmpty ? "border-red-500" : "border-gray-600"
+        } focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[100px] resize-y`}
+        placeholder={`Enter ${label}`}
+      />
+    </motion.div>
+  );
+};
+
 
   const renderNestedFields = (title: string, obj: Record<string, any>) => (
     <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
@@ -321,6 +390,20 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
         Create Prompt
       </h2>
 
+      {formData.gender && (
+        <>
+         {renderInputField(
+  "Title",
+  formData.title,
+  (val) => handleInputChange("title", val),
+  false,
+  false,
+  true
+)}
+
+          </>
+      )}
+
       {/* Gender */}
       <div className="mb-4">
         <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 text-start">
@@ -361,19 +444,12 @@ const CreatePromptForm: React.FC<CreatePromptFormProps> = ({
           
           )}
 
-          {renderInputField(
-            "Title",
-            formData.title,
-            (val) => handleInputChange("title", val),
-            false,
-            false,
-            true
-          )}
+        
+          {renderNestedFields("messageTypes", formData.messageTypes)}
 
           {renderNestedFields("languages", formData.languages)}
           {renderNestedFields("dialects", formData.dialects)}
           {renderNestedFields("styles", formData.styles)}
-          {renderNestedFields("messageTypes", formData.messageTypes)}
 
              {renderInputField(
             "Submission Prompt",
