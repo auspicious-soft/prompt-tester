@@ -386,7 +386,7 @@ const ConversationPromptEditor: React.FC<ConversationPromptEditorProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700"
+        className="w-full max-w-5xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700"
       >
         <p className="text-red-500 text-left">{error}</p>
       </motion.div>
@@ -408,7 +408,7 @@ const {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="relative w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
+      className="relative w-full max-w-5xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-6 sm:p-8 border border-gray-700 pt-10 mt-[20px]"
     >
       <div className="flex flex-wrap justify-start items-center gap-4 text-sm text-gray-400 mb-6 sm:mb-8">
         <div>

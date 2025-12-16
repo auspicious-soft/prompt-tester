@@ -13,6 +13,7 @@ import ConversationPromptEditor from "../utils/ConversationPromptEditor";
 import { usePromptGenerator } from "../context/PromptGeneratorContext";
 import { useConvoGenerator } from "../context/ConvoGeneratorContext";
 import Select, { SingleValue } from "react-select";
+import PickUpPromptTemplates from "./PickUpPromptTemplates";
 
 interface FullPrompt {
   role: string;
@@ -48,7 +49,7 @@ const PromptGenerator: React.FC = () => {
   const { resetConvoSettings } = useConvoGenerator();
 
   const [activeTab, setActiveTab] = useState<
-    "generator" | "templates" | "conversation" | "conversation_prompt"
+    "generator" | "templates" | "conversation" | "conversation_prompt" | "pickup_templates"
   >("conversation");
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
@@ -417,7 +418,7 @@ const PromptGenerator: React.FC = () => {
 
   const visibleTabs =
     adminRole === "superAdmin"
-      ? ["generator", "templates", "conversation", "conversation_prompt"]
+      ? ["generator", "templates", "pickup_templates", "conversation", "conversation_prompt"]
       : ["conversation"];
 
   const handleDownloadJson = () => {
@@ -599,7 +600,7 @@ const PromptGenerator: React.FC = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-4xl flex flex-col sm:flex-row justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-2"
+        className="w-full max-w-5xl flex flex-col sm:flex-row justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-2"
       >
         {visibleTabs.includes("generator") && (
           <button
@@ -630,6 +631,22 @@ const PromptGenerator: React.FC = () => {
             }`}
           >
             Prompt Templates
+          </button>
+        )}
+
+          {visibleTabs.includes("pickup_templates") && (
+          <button
+            onClick={() => {
+              setActiveTab("pickup_templates");
+              resetGeneratorTab();
+            }}
+            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
+              activeTab === "pickup_templates"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Pickup Prompt Templates
           </button>
         )}
 
@@ -665,7 +682,7 @@ const PromptGenerator: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="w-full max-w-3xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700"
+          className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-gray-100 text-center mb-4 sm:mb-6">
             Prompt Tester
@@ -683,7 +700,7 @@ const PromptGenerator: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleChange(setSelectedType, type)}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 min-w-[100px] ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 min-w-[170px] ${
                   selectedType === type
                     ? "bg-blue-600 text-white"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -1465,16 +1482,26 @@ const PromptGenerator: React.FC = () => {
       {activeTab === "templates" && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
         >
           <PromptTemplates />
         </motion.div>
       )}
 
+      {activeTab === "pickup_templates" && (
+        <motion.div
+          variants={itemVariants}
+          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
+        >
+          <PickUpPromptTemplates />
+        </motion.div>
+      )}
+
+
       {activeTab === "conversation" && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
         >
           <ConvoGenerator setGlobalLoading={setGlobalLoading} />{" "}
         </motion.div>
@@ -1483,7 +1510,7 @@ const PromptGenerator: React.FC = () => {
       {activeTab === "conversation_prompt" && editMode && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-4xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
         >
           <ConversationPromptEditor
             keyValue="conversation_prompt_v5_1762836404699"
