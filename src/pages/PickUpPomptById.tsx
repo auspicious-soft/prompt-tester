@@ -221,6 +221,7 @@ function PickUpPromptById({
       );
       if (response.status === 200) {
         setSuccess("Prompt updated successfully!");
+
         // Clear success message after 3 seconds
         setTimeout(() => setSuccess(null), 3000);
         setIsModified(false);
@@ -249,18 +250,25 @@ function PickUpPromptById({
     setSuccess(null);
 
     try {
-      const response = await postApi(`${URLS.promotePromptVersion}?type=pickup`, {
-        versionId: id,
-      });
+      const response = await postApi(
+        `${URLS.promotePromptVersion}?type=pickup`,
+        {
+          versionId: id,
+        }
+      );
       if (response.status === 200) {
         setSuccess("Prompt successfully promoted to production!");
+        toast.success("Prompt successfully promoted to production!");
+
         setTimeout(() => setSuccess(null), 3000);
       } else {
         setError("Failed to promote prompt.");
+        toast.error("Failed to promote prompt.");
       }
     } catch (error) {
       console.error(error);
       setError("An error occurred while promoting the prompt.");
+      toast.error("An error occurred while promoting the prompt.");
     } finally {
       setLoading(false);
     }
@@ -284,18 +292,24 @@ function PickUpPromptById({
     setSuccess(null);
 
     try {
-      const response = await postApi(`${URLS.promoteWebPromptVersion}?type=pickup`, {
-        versionId: id,
-      });
+      const response = await postApi(
+        `${URLS.promoteWebPromptVersion}?type=pickup`,
+        {
+          versionId: id,
+        }
+      );
       if (response.status === 200) {
         setSuccess("Prompt successfully promoted to Site!");
+        toast.success("Prompt successfully promoted to Site!");
         setTimeout(() => setSuccess(null), 3000);
       } else {
         setError("Failed to promote prompt.");
+        toast.error("Failed to promote prompt.");
       }
     } catch (error) {
       console.error(error);
       setError("An error occurred while promoting the prompt.");
+      toast.error("An error occurred while promoting the prompt.");
     } finally {
       setLoading(false);
     }
@@ -350,208 +364,217 @@ function PickUpPromptById({
     }));
   };
 
-const renderInputField = (
-  label: string,
-  value: string,
-  onChange: (value: string) => void,
-  isTextarea: boolean = false,
-  isReadOnly: boolean = false,
-  hideLabel = false
-) => (
-  <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
-    {!hideLabel && (
-      <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
-        {label
-          .replace(/([A-Z])/g, " $1")
-          .replace(/_/g, " ")
-          .trim()}
-      </label>
-    )}
-
-    {isTextarea ? (
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        readOnly={isReadOnly}
-        className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-y hide-scrollbar transition-all duration-200 ${
-          isReadOnly ? "cursor-not-allowed opacity-70" : ""
-        }`}
-        placeholder={
-          isReadOnly
-            ? ""
-            : `Enter ${label
-                .replace(/([A-Z])/g, " $1")
-                .replace(/_/g, " ")
-                .trim()
-                .toLowerCase()}`
-        }
-      />
-    ) : (
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        readOnly={isReadOnly}
-        className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200 ${
-          isReadOnly ? "cursor-not-allowed opacity-70" : ""
-        }`}
-        placeholder={
-          isReadOnly
-            ? ""
-            : `Enter ${label
-                .replace(/([A-Z])/g, " $1")
-                .replace(/_/g, " ")
-                .trim()
-                .toLowerCase()}`
-        }
-      />
-    )}
-  </motion.div>
-);
-
-
-
-const renderNestedFields = (
-  title: string,
-  obj: Record<string, any>,
-  isAccordion: boolean = true
-) => (
-  <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-    <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-      <motion.div
-        onClick={() => toggleAccordion(title)}
-        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-        className="cursor-pointer"
-      >
-        <div className="flex justify-between items-center">
-          <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-            {title
-              .replace(/([A-Z])/g, " $1")
-              .replace(/_/g, " ")
-              .trim()}
-          </h4>
-          <motion.span
-            animate={{ rotate: openAccordions[title] ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="text-gray-400"
-          >
-            ▼
-          </motion.span>
-        </div>
-      </motion.div>
-
-      {openAccordions[title] && (
-        <div className="space-y-3 sm:space-y-4 pt-3">
-          {Object.entries(obj).map(([key, value]) => {
-            const lcKey = String(key).toLowerCase();
-            const isSimpleField = ["title", "key", "generation", "persona"].includes(lcKey);
-
-            return (
-              <div key={key}>
-                {renderInputField(
-                  key,
-                  typeof value === "string" ? value : JSON.stringify(value),
-                  (newValue) => handleNestedChange(title, key, newValue),
-                  !isSimpleField // textarea for all except the four simple fields
-                )}
-              </div>
-            );
-          })}
-        </div>
+  const renderInputField = (
+    label: string,
+    value: string,
+    onChange: (value: string) => void,
+    isTextarea: boolean = false,
+    isReadOnly: boolean = false,
+    hideLabel = false
+  ) => (
+    <motion.div variants={itemVariants} className="flex-1 min-w-[200px]">
+      {!hideLabel && (
+        <label className="block text-sm sm:text-base font-medium text-gray-300 mb-1 capitalize text-left">
+          {label
+            .replace(/([A-Z])/g, " $1")
+            .replace(/_/g, " ")
+            .trim()}
+        </label>
       )}
-    </div>
-  </motion.div>
-);
 
+      {isTextarea ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          readOnly={isReadOnly}
+          className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm min-h-[250px] resize-y hide-scrollbar transition-all duration-200 ${
+            isReadOnly ? "cursor-not-allowed opacity-70" : ""
+          }`}
+          placeholder={
+            isReadOnly
+              ? ""
+              : `Enter ${label
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/_/g, " ")
+                  .trim()
+                  .toLowerCase()}`
+          }
+        />
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          readOnly={isReadOnly}
+          className={`w-full px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm transition-all duration-200 ${
+            isReadOnly ? "cursor-not-allowed opacity-70" : ""
+          }`}
+          placeholder={
+            isReadOnly
+              ? ""
+              : `Enter ${label
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/_/g, " ")
+                  .trim()
+                  .toLowerCase()}`
+          }
+        />
+      )}
+    </motion.div>
+  );
 
+  const renderNestedFields = (
+    title: string,
+    obj: Record<string, any>,
+    isAccordion: boolean = true
+  ) => (
+    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+        <motion.div
+          onClick={() => toggleAccordion(title)}
+          whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+          className="cursor-pointer"
+        >
+          <div className="flex justify-between items-center">
+            <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
+              {title
+                .replace(/([A-Z])/g, " $1")
+                .replace(/_/g, " ")
+                .trim()}
+            </h4>
+            <motion.span
+              animate={{ rotate: openAccordions[title] ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-gray-400"
+            >
+              ▼
+            </motion.span>
+          </div>
+        </motion.div>
 
-const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
-  <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
-    <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-      <motion.div
-        onClick={() => toggleAccordion(parentTitle)}
-        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-        className="cursor-pointer"
-      >
-        <div className="flex justify-between items-center">
-          <h4 className="text-lg sm:text-xl font-semibold text-gray-100 capitalize text-left">
-            {parentTitle
-              .replace(/([A-Z])/g, " $1")
-              .replace(/_/g, " ")
-              .trim()}
-          </h4>
-          <motion.span
-            animate={{ rotate: openAccordions[parentTitle] ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="text-gray-400"
-          >
-            ▼
-          </motion.span>
-        </div>
-      </motion.div>
+        {openAccordions[title] && (
+          <div className="space-y-3 sm:space-y-4 pt-3">
+            {Object.entries(obj).map(([key, value]) => {
+              const lcKey = String(key).toLowerCase();
+              const isSimpleField = [
+                "title",
+                "key",
+                "generation",
+                "persona",
+              ].includes(lcKey);
 
-      {openAccordions[parentTitle] && (
-        <div className="space-y-3 sm:space-y-4 pt-3">
-          {Object.entries(parentObj).map(([key, value]) => {
-            const lcKeyLevel1 = String(key).toLowerCase();
-            const isSimpleFieldLevel1 = ["title", "key", "generation", "persona"].includes(lcKeyLevel1);
-
-            return (
-              <div key={key}>
-                {typeof value === "object" && value !== null ? (
-                  <div className="mb-3">
-                    <h5 className="text-sm sm:text-base font-medium text-gray-300 mb-2 capitalize text-left">
-                      {key
-                        .replace(/([A-Z])/g, " $1")
-                        .replace(/_/g, " ")
-                        .trim()}
-                    </h5>
-
-                    <div className="space-y-3">
-                      {Object.entries(value).map(([subKey, subValue]) => {
-                        const lcSubKey = String(subKey).toLowerCase();
-                        const isSimpleField = ["title", "key", "generation", "persona"].includes(lcSubKey);
-
-                        return (
-                          <div key={subKey}>
-                            {renderInputField(
-                              subKey,
-                              typeof subValue === "string"
-                                ? subValue
-                                : JSON.stringify(subValue),
-                              (newValue) =>
-                                handleDeepNestedChange(
-                                  parentTitle,
-                                  key,
-                                  subKey,
-                                  newValue
-                                ),
-                              !isSimpleField // textarea except the four
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  renderInputField(
+              return (
+                <div key={key}>
+                  {renderInputField(
                     key,
                     typeof value === "string" ? value : JSON.stringify(value),
-                    (newValue) =>
-                      handleNestedChange(parentTitle, key, newValue),
-                    !isSimpleFieldLevel1 // textarea except the four
-                  )
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  </motion.div>
-);
+                    (newValue) => handleNestedChange(title, key, newValue),
+                    !isSimpleField // textarea for all except the four simple fields
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
 
+  const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
+    <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
+      <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
+        <motion.div
+          onClick={() => toggleAccordion(parentTitle)}
+          whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+          className="cursor-pointer"
+        >
+          <div className="flex justify-between items-center">
+            <h4 className="text-lg sm:text-xl font-semibold text-gray-100 capitalize text-left">
+              {parentTitle
+                .replace(/([A-Z])/g, " $1")
+                .replace(/_/g, " ")
+                .trim()}
+            </h4>
+            <motion.span
+              animate={{ rotate: openAccordions[parentTitle] ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-gray-400"
+            >
+              ▼
+            </motion.span>
+          </div>
+        </motion.div>
 
+        {openAccordions[parentTitle] && (
+          <div className="space-y-3 sm:space-y-4 pt-3">
+            {Object.entries(parentObj).map(([key, value]) => {
+              const lcKeyLevel1 = String(key).toLowerCase();
+              const isSimpleFieldLevel1 = [
+                "title",
+                "key",
+                "generation",
+                "persona",
+              ].includes(lcKeyLevel1);
+
+              return (
+                <div key={key}>
+                  {typeof value === "object" && value !== null ? (
+                    <div className="mb-3">
+                      <h5 className="text-sm sm:text-base font-medium text-gray-300 mb-2 capitalize text-left">
+                        {key
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/_/g, " ")
+                          .trim()}
+                      </h5>
+
+                      <div className="space-y-3">
+                        {Object.entries(value).map(([subKey, subValue]) => {
+                          const lcSubKey = String(subKey).toLowerCase();
+                          const isSimpleField = [
+                            "title",
+                            "key",
+                            "generation",
+                            "persona",
+                          ].includes(lcSubKey);
+
+                          return (
+                            <div key={subKey}>
+                              {renderInputField(
+                                subKey,
+                                typeof subValue === "string"
+                                  ? subValue
+                                  : JSON.stringify(subValue),
+                                (newValue) =>
+                                  handleDeepNestedChange(
+                                    parentTitle,
+                                    key,
+                                    subKey,
+                                    newValue
+                                  ),
+                                !isSimpleField // textarea except the four
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    renderInputField(
+                      key,
+                      typeof value === "string" ? value : JSON.stringify(value),
+                      (newValue) =>
+                        handleNestedChange(parentTitle, key, newValue),
+                      !isSimpleFieldLevel1 // textarea except the four
+                    )
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
 
   if (error) {
     return (
@@ -586,8 +609,6 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
       </>
     );
   }
-
-
 
   const simpleFields = ["title", "key", "generation", "persona"];
   const textareaFields = ["role"];
@@ -761,9 +782,9 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
                   >
                     <button
                       onClick={promotePromptWeb}
-                      disabled={loading || promptData?.isActiveWeb}
+                      disabled={loading}
                       className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-                        loading || promptData?.isActiveWeb
+                        loading
                           ? "bg-gray-600 cursor-not-allowed"
                           : "bg-purple-600 hover:bg-purple-700"
                       }`}
@@ -778,9 +799,9 @@ const renderDeepNestedFields = (parentTitle: string, parentObj: any) => (
                   >
                     <button
                       onClick={promotePrompt}
-                      disabled={loading || promptData?.isActive}
+                      disabled={loading}
                       className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-200 ${
-                        loading || promptData?.isActive
+                        loading
                           ? "bg-gray-600 cursor-not-allowed"
                           : "bg-orange-600 hover:bg-orange-700"
                       }`}
