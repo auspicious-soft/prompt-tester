@@ -29,5 +29,7 @@ export const URLS = {
   createRelationshipLevelAndAttach:`${baseUrl}/create-realtionship-level`,
   deleteScenarioAndDetach:`${baseUrl}/delete-scenario`,
   deleteRelationshipLevelAndDetach:`${baseUrl}/delete-relationship-level`,
+  getAISettings:`${baseUrl}/ai-settings`,
+updateAISettings:`${baseUrl}/ai-settings`,
   getMergedConvoData:`${commonBaseUrl}/get-merged-data`
 };

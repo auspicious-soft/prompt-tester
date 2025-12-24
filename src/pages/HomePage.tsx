@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import PromptTemplates from "./PromptTemplates";
 import TypingLoader from "../utils/Lodaer";
 import { createPortal } from "react-dom";
-import { User, User2 } from "lucide-react";
+import { AlignJustify, Boxes, Brain, FileText, LayoutTemplate, MessagesSquare, PencilLine, Settings, SidebarOpen, Sparkles, User, User2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ConvoGenerator from "./ConvoGenerator";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
@@ -14,6 +14,8 @@ import { usePromptGenerator } from "../context/PromptGeneratorContext";
 import { useConvoGenerator } from "../context/ConvoGeneratorContext";
 import Select, { SingleValue } from "react-select";
 import PickUpPromptTemplates from "./PickUpPromptTemplates";
+import AISettingsComponent from "./AiSettings";
+import { useAIProvider } from "../context/AIProviderContext";
 
 interface FullPrompt {
   role: string;
@@ -49,7 +51,7 @@ const PromptGenerator: React.FC = () => {
   const { resetConvoSettings } = useConvoGenerator();
 
   const [activeTab, setActiveTab] = useState<
-    "generator" | "templates" | "conversation" | "conversation_prompt" | "pickup_templates"
+    "generator" | "templates" | "conversation" | "conversation_prompt" | "pickup_templates" | "ai_Settings"
   >("conversation");
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
@@ -113,6 +115,7 @@ const PromptGenerator: React.FC = () => {
   const [aiInput, setAiInput] = useState<InputPrompt | null>(null);
   const [aiOutput, setAiOutput] = useState<string[]>([]);
   const [editMode, setEditMode] = useState(false);
+const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [tokenUsage, setTokenUsage] = useState<{
     inputTokens: number;
@@ -123,6 +126,9 @@ const PromptGenerator: React.FC = () => {
   const [globalLoading, setGlobalLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { provider } = useAIProvider();
+
+  console.log(provider,"provder")
   const navigate = useNavigate();
 
   const adminRole = localStorage.getItem("adminRole") || "admin";
@@ -383,6 +389,24 @@ const PromptGenerator: React.FC = () => {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
   };
 
+  const sidebarVariants: Variants = {
+  open: {
+    width: 256, // w-64
+    transition: { duration: 0.25, ease: "easeInOut" },
+  },
+  closed: {
+    width: 72, // icon-only
+    transition: { duration: 0.25, ease: "easeInOut" },
+  },
+};
+
+const contentVariants: Variants = {
+  open: { marginLeft: 0 },
+  closed: { marginLeft: 0 },
+};
+
+
+
   const togglePromptAccordion = () => {
     setPromptAccordionOpen(!promptAccordionOpen);
   };
@@ -418,7 +442,7 @@ const PromptGenerator: React.FC = () => {
 
   const visibleTabs =
     adminRole === "superAdmin"
-      ? ["generator", "templates", "pickup_templates", "conversation", "conversation_prompt"]
+      ? ["generator", "templates", "pickup_templates", "conversation", "ai_Settings", "conversation_prompt"]
       : ["conversation"];
 
   const handleDownloadJson = () => {
@@ -564,125 +588,207 @@ const PromptGenerator: React.FC = () => {
     }),
   };
 
+  type TabKey =
+  | "generator"
+  | "templates"
+  | "pickup_templates"
+  | "conversation"
+  | "conversation_prompt"
+  | "ai_Settings"
+  ;
+
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-start p-4 sm:p-6">
+<div className="h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex overflow-hidden">
       {/* Top Tabs */}
 
-      <div className="absolute top-4 right-4" ref={menuRef}>
-        <div className="relative">
-          <button
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center focus:outline-none transition-all duration-300"
-          >
-            <User2 />
-          </button>
+      <button
+  onClick={() => setIsSidebarOpen(true)}
+  className="md:hidden fixed top-2 left-2 z-50 text-white bg-gradient-to-br from-gray-800 to-gray-900 p-2 rounded-md bg"
+>
+  <AlignJustify size={22} />
+</button>
 
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="absolute right-0 mt-2 w-32 sm:w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
+
+
+
+    {/* Sidebar */}
+<motion.div
+  variants={sidebarVariants}
+  animate={isSidebarOpen ? "open" : "closed"}
+  initial={false}
+  className={`
+    bg-gray-900 border-r border-gray-700 flex flex-col h-screen
+    fixed md:static z-50
+    ${isSidebarOpen ? "left-0" : "-left-64"}
+    md:left-0
+  `}
+>
+
+  {/* Header */}
+  <div
+   className={`flex items-center  px-4 py-4
+          ${isSidebarOpen 
+            ? "justify-between"
+            : "justify-center"}`}
             >
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 rounded-md"
-              >
-                Logout
-              </button>
-            </motion.div>
-          )}
-        </div>
-      </div>
+    {isSidebarOpen && (
+      <span className="text-lg font-semibold text-white">
+        Prompt Panel
+      </span>
+    )}
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="w-full max-w-5xl flex flex-col sm:flex-row justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-2"
+    <button
+      onClick={() => setIsSidebarOpen((prev) => !prev)}
+      className="text-gray-300 hover:text-white transition"
+    >
+      {/* simple icon */}
+      { isSidebarOpen ? <X/>  :
+     <AlignJustify/>
+      }
+    </button>
+  </div>
+
+  {/* Navigation */}
+  <nav className="flex-1 flex flex-col space-y-1 px-2 py-2 gap-2">
+    {visibleTabs.includes("generator") && (
+      <button
+        onClick={() => {
+          setActiveTab("generator");
+          resetGeneratorTab();
+        }}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${activeTab === "generator"
+            ? "bg-blue-600 text-white"
+            : "text-gray-300 hover:bg-gray-700 "}
+               ${isSidebarOpen 
+            ? ""
+            : "justify-center"}`}
       >
-        {visibleTabs.includes("generator") && (
-          <button
-            onClick={() => {
-              setActiveTab("generator");
-              resetGeneratorTab();
-            }}
-            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
-              activeTab === "generator"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            Prompt Tester
-          </button>
-        )}
+        <LayoutTemplate  size={21} />
+        {isSidebarOpen && <span>Prompt Tester</span>}
+      </button>
+    )}
 
-        {visibleTabs.includes("templates") && (
-          <button
-            onClick={() => {
-              setActiveTab("templates");
-              resetGeneratorTab();
-            }}
-            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
-              activeTab === "templates"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            Prompt Templates
-          </button>
-        )}
+    {visibleTabs.includes("templates") && (
+      <button
+        onClick={() => {
+          setActiveTab("templates");
+          resetGeneratorTab();
+        }}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${activeTab === "templates"
+            ? "bg-blue-600 text-white"
+            : "text-gray-300 hover:bg-gray-700"}
+              ${isSidebarOpen 
+            ? ""
+            : "justify-center"}
+            `}
+      >
+        <FileText size={21} />
+        {isSidebarOpen && <span>Prompt Templates</span>}
+      </button>
+    )}
 
-          {visibleTabs.includes("pickup_templates") && (
-          <button
-            onClick={() => {
-              setActiveTab("pickup_templates");
-              resetGeneratorTab();
-            }}
-            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
-              activeTab === "pickup_templates"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            Pickup Prompt Templates
-          </button>
-        )}
+    {visibleTabs.includes("pickup_templates") && (
+      <button
+        onClick={() => {
+          setActiveTab("pickup_templates");
+          resetGeneratorTab();
+        }}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${activeTab === "pickup_templates"
+            ? "bg-blue-600 text-white"
+            : "text-gray-300 hover:bg-gray-700"}
+               ${isSidebarOpen 
+            ? ""
+            : "justify-center"}`}
+      >
+        <Sparkles size={18} />
+        {isSidebarOpen && <span>Pickup Templates</span>}
+      </button>
+    )}
 
-        {visibleTabs.includes("conversation") && (
-          <button
-            onClick={() => setActiveTab("conversation")}
-            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
-              activeTab === "conversation"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            Conversation Generator
-          </button>
-        )}
 
-        {visibleTabs.includes("conversation_prompt") && (
-          <button
-            onClick={() => handleEditConvoPrompt()}
-            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 ${
-              activeTab === "conversation_prompt"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            Edit Conversation Prompt
-          </button>
-        )}
-      </motion.div>
+    {visibleTabs.includes("conversation") && (
+      <button
+        onClick={() => {
+          setActiveTab("conversation");
+        }}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${activeTab === "conversation"
+               ? "bg-blue-600 text-white"
+            : "text-gray-300 hover:bg-gray-700"}
+               ${isSidebarOpen 
+            ? ""
+            : "justify-center"}`}
+      >
+        <MessagesSquare  size={21} />
+        {isSidebarOpen && <span>Conversation Generator</span>}
+      </button>
+    )}
+
+    {visibleTabs.includes("conversation_prompt") && (
+      <button
+        onClick={() => {
+          handleEditConvoPrompt();
+        }}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${activeTab === "conversation_prompt"
+               ? "bg-blue-600 text-white"
+            : "text-gray-300 hover:bg-gray-700"}
+               ${isSidebarOpen 
+            ? ""
+            : "justify-center"}`}
+      >
+        <PencilLine   size={21} />
+        {isSidebarOpen && <span>Edit Conversation Prompt</span>}
+      </button>
+    )}
+
+    
+       {visibleTabs.includes("ai_Settings") && (
+      <button
+        onClick={() => {
+          setActiveTab("ai_Settings");
+          resetGeneratorTab();
+        }}
+        className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${activeTab === "ai_Settings"
+              ? "bg-blue-600 text-white"
+            : "text-gray-300 hover:bg-gray-700"}
+               ${isSidebarOpen 
+            ? ""
+            : "justify-center"}`}
+      >
+        <Settings size={21} />
+        {isSidebarOpen && <span className="">AI Settings</span>}
+      </button>
+    )}
+
+  </nav>
+
+  {/* Logout */}
+  <div className="p-3 border-t border-gray-700">
+    <button
+      onClick={handleLogout}
+      className="flex items-center gap-3 w-full px-3 py-2 text-red-400 hover:bg-gray-800 rounded-md transition"
+    >
+      <User size={21} />
+      {isSidebarOpen && <span>Logout</span>}
+    </button>
+  </div>
+</motion.div>
+
+
+<div className="flex-1 h-screen overflow-y-auto p-4 sm:p-6">
 
       {activeTab === "generator" && (
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="w-full max-w-4xl bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700"
+          className="w-full max-w-4xl  mt-4 bg-gray-800/90 backdrop-blur-md rounded-xl shadow-xl p-4 sm:p-6 border border-gray-700 flex flex-col m-auto"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-gray-100 text-center mb-4 sm:mb-6">
             Prompt Tester
@@ -719,9 +825,11 @@ const PromptGenerator: React.FC = () => {
             >
               {/* GPT Model Dropdown */}
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+               {provider && provider === "OPENAI" ?  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   GPT Model
-                </label>
+                </label> :  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                  Gemini Model
+                </label> }
                 <select
                   value={gptModel}
                   onChange={(e) => setGptModel(e.target.value)}
@@ -729,11 +837,14 @@ const PromptGenerator: React.FC = () => {
           focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                   required
                 >
+                {provider === "OPENAI" ? <>
                   <option value="gpt-5">GPT-5</option>
                   <option value="gpt-4o-mini">GPT-4o Mini</option>
                   <option value="gpt-4o">GPT-4o</option>
                   <option value="gpt-4-turbo">GPT-4 Turbo</option>
                   <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                </> :  <> <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                  </> }
                 </select>
               </div>
 
@@ -1482,7 +1593,7 @@ const PromptGenerator: React.FC = () => {
       {activeTab === "templates" && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl m-auto mt-4 text-center text-gray-300 text-sm sm:text-base"
         >
           <PromptTemplates />
         </motion.div>
@@ -1491,7 +1602,7 @@ const PromptGenerator: React.FC = () => {
       {activeTab === "pickup_templates" && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl mt-4 m-auto text-center text-gray-300 text-sm sm:text-base"
         >
           <PickUpPromptTemplates />
         </motion.div>
@@ -1501,7 +1612,7 @@ const PromptGenerator: React.FC = () => {
       {activeTab === "conversation" && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl m-auto text-center text-gray-300 text-sm sm:text-base"
         >
           <ConvoGenerator setGlobalLoading={setGlobalLoading} />{" "}
         </motion.div>
@@ -1510,12 +1621,22 @@ const PromptGenerator: React.FC = () => {
       {activeTab === "conversation_prompt" && editMode && (
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-5xl text-center text-gray-300 text-sm sm:text-base"
+          className="w-full max-w-5xl m-auto text-center text-gray-300 text-sm sm:text-base"
         >
           <ConversationPromptEditor
             keyValue="conversation_prompt_v5_1762836404699"
             handleCancel={() => setEditMode(false)}
             setGlobalLoading={setGlobalLoading}
+          />
+        </motion.div>
+      )}
+
+        {activeTab === "ai_Settings" && (
+        <motion.div
+          variants={itemVariants}
+          className="w-full max-w-5xl m-auto text-center text-gray-300 text-sm sm:text-base"
+        >
+          <AISettingsComponent
           />
         </motion.div>
       )}
@@ -1536,6 +1657,7 @@ const PromptGenerator: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   );
 };
