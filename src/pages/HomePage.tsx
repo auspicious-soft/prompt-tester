@@ -111,9 +111,11 @@ const PromptGenerator: React.FC = () => {
     gender === "MALE" ? maleStyles : gender === "FEMALE" ? femaleStyles : [];
 
 
-const [gptModel, setGptModel] = useState(() =>
-  provider === "GEMINI" ? "gemini-2.0-flash" : settings.gptModel
-);
+const [gptModel, setGptModel] = useState(() => {
+  if (provider === "GEMINI") return "gemini-2.0-flash";
+  if (provider === "OPENAI") return settings.gptModel || "gpt-4o-mini";
+  return settings.gptModel || "gemini-2.0-flash";
+});
   const [temperature, setTemperature] = useState(settings.temperature);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
@@ -195,6 +197,19 @@ const [isSidebarOpen, setIsSidebarOpen] = useState(true);
       }
     }
   };
+
+useEffect(() => {
+  if (provider) {
+    const defaultModel = provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+    if (
+      (provider === "GEMINI" && !gptModel.includes("gemini")) ||
+      (provider === "OPENAI" && !gptModel.includes("gpt"))
+    ) {
+      setGptModel(defaultModel);
+      updateSettings({ gptModel: defaultModel });
+    }
+  }
+}, [provider]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
