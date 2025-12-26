@@ -47,6 +47,8 @@ type DialectOption = {
 };
 
 const PromptGenerator: React.FC = () => {
+    const { provider } = useAIProvider();
+
   const { settings, updateSettings, resetSettings } = usePromptGenerator();
   const { resetConvoSettings } = useConvoGenerator();
 
@@ -108,7 +110,10 @@ const PromptGenerator: React.FC = () => {
   const stylesOptions =
     gender === "MALE" ? maleStyles : gender === "FEMALE" ? femaleStyles : [];
 
-  const [gptModel, setGptModel] = useState(settings.gptModel);
+
+const [gptModel, setGptModel] = useState(() =>
+  provider === "GEMINI" ? "gemini-2.0-flash" : settings.gptModel
+);
   const [temperature, setTemperature] = useState(settings.temperature);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
@@ -126,9 +131,7 @@ const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { provider } = useAIProvider();
 
-  console.log(provider,"provder")
   const navigate = useNavigate();
 
   const adminRole = localStorage.getItem("adminRole") || "admin";
