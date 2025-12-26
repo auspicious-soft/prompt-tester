@@ -47,7 +47,7 @@ type DialectOption = {
 };
 
 const PromptGenerator: React.FC = () => {
-    const { provider } = useAIProvider();
+    const { provider, loading: providerLoading } = useAIProvider();
 
   const { settings, updateSettings, resetSettings } = usePromptGenerator();
   const { resetConvoSettings } = useConvoGenerator();
@@ -111,11 +111,14 @@ const PromptGenerator: React.FC = () => {
     gender === "MALE" ? maleStyles : gender === "FEMALE" ? femaleStyles : [];
 
 
-const [gptModel, setGptModel] = useState(() => {
-  if (provider === "GEMINI") return "gemini-2.0-flash";
-  if (provider === "OPENAI") return settings.gptModel || "gpt-4o-mini";
-  return settings.gptModel || "gemini-2.0-flash";
-});
+
+ const [gptModel, setGptModel] = useState(() => {
+    if (providerLoading) return "";
+    
+    if (provider === "GEMINI") return "gemini-2.0-flash";
+    if (provider === "OPENAI") return settings.gptModel || "gpt-4o-mini";
+    return "gemini-2.0-flash";
+  });
   const [temperature, setTemperature] = useState(settings.temperature);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [temperatureUsed, setTemperatureUsed] = useState<number | null>(null);
@@ -137,6 +140,7 @@ const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
 
   const adminRole = localStorage.getItem("adminRole") || "admin";
+
 
   const toggleInputAccordion = () => setInputAccordionOpen((prev) => !prev);
   const toggleOutputAccordion = () => setOutputAccordionOpen((prev) => !prev);
@@ -199,17 +203,33 @@ const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   };
 
 useEffect(() => {
-  if (provider) {
-    const defaultModel = provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
-    if (
-      (provider === "GEMINI" && !gptModel.includes("gemini")) ||
-      (provider === "OPENAI" && !gptModel.includes("gpt"))
-    ) {
-      setGptModel(defaultModel);
-      updateSettings({ gptModel: defaultModel });
+    if (!providerLoading && provider) {
+      const defaultModel = provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+      
+      // Only set if gptModel is empty or doesn't match provider
+      if (!gptModel || 
+          (provider === "GEMINI" && !gptModel.includes("gemini")) ||
+          (provider === "OPENAI" && !gptModel.includes("gpt"))) {
+        setGptModel(defaultModel);
+        updateSettings({ gptModel: defaultModel });
+      }
     }
-  }
-}, [provider]);
+  }, [provider, providerLoading]);
+
+  // Sync gptModel when provider changes
+  useEffect(() => {
+    if (!providerLoading && provider && gptModel) {
+      const defaultModel = provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+      
+      if (
+        (provider === "GEMINI" && !gptModel.includes("gemini")) ||
+        (provider === "OPENAI" && !gptModel.includes("gpt"))
+      ) {
+        setGptModel(defaultModel);
+        updateSettings({ gptModel: defaultModel });
+      }
+    }
+  }, [provider, providerLoading]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -452,6 +472,7 @@ const contentVariants: Variants = {
   const handleLogout = async () => {
     localStorage.removeItem("token");
     localStorage.removeItem("adminRole");
+        localStorage.removeItem("promptGeneratorSettings");
     resetSettings();
     resetConvoSettings();
     navigate("/");
@@ -614,6 +635,14 @@ const contentVariants: Variants = {
   | "conversation_prompt"
   | "ai_Settings"
   ;
+
+   if (providerLoading) {
+    return (
+      <div className="h-screen w-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+        <TypingLoader />
+      </div>
+    );
+  }
 
 
   return (
