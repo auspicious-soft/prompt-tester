@@ -30,6 +30,7 @@ import Select, { SingleValue } from "react-select";
 import PickUpPromptTemplates from "./PickUpPromptTemplates";
 import AISettingsComponent from "./AiSettings";
 import { useAIProvider } from "../context/AIProviderContext";
+import { useTabProvider } from "../context/TabContext";
 
 interface FullPrompt {
   role: string;
@@ -62,7 +63,7 @@ type DialectOption = {
 
 const PromptGenerator: React.FC = () => {
   const { provider, loading: providerLoading } = useAIProvider();
-
+  const { tabing, setTabing } = useTabProvider();
   const { settings, updateSettings, resetSettings } = usePromptGenerator();
   const { resetConvoSettings } = useConvoGenerator();
 
@@ -73,14 +74,14 @@ const PromptGenerator: React.FC = () => {
     | "conversation_prompt"
     | "pickup_templates"
     | "ai_Settings"
-  >("conversation");
+  >(tabing);
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
   >("GetPickUpLine");
 
   const [message, setMessage] = useState("");
   const [context, setContext] = useState("");
-   const [pickupContext, setPickupContext] = useState("");
+  const [pickupContext, setPickupContext] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [output, setOutput] = useState("");
   const [fullPrompt, setFullPrompt] = useState<FullPrompt | null>(null);
@@ -188,7 +189,7 @@ const PromptGenerator: React.FC = () => {
       setImageFile(null); // Reset uploaded image
       setMessage(""); // Reset manual reply
       setContext(""); // Reset optional context
-      setPickupContext("")
+      setPickupContext("");
     } else if (setter === setGender) {
       if (value === "MALE") {
         setStyle("Conservative");
@@ -220,22 +221,32 @@ const PromptGenerator: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (!providerLoading && provider) {
-      const defaultModel =
-        provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+ useEffect(() => {
+    setActiveTab(tabing);
+  }, [tabing]);
 
-      // Only set if gptModel is empty or doesn't match provider
-      if (
-        !gptModel ||
-        (provider === "GEMINI" && !gptModel.includes("gemini")) ||
-        (provider === "OPENAI" && !gptModel.includes("gpt"))
-      ) {
-        setGptModel(defaultModel);
-        updateSettings({ gptModel: defaultModel });
-      }
+  useEffect(() => {
+    if (adminRole !== "superAdmin") {
+      setActiveTab("conversation");
+      setTabing("conversation");
     }
-  }, [provider, providerLoading]);
+  }, [adminRole, setTabing]);
+
+useEffect(() => {
+  if (!providerLoading && provider) {
+    const defaultModel =
+      provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+
+    if (
+      !gptModel ||
+      (provider === "GEMINI" && !gptModel.includes("gemini")) ||
+      (provider === "OPENAI" && !gptModel.includes("gpt"))
+    ) {
+      setGptModel(defaultModel);
+      updateSettings({ gptModel: defaultModel });
+    }
+  }
+}, [provider, providerLoading]);
 
   // Sync gptModel when provider changes
   useEffect(() => {
@@ -270,7 +281,7 @@ const PromptGenerator: React.FC = () => {
     setImageFile(null); // reset uploaded image
     setMessage(""); // reset manual message
     setContext(""); // reset optional context
-    setPickupContext("")
+    setPickupContext("");
     setResponses([]); // reset API responses
     setSuccess(false); // reset success state
   };
@@ -331,7 +342,9 @@ const PromptGenerator: React.FC = () => {
           gptModel: gptModel,
           temperature: temperature.toString(),
         }).toString();
-        response = await postApi(`${URLS.getPickUpLine}?${query}`,{context:pickupContext});
+        response = await postApi(`${URLS.getPickUpLine}?${query}`, {
+          context: pickupContext,
+        });
       } else if (selectedType === "ManualReply") {
         const body = {
           ...commonParams,
@@ -476,6 +489,7 @@ const PromptGenerator: React.FC = () => {
 
   const handleEditConvoPrompt = () => {
     setActiveTab("conversation_prompt");
+    setTabing("conversation_prompt");
     setEditMode(true);
   };
 
@@ -719,8 +733,10 @@ const PromptGenerator: React.FC = () => {
           {visibleTabs.includes("generator") && (
             <button
               onClick={() => {
-                setActiveTab("generator");
-                resetGeneratorTab();
+               const newTab = "generator";
+            setActiveTab(newTab);
+            setTabing(newTab);
+            resetGeneratorTab();
               }}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition
           ${
@@ -738,8 +754,10 @@ const PromptGenerator: React.FC = () => {
           {visibleTabs.includes("templates") && (
             <button
               onClick={() => {
-                setActiveTab("templates");
-                resetGeneratorTab();
+                 const newTab = "templates";
+            setActiveTab(newTab);
+            setTabing(newTab);
+            resetGeneratorTab();
               }}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition
           ${
@@ -758,8 +776,10 @@ const PromptGenerator: React.FC = () => {
           {visibleTabs.includes("pickup_templates") && (
             <button
               onClick={() => {
-                setActiveTab("pickup_templates");
-                resetGeneratorTab();
+              const newTab = "pickup_templates";
+            setActiveTab(newTab);
+            setTabing(newTab);
+            resetGeneratorTab();
               }}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition
           ${
@@ -777,7 +797,9 @@ const PromptGenerator: React.FC = () => {
           {visibleTabs.includes("conversation") && (
             <button
               onClick={() => {
-                setActiveTab("conversation");
+               const newTab = "conversation";
+            setActiveTab(newTab);
+            setTabing(newTab);
               }}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition
           ${
@@ -813,8 +835,10 @@ const PromptGenerator: React.FC = () => {
           {visibleTabs.includes("ai_Settings") && (
             <button
               onClick={() => {
-                setActiveTab("ai_Settings");
-                resetGeneratorTab();
+                const newTab = "ai_Settings";
+            setActiveTab(newTab);
+            setTabing(newTab);
+            resetGeneratorTab();
               }}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition
           ${
@@ -1070,9 +1094,8 @@ const PromptGenerator: React.FC = () => {
                 </motion.div>
               </div>
 
-                {selectedType === "GetPickUpLine" && (
+              {selectedType === "GetPickUpLine" && (
                 <div className="space-y-3 sm:space-y-4">
-                 
                   <motion.div variants={itemVariants}>
                     <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                       Context (Optional)
@@ -1721,14 +1744,19 @@ const PromptGenerator: React.FC = () => {
           </motion.div>
         )}
 
-        {activeTab === "conversation_prompt" && editMode && (
+        {activeTab === "conversation_prompt" && (
           <motion.div
             variants={itemVariants}
             className="w-full max-w-5xl m-auto text-center text-gray-300 text-sm sm:text-base"
           >
             <ConversationPromptEditor
               keyValue="conversation_prompt_v5_1762836404699"
-              handleCancel={() => setEditMode(false)}
+              handleCancel={() => {
+              setEditMode(false);
+              const newTab = "conversation";
+              setActiveTab(newTab);
+              setTabing(newTab);
+            }}
               setGlobalLoading={setGlobalLoading}
             />
           </motion.div>

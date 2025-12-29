@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useAIProvider } from './AIProviderContext';
 
 interface PromptGeneratorSettings {
-  gptModel: string;
+  gptModel: string; // This will be the currently active model based on provider
   temperature: number;
   language: "en" | "ar" | "arbz";
   dialect:  "EGYPTIAN"
@@ -33,6 +33,16 @@ interface PromptGeneratorSettings {
   gender: "MALE" | "FEMALE";
 }
 
+// Separate storage for provider-specific models
+interface ProviderModels {
+  OPENAI: string;
+  GEMINI: string;
+}
+
+interface StoredSettings extends PromptGeneratorSettings {
+  providerModels?: ProviderModels; // Store both models separately
+}
+
 interface PromptGeneratorContextType {
   settings: PromptGeneratorSettings;
   updateSettings: (newSettings: Partial<PromptGeneratorSettings>) => void;
@@ -43,6 +53,11 @@ const getDefaultModel = (provider: "OPENAI" | "GEMINI" | null): string => {
   if (provider === "GEMINI") return "gemini-2.0-flash";
   return "gpt-4o-mini";
 };
+
+const getDefaultProviderModels = (): ProviderModels => ({
+  OPENAI: "gpt-4o-mini",
+  GEMINI: "gemini-2.0-flash",
+});
 
 const getDefaultSettings = (provider: "OPENAI" | "GEMINI" | null): PromptGeneratorSettings => ({
   gptModel: getDefaultModel(provider),
@@ -59,65 +74,88 @@ const PromptGeneratorContext = createContext<PromptGeneratorContextType | undefi
 export const PromptGeneratorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { provider, loading } = useAIProvider();
   
+  // Store provider-specific models separately
+  const [providerModels, setProviderModels] = useState<ProviderModels>(() => {
+    const stored = localStorage.getItem('promptGeneratorSettings');
+    if (stored) {
+      try {
+        const parsedSettings: StoredSettings = JSON.parse(stored);
+        return parsedSettings.providerModels || getDefaultProviderModels();
+      } catch {
+        return getDefaultProviderModels();
+      }
+    }
+    return getDefaultProviderModels();
+  });
+  
   const [settings, setSettings] = useState<PromptGeneratorSettings>(() => {
     const stored = localStorage.getItem('promptGeneratorSettings');
     if (stored) {
       try {
-        const parsedSettings = JSON.parse(stored);
-        // If there's a stored provider-specific model, use it
-        return { ...getDefaultSettings(null), ...parsedSettings };
+        const parsedSettings: StoredSettings = JSON.parse(stored);
+        const models = parsedSettings.providerModels || getDefaultProviderModels();
+        
+        // Use the stored model for the current provider if available
+        return {
+          ...getDefaultSettings(provider),
+          ...parsedSettings,
+          gptModel: provider ? models[provider] : parsedSettings.gptModel || getDefaultModel(provider),
+        };
       } catch {
-        return getDefaultSettings(null);
+        return getDefaultSettings(provider);
       }
     }
-    return getDefaultSettings(null);
+    return getDefaultSettings(provider);
   });
 
-  // Update gptModel when provider changes
+  // Update gptModel when provider changes (without resetting user's choice)
   useEffect(() => {
     if (!loading && provider) {
-      const stored = localStorage.getItem('promptGeneratorSettings');
-      const newModel = getDefaultModel(provider);
-      let shouldUpdate = false;
+      // Get the remembered model for this provider
+      const rememberedModel = providerModels[provider];
       
-      if (stored) {
-        try {
-          const parsedSettings = JSON.parse(stored);
-          const storedProvider = parsedSettings.lastProvider;
-          
-          // Update if provider changed OR if current model doesn't match provider
-          if (storedProvider !== provider || parsedSettings.gptModel !== newModel) {
-            shouldUpdate = true;
-          }
-        } catch {
-          shouldUpdate = true;
-        }
-      } else {
-        shouldUpdate = true;
-      }
-
-      if (shouldUpdate) {
+      // Only update if the current model doesn't match the provider
+      const isCorrectProvider = 
+        (provider === "GEMINI" && settings.gptModel.includes("gemini")) ||
+        (provider === "OPENAI" && settings.gptModel.includes("gpt"));
+      
+      if (!isCorrectProvider) {
         setSettings(prev => ({
           ...prev,
-          gptModel: newModel,
+          gptModel: rememberedModel,
         }));
       }
     }
   }, [provider, loading]);
 
+  // Save to localStorage whenever settings or providerModels change
   useEffect(() => {
-    const settingsToStore = {
+    const settingsToStore: StoredSettings = {
       ...settings,
-      lastProvider: provider,
+      providerModels, // Store both provider models
     };
     localStorage.setItem('promptGeneratorSettings', JSON.stringify(settingsToStore));
-  }, [settings, provider]);
+  }, [settings, providerModels]);
 
   const updateSettings = (newSettings: Partial<PromptGeneratorSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    setSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      
+      // If gptModel is being updated, save it to the correct provider
+      if (newSettings.gptModel && provider) {
+        setProviderModels(prevModels => ({
+          ...prevModels,
+          [provider]: newSettings.gptModel!,
+        }));
+      }
+      
+      return updated;
+    });
   };
 
   const resetSettings = () => {
+    const defaultModels = getDefaultProviderModels();
+    setProviderModels(defaultModels);
     setSettings(getDefaultSettings(provider));
     localStorage.removeItem('promptGeneratorSettings');
   };
