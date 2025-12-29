@@ -80,6 +80,7 @@ const PromptGenerator: React.FC = () => {
 
   const [message, setMessage] = useState("");
   const [context, setContext] = useState("");
+   const [pickupContext, setPickupContext] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [output, setOutput] = useState("");
   const [fullPrompt, setFullPrompt] = useState<FullPrompt | null>(null);
@@ -187,6 +188,7 @@ const PromptGenerator: React.FC = () => {
       setImageFile(null); // Reset uploaded image
       setMessage(""); // Reset manual reply
       setContext(""); // Reset optional context
+      setPickupContext("")
     } else if (setter === setGender) {
       if (value === "MALE") {
         setStyle("Conservative");
@@ -268,6 +270,7 @@ const PromptGenerator: React.FC = () => {
     setImageFile(null); // reset uploaded image
     setMessage(""); // reset manual message
     setContext(""); // reset optional context
+    setPickupContext("")
     setResponses([]); // reset API responses
     setSuccess(false); // reset success state
   };
@@ -328,7 +331,7 @@ const PromptGenerator: React.FC = () => {
           gptModel: gptModel,
           temperature: temperature.toString(),
         }).toString();
-        response = await getApi(`${URLS.getPickUpLine}?${query}`);
+        response = await postApi(`${URLS.getPickUpLine}?${query}`,{context:pickupContext});
       } else if (selectedType === "ManualReply") {
         const body = {
           ...commonParams,
@@ -1066,6 +1069,23 @@ const PromptGenerator: React.FC = () => {
                   </select>
                 </motion.div>
               </div>
+
+                {selectedType === "GetPickUpLine" && (
+                <div className="space-y-3 sm:space-y-4">
+                 
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                      Context (Optional)
+                    </label>
+                    <textarea
+                      value={pickupContext}
+                      onChange={(e) => setPickupContext(e.target.value)}
+                      placeholder="Enter context (optional)..."
+                      className="w-full h-16 sm:h-20 px-3 py-1.5 sm:py-2 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                    />
+                  </motion.div>
+                </div>
+              )}
 
               {selectedType === "ScreenshotReply" && (
                 <motion.div variants={itemVariants} className="mb-4 sm:mb-6">
