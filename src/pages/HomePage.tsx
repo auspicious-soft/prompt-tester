@@ -8,6 +8,7 @@ import TypingLoader from "../utils/Lodaer";
 import { createPortal } from "react-dom";
 import {
   AlignJustify,
+  AudioLines,
   Boxes,
   Brain,
   FileText,
@@ -31,6 +32,7 @@ import PickUpPromptTemplates from "./PickUpPromptTemplates";
 import AISettingsComponent from "./AiSettings";
 import { useAIProvider } from "../context/AIProviderContext";
 import { useTabProvider } from "../context/TabContext";
+import PickupLines from "./PickupLines";
 
 interface FullPrompt {
   role: string;
@@ -74,6 +76,7 @@ const PromptGenerator: React.FC = () => {
     | "conversation_prompt"
     | "pickup_templates"
     | "ai_Settings"
+    | "pickup_lines"
   >(tabing);
   const [selectedType, setSelectedType] = useState<
     "ScreenshotReply" | "ManualReply" | "GetPickUpLine"
@@ -523,6 +526,7 @@ useEffect(() => {
           "conversation",
           "ai_Settings",
           "conversation_prompt",
+          "pickup_lines",
         ]
       : ["conversation"];
 
@@ -675,7 +679,8 @@ useEffect(() => {
     | "pickup_templates"
     | "conversation"
     | "conversation_prompt"
-    | "ai_Settings";
+    | "ai_Settings"
+    | "pickup_lines";
 
   if (providerLoading) {
     return (
@@ -791,6 +796,28 @@ useEffect(() => {
             >
               <Sparkles size={18} />
               {isSidebarOpen && <span>Pickup Templates</span>}
+            </button>
+          )}
+
+          {visibleTabs.includes("pickup_lines") && (
+            <button
+              onClick={() => {
+                 const newTab = "pickup_lines";
+            setActiveTab(newTab);
+            setTabing(newTab);
+            resetGeneratorTab();
+              }}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition
+          ${
+            activeTab === "pickup_lines"
+              ? "bg-blue-600 text-white"
+              : "text-gray-300 hover:bg-gray-700"
+          }
+              ${isSidebarOpen ? "" : "justify-center"}
+            `}
+            >
+              <AudioLines  size={21} />
+              {isSidebarOpen && <span>Pick Up Lines</span>}
             </button>
           )}
 
@@ -1725,6 +1752,16 @@ useEffect(() => {
             <PromptTemplates />
           </motion.div>
         )}
+
+    {activeTab === "pickup_lines" && (
+          <motion.div
+            variants={itemVariants}
+            className="w-full max-w-5xl m-auto mt-4 text-center text-gray-300 text-sm sm:text-base"
+          >
+            <PickupLines />
+          </motion.div>
+        )}
+
 
         {activeTab === "pickup_templates" && (
           <motion.div

@@ -6,7 +6,9 @@ type TabType =
   | "conversation"
   | "conversation_prompt"
   | "pickup_templates"
+  | "pickup_lines"
   | "ai_Settings";
+
 
 interface TabContextType {
   tabing: TabType;
@@ -19,7 +21,7 @@ const TabContext = createContext<TabContextType | undefined>(undefined);
 const getInitialTab = (): TabType => {
   try {
     const stored = localStorage.getItem('activeTab');
-    if (stored && ['generator', 'templates', 'conversation', 'conversation_prompt', 'pickup_templates', 'ai_Settings'].includes(stored)) {
+    if (stored && ['generator', 'templates', 'conversation', 'conversation_prompt', 'pickup_templates', 'ai_Settings' , 'pickup_lines'].includes(stored)) {
       return stored as TabType;
     }
   } catch (error) {
