@@ -38,7 +38,6 @@ const CreatePickupLine = () => {
     language: "ar",
     dialect: "EGYPTIAN",
     gender: "Male",
-    isGenz: true,
   });
   const [loading, setLoading] = useState(false);
 
@@ -63,7 +62,7 @@ const CreatePickupLine = () => {
           language: "ar",
           dialect: "EGYPTIAN",
           gender: "Male",
-          isGenz: true,
+    
         });
       }
 
@@ -161,7 +160,7 @@ const CreatePickupLine = () => {
             </select>
           </div>
 
-          {/* Gen Z Toggle */}
+          {/* Gen Z Toggle
           <div className="flex items-center justify-between py-3 text-start">
             <div>
               <label className="text-sm font-medium text-gray-200">Gen Z Style</label>
@@ -178,7 +177,7 @@ const CreatePickupLine = () => {
               />
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
             </label>
-          </div>
+          </div> */}
 
           {/* Submit Button */}
      <motion.button

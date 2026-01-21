@@ -1756,7 +1756,7 @@ useEffect(() => {
     {activeTab === "pickup_lines" && (
           <motion.div
             variants={itemVariants}
-            className="w-full max-w-5xl m-auto mt-4 text-center text-gray-300 text-sm sm:text-base"
+            className="w-full max-w-7xl m-auto mt-4 text-center text-gray-300 text-sm sm:text-base"
           >
             <PickupLines />
           </motion.div>

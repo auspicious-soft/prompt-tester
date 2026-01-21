@@ -36,6 +36,7 @@ export const URLS = {
   userPickUpSubmissions:`${baseUrl}/all-user-submissions`,
   getSinglePickupLine:`${baseUrl}/pickup-line/single`,
   updatePickUpLine:`${baseUrl}/pickup-lines`,
+  updateUserSubmission:`${baseUrl}/user-pickup-lines`,
   reviewPickUpLine:`${baseUrl}/user-submissions/review`,
   deletePickupLine:`${baseUrl}/pickup-lines`,
 

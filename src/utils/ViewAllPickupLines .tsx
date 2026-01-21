@@ -31,7 +31,7 @@ interface UserSubmission {
 interface AdminFilters {
   gender: string;
   language: string;
-  isGenz: string;
+  // isGenz: string;
   origin: string;
   page: number;
   limit: number;
@@ -50,6 +50,7 @@ interface ModalData {
   dialect: string;
   gender: string;
   isGenz: boolean;
+  isReviewed:boolean
 }
 
 interface Props {
@@ -67,7 +68,7 @@ const [rejectId, setRejectId] = useState<string>("");
   const [adminFilters, setAdminFilters] = useState<AdminFilters>({
     gender: "",
     language: "",
-    isGenz: "",
+    // isGenz: "",
     origin: "",
     page: 1,
     limit: 20,
@@ -97,7 +98,7 @@ const [rejectId, setRejectId] = useState<string>("");
       if (activeTab === "admin") {
         if (adminFilters.gender) params.append("gender", adminFilters.gender);
         if (adminFilters.language) params.append("language", adminFilters.language);
-        if (adminFilters.isGenz !== "") params.append("isGenz", adminFilters.isGenz);
+        // if (adminFilters.isGenz !== "") params.append("isGenz", adminFilters.isGenz);
         if (adminFilters.origin) params.append("origin", adminFilters.origin);
         params.append("page", String(adminFilters.page));
         params.append("limit", String(adminFilters.limit));
@@ -159,7 +160,11 @@ const [rejectId, setRejectId] = useState<string>("");
         isGenz: editData.isGenz,
       };
 
-      await putApi(`${URLS.updatePickUpLine}/${editData._id}`, payload);
+       if (activeTab === "admin") {
+        await putApi(`${URLS.updatePickUpLine}/${editData._id}`, payload);
+      } else {
+        await putApi(`${URLS.updateUserSubmission}/${editData._id}`, payload);
+      }
       toast.success("Pickup line updated successfully");
       setShowModal(false);
       fetchData();
@@ -200,7 +205,7 @@ const [rejectId, setRejectId] = useState<string>("");
       let count = 0;
       if (adminFilters.gender) count++;
       if (adminFilters.language) count++;
-      if (adminFilters.isGenz !== "") count++;
+      // if (adminFilters.isGenz !== "") count++;
       if (adminFilters.origin) count++;
       return count;
     } else {
@@ -213,7 +218,7 @@ const [rejectId, setRejectId] = useState<string>("");
       setAdminFilters({
         gender: "",
         language: "",
-        isGenz: "",
+        // isGenz: "",
         origin: "",
         page: 1,
         limit: adminFilters.limit,
@@ -361,7 +366,7 @@ useEffect(() => {
 
         <div className="p-6">
           {activeTab === "admin" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {/* Language */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-300">
@@ -415,7 +420,7 @@ useEffect(() => {
               </div>
 
               {/* Gen Z */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-300">
                   Gen Z Style
                 </label>
@@ -438,7 +443,7 @@ useEffect(() => {
                     </button>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Origin */}
               <div className="space-y-2">
@@ -533,7 +538,7 @@ useEffect(() => {
       </div>
 
       {/* Table */}
-      <div className="bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-700/50">
+      <div className="bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-700/50 overflow-x-auto hide-scrollbar">
         <div className="p-6 border-b border-gray-700">
           <h2 className="text-xl font-semibold text-white">
             {activeTab === "admin" ? "Admin Created Pickup Lines" : "User Submissions"}
@@ -607,6 +612,7 @@ useEffect(() => {
   <div className="flex flex-wrap gap-2">
     {activeTab === "admin" ? (
       <>
+      <div className="w-full gap-2 flex flex-col">
         <button
           onClick={() => handleViewDetails(item._id)}
           className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors flex items-center gap-1"
@@ -620,6 +626,7 @@ useEffect(() => {
         >
           Delete
         </button>
+        </div>
       </>
     ) : (
       <>
@@ -627,28 +634,30 @@ useEffect(() => {
           <>
             <button
               onClick={() => handleViewDetails(item._id)}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors flex items-center gap-1 w-full justify-center"
             >
               <Eye className="w-4 h-4" />
-              View
+             {item.isReviewed ? "View" : "Edit"}
             </button>
+            <div className="flex gap-2 w-full justify-between align-center">
             <button
               onClick={() => handleReview(item._id, true)}
-              className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors"
+              className="px-6 py-1 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors flex-1 flex justify-center"
             >
               <Check/>
             </button>
            <button
   onClick={() => handleRejectClick(item._id)}
-  className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors"
+  className="px-6 py-1 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors flex-1 flex justify-center"
 >
   <X/>
 </button>
+</div>
           </>
         ) : (
           <button
             onClick={() => handleViewDetails(item._id)}
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors flex items-center gap-1"
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors flex items-center gap-1 flex-1 justify-center"
           >
             <Eye className="w-4 h-4" />
             View
@@ -732,7 +741,11 @@ useEffect(() => {
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 px-6 py-4 border-b border-gray-700 flex items-center justify-between ">
           <h3 className="text-xl font-semibold text-white">
-            {activeTab === "admin" ? "Edit Pickup Line" : "View Pickup Line"}
+         {activeTab === "admin"
+    ? "Edit Pickup Line"
+    : modalData?.isReviewed
+      ? "View Reviewed Submission"
+      : "Edit Pending Submission"}
           </h3>
           <button
             onClick={() => setShowModal(false)}
@@ -763,7 +776,7 @@ useEffect(() => {
   value={editData.line}
   onChange={(e) => setEditData({ ...editData, line: e.target.value })}
   rows={3}
-  disabled={activeTab === "user"}
+  disabled={activeTab === "user" && modalData?.isReviewed === true}
   className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
   placeholder="Enter pickup line..."
 />
@@ -776,6 +789,7 @@ useEffect(() => {
                 </label>
                 <select
                   value={editData.language}
+                    disabled={activeTab === "user" && modalData?.isReviewed === true}
                   onChange={(e) => setEditData({ ...editData, language: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600/50 rounded-xl text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                 >
@@ -792,6 +806,8 @@ useEffect(() => {
                 <input
                   type="text"
                   value={editData.dialect}
+                    disabled={activeTab === "user" && modalData?.isReviewed === true}
+
                   onChange={(e) => setEditData({ ...editData, dialect: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                   placeholder="Enter dialect (e.g., EGYPTIAN, PALESTINIAN)"
@@ -805,6 +821,8 @@ useEffect(() => {
                 </label>
                 <select
                   value={editData.gender}
+                    disabled={activeTab === "user" && modalData?.isReviewed === true}
+
                   onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600/50 rounded-xl text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                 >
@@ -814,7 +832,7 @@ useEffect(() => {
               </div>
 
               {/* Gen Z Style */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Gen Z Style
                 </label>
@@ -838,7 +856,7 @@ useEffect(() => {
                     <span className="text-gray-300">No</span>
                   </label>
                 </div>
-              </div>
+              </div> */}
             </div>
           ) : (
             <div className="text-center py-12 text-gray-400">
@@ -848,31 +866,23 @@ useEffect(() => {
         </div>
 
         {/* Modal Footer */}
-       {editData && activeTab === "admin" && (
+      {editData && (
   <div className="bg-gray-800/95 backdrop-blur-sm px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
     <button
       onClick={() => setShowModal(false)}
       className="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
     >
-      Cancel
+      {activeTab === "admin" || !modalData?.isReviewed ? "Cancel" : "Close"}
     </button>
-    <button
-      onClick={handleUpdatePickupLine}
-      className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg"
-    >
-      Save Changes
-    </button>
-  </div>
-)}
 
-{editData && activeTab === "user" && (
-  <div className="bg-gray-800/95 backdrop-blur-sm px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
-    <button
-      onClick={() => setShowModal(false)}
-      className="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
-    >
-      Close
-    </button>
+    {(activeTab === "admin" || !modalData?.isReviewed) && (
+      <button
+        onClick={handleUpdatePickupLine}
+        className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg"
+      >
+        Save Changes
+      </button>
+    )}
   </div>
 )}
       </motion.div>
